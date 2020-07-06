@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    'simplecrop-plant',
+    'simplecrop-soil',
+    'simplecrop-weather'
+]
