@@ -4,33 +4,38 @@
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-pub fn initialize(input: &mut PlantInput) {
-    unsafe {
-        plant_initialize(input);
+trait DTSSMealy {
+    type Input;
+    type Output;
+
+    fn update(self: &mut Self, input: &Self::Input) -> Self::Output;
+}
+
+trait DTSSMoore {
+    type Input;
+    type Output;
+
+    fn update(self: &mut Self, input: &Self::Input);
+    fn output(self: &Self) -> Self::Output;
+}
+
+impl PlantModel {
+    fn new() -> Self {
+        Default::default()
     }
 }
 
-pub fn rate(input: &mut PlantInput) {
-    unsafe {
-        plant_rate(input);
-    }
-}
+impl DTSSMealy for PlantModel {
+    type Input = PlantInput;
+    type Output = f32;
 
-pub fn integ(input: &mut PlantInput) {
-    unsafe {
-        plant_integ(input);
-    }
-}
-
-pub fn output(input: &mut PlantInput) {
-    unsafe {
-        plant_output(input);
-    }
-}
-
-pub fn close(input: &mut PlantInput) {
-    unsafe {
-        plant_close(input);
+    fn update(&mut self, input: &Self::Input) -> Self::Output {
+        unsafe {
+            pm_update(&mut *self, input);
+            pm_rate(&mut *self);
+            pm_integ(&mut *self);
+        }
+        self.lai
     }
 }
 
@@ -40,22 +45,28 @@ mod tests {
 
     #[test]
     fn open() {
-        let mut input = PlantInput {
-            doy: 0,
-            endsim: 0,
-            tmax: 0f32,
-            tmin: 0f32,
-            par: 0f32,
-            swfac1: 0f32,
-            swfac2: 0f32,
-            lai: 0f32
-        };
-        unsafe {
-            plant_initialize(&mut input);
-        }
-        assert_eq!(input.lai, 0.013f32);
-        unsafe {
-            plant_close(&mut input);
-        }
+        let mut model = PlantModel::new();
+        model.lfmax = 12.0f32;
+        model.emp2 = 0.64f32;
+        model.emp1 = 0.104f32;
+        model.pd = 5.0f32;
+        model.nb = 5.3f32;
+        model.rm = 0.1f32;
+        model.fc = 0.85f32;
+        model.tb = 10.0f32;
+        model.intot = 300.0f32;
+        model.n = 2f32;
+        model.lai = 0.013f32;
+        model.w = 0.3f32;
+        model.wr = 0.045f32;
+        model.wc = 0.255f32;
+        model.p1 = 0.03f32;
+        model.fc = 0.028f32;
+        model.sla = 0.035;
+        let mut input = PlantInput::default();
+        input.tmax = 20.0;
+        input.tmin = 4.4;
+        let lai = model.update(&input);
+        assert_eq!(lai, 0.013f32);
     }
 }
