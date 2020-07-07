@@ -52,7 +52,6 @@
 
 
 !***********************************************************************
-
 SUBROUTINE PLANT(&
         DOY, endsim, TMAX, TMIN, PAR, SWFAC1, SWFAC2, & !Input
         LAI, & !Output
@@ -219,6 +218,7 @@ END SUBROUTINE PLANT
 !     Input:  FL, di, PD, EMP1, EMP2, N, nb, SWFAC1, SWFAC2, PT, dN
 !     Output: dLAI
 !************************************************************************
+! pure
 SUBROUTINE LAIS(FL, di, PD, EMP1, EMP2, N, nb, SWFAC1, SWFAC2, PT, &
         dN, p1, sla, dLAI)
 
@@ -249,6 +249,7 @@ END SUBROUTINE LAIS
 !     Subroutine PGS
 !     Calculates the canopy gross photosysntesis rate (PG)
 !*****************************************************************************
+! pure
 SUBROUTINE PGS(SWFAC1, SWFAC2, PAR, PD, PT, Lai, Pg)
 
     !-----------------------------------------------------------------------
@@ -293,6 +294,346 @@ END SUBROUTINE PTS
 !***********************************************************************
 !***********************************************************************
 
+module PlantComponent
+    use iso_c_binding
+
+    type, public, bind(C) :: PlantModel
+        real(c_float) :: e, fc, lai, nb, n, pt, pg, di, par
+        real(c_float) :: rm, dwf, intc, tmax, tmin, p1, sla
+        real(c_float) :: pd, emp1, emp2, lfmax, dwc, tmn
+        real(c_float) :: dwr, dw, dn, w, wc, wr, wf, tb, intot, dlai, fl
+        real(c_float) :: swfac1, swfac2
+        integer(c_int) :: doy, endsim, count
+    end type PlantModel
+contains
+    subroutine pm_inititialize_from_file(this)
+        use iso_c_binding
+        implicit none
+        type(PlantModel) :: this
+        real(c_float) :: e, fc, lai, nb, n, pt, pg, di, par, &
+                rm, dwf, int, tmax, tmin, p1, sla, &
+                pd, emp1, emp2, lfmax, dwc, tmn, &
+                dwr, dw, dn, w, wc, wr, wf, tb, intot, dlai, fl, &
+                swfac1, swfac2
+        integer(c_int) :: doy, endsim, count
+        e = this%e
+        fc = this%fc
+        lai = this%lai
+        nb = this%nb
+        n = this%n
+        pt = this%pt
+        pg = this%pg
+        di = this%di
+        par = this%par
+
+        rm = this%rm
+        dwf = this%dwf
+        int = this%intc
+        tmax = this%tmax
+        tmin = this%tmin
+        p1 = this%p1
+        sla = this%sla
+
+        pd = this%pd
+        emp1 = this%emp1
+        emp2 = this%emp2
+        lfmax = this%lfmax
+        dwc = this%dwc
+        tmn = this%tmn
+
+        dwr = this%dwr
+        dw = this%dw
+        dn = this%dn
+        w = this%w
+        wc = this%wc
+        wr = this%wr
+        wf = this%wf
+        tb = this%tb
+        intot = this%intot
+        dlai = this%dlai
+        fl = this%fl
+
+        swfac1 = this%swfac1
+        swfac2 = this%swfac2
+
+        doy = this%doy
+        endsim = this%endsim
+        count = this%count
+
+        endsim = 0
+
+        open (2, file = 'data/plant.inp', status = 'unknown')
+        open (1, file = 'output/plant.out', status = 'replace')
+
+        read(2, 10) lfmax, emp2, emp1, pd, nb, rm, fc, tb, intot, n, lai, w, wr, wc &
+                , p1, sla
+        10 format(17(1x, f7.4))
+        close(2)
+
+        write(1, 11)
+        write(1, 12)
+        11 format('results of plant growth simulation: ')
+        12 format(/ &
+                /, '                accum', &
+                /, '       number    temp                                    leaf', &
+                /, '  day      of  during   plant  canopy    root   fruit    area', &
+                /, '   of    leaf  reprod  weight  weight  weight  weight   index', &
+                /, ' year   nodes    (oc)  (g/m2)  (g/m2)  (g/m2)  (g/m2) (m2/m2)', &
+                /, ' ----  ------  ------  ------  ------  ------  ------  ------')
+
+        write(*, 11)
+        write(*, 12)
+
+        count = 0
+    end subroutine pm_inititialize_from_file
+
+    subroutine pm_output_to_file(this)
+        implicit none
+        type(PlantModel) :: this
+                real(c_float) :: e, fc, lai, nb, n, pt, pg, di, par, &
+                rm, dwf, int, tmax, tmin, p1, sla, &
+                pd, emp1, emp2, lfmax, dwc, tmn, &
+                dwr, dw, dn, w, wc, wr, wf, tb, intot, dlai, fl, &
+                swfac1, swfac2
+        integer(c_int) :: doy, endsim, count
+        e = this%e
+        fc = this%fc
+        lai = this%lai
+        nb = this%nb
+        n = this%n
+        pt = this%pt
+        pg = this%pg
+        di = this%di
+        par = this%par
+
+        rm = this%rm
+        dwf = this%dwf
+        int = this%intc
+        tmax = this%tmax
+        tmin = this%tmin
+        p1 = this%p1
+        sla = this%sla
+
+        pd = this%pd
+        emp1 = this%emp1
+        emp2 = this%emp2
+        lfmax = this%lfmax
+        dwc = this%dwc
+        tmn = this%tmn
+
+        dwr = this%dwr
+        dw = this%dw
+        dn = this%dn
+        w = this%w
+        wc = this%wc
+        wr = this%wr
+        wf = this%wf
+        tb = this%tb
+        intot = this%intot
+        dlai = this%dlai
+        fl = this%fl
+
+        swfac1 = this%swfac1
+        swfac2 = this%swfac2
+
+        doy = this%doy
+        endsim = this%endsim
+        count = this%count
+
+        write(1, 20) doy, n, int, w, wc, wr, wf, lai
+        20 format(i5, 7f8.2)
+
+        if (count == 23) then
+            count = 0
+            write(*, 30)
+            30 format(2/)
+            31 format(/ &
+                /, '                accum', &
+                /, '       number    temp                                    leaf', &
+                /, '  day      of  during   plant  canopy    root   fruit    area', &
+                /, '   of    leaf  reprod  weight  weight  weight  weight   index', &
+                /, ' year   nodes    (oc)  (g/m2)  (g/m2)  (g/m2)  (g/m2) (m2/m2)', &
+                /, ' ----  ------  ------  ------  ------  ------  ------  ------')
+            write(*, 31)
+        endif
+
+        count = count + 1
+        write(*, 20) doy, n, int, w, wc, wr, wf, lai
+    end subroutine pm_output_to_file
+
+    subroutine pm_close(this)
+        implicit none
+        type(PlantModel) :: this
+        close(1)
+    end subroutine pm_close
+
+    subroutine pm_rate(this)
+        use iso_c_binding
+        implicit none
+        type(PlantModel) :: this
+        real(c_float) :: e, fc, lai, nb, n, pt, pg, di, par, &
+                rm, dwf, int, tmax, tmin, p1, sla, &
+                pd, emp1, emp2, lfmax, dwc, tmn, &
+                dwr, dw, dn, w, wc, wr, wf, tb, intot, dlai, fl, &
+                swfac1, swfac2
+        integer(c_int) :: doy, endsim, count
+        e = this%e
+        fc = this%fc
+        lai = this%lai
+        nb = this%nb
+        n = this%n
+        pt = this%pt
+        pg = this%pg
+        di = this%di
+        par = this%par
+
+        rm = this%rm
+        dwf = this%dwf
+        int = this%intc
+        tmax = this%tmax
+        tmin = this%tmin
+        p1 = this%p1
+        sla = this%sla
+
+        pd = this%pd
+        emp1 = this%emp1
+        emp2 = this%emp2
+        lfmax = this%lfmax
+        dwc = this%dwc
+        tmn = this%tmn
+
+        dwr = this%dwr
+        dw = this%dw
+        dn = this%dn
+        w = this%w
+        wc = this%wc
+        wr = this%wr
+        wf = this%wf
+        tb = this%tb
+        intot = this%intot
+        dlai = this%dlai
+        fl = this%fl
+
+        swfac1 = this%swfac1
+        swfac2 = this%swfac2
+
+        doy = this%doy
+        endsim = this%endsim
+        count = this%count
+
+        tmn = 0.5 * (tmax + tmin)
+        call pts(tmax, tmin, pt)
+        call pgs(swfac1, swfac2, par, pd, pt, lai, pg)
+
+        if (n < lfmax) then
+            !         vegetative phase
+            fl = 1.0
+            e = 1.0
+            dn = rm * pt
+
+            call lais(fl, di, pd, emp1, emp2, n, nb, swfac1, swfac2, pt, &
+                    dn, p1, sla, dlai)
+            dw = e * (pg) * pd
+            dwc = fc * dw
+            dwr = (1 - fc) * dw
+            dwf = 0.0
+
+        else
+            !         reproductive phase
+            fl = 2.0
+
+            if (tmn >= tb .and. tmn <= 25) then
+                di = (tmn - tb)
+            else
+                di = 0.0
+            endif
+
+            int = int + di
+            e = 1.0
+            call lais(fl, di, pd, emp1, emp2, n, nb, swfac1, swfac2, pt, &
+                    dn, p1, sla, dlai)
+            dw = e * (pg) * pd
+            dwf = dw
+            dwc = 0.0
+            dwr = 0.0
+            dn = 0.0
+        endif
+    end subroutine pm_rate
+
+    subroutine pm_integ(this)
+        use iso_c_binding
+        implicit none
+        type(PlantModel) :: this
+        real(c_float) :: e, fc, lai, nb, n, pt, pg, di, par, &
+                rm, dwf, int, tmax, tmin, p1, sla, &
+                pd, emp1, emp2, lfmax, dwc, tmn, &
+                dwr, dw, dn, w, wc, wr, wf, tb, intot, dlai, fl, &
+                swfac1, swfac2
+        integer(c_int) :: doy, endsim, count
+        e = this%e
+        fc = this%fc
+        lai = this%lai
+        nb = this%nb
+        n = this%n
+        pt = this%pt
+        pg = this%pg
+        di = this%di
+        par = this%par
+
+        rm = this%rm
+        dwf = this%dwf
+        int = this%intc
+        tmax = this%tmax
+        tmin = this%tmin
+        p1 = this%p1
+        sla = this%sla
+
+        pd = this%pd
+        emp1 = this%emp1
+        emp2 = this%emp2
+        lfmax = this%lfmax
+        dwc = this%dwc
+        tmn = this%tmn
+
+        dwr = this%dwr
+        dw = this%dw
+        dn = this%dn
+        w = this%w
+        wc = this%wc
+        wr = this%wr
+        wf = this%wf
+        tb = this%tb
+        intot = this%intot
+        dlai = this%dlai
+        fl = this%fl
+
+        swfac1 = this%swfac1
+        swfac2 = this%swfac2
+
+        doy = this%doy
+        endsim = this%endsim
+        count = this%count
+
+        lai = lai + dlai
+        w = w + dw
+        wc = wc + dwc
+        wr = wr + dwr
+        wf = wf + dwf
+
+        lai = max(lai, 0.0)
+        w = max(w, 0.0)
+        wc = max(wc, 0.0)
+        wr = max(wr, 0.0)
+        wf = max(wf, 0.0)
+
+        n = n + dn
+        if (int > intot) then
+            endsim = 1
+            return
+        endif
+    end subroutine pm_integ
+end module PlantComponent
+
 module PlantFFI
     use, intrinsic :: iso_c_binding
 
@@ -301,27 +642,27 @@ module PlantFFI
         real(c_float) :: tmax, tmin, par, swfac1, swfac2, lai
     end type PlantInput
 contains
-    subroutine plant_initialize(input) bind(c, name='plant_initialize')
+    subroutine plant_initialize(input) bind(c, name = 'plant_initialize')
         type(PlantInput) :: input
         call plant(input%doy, input%endsim, input%tmax, input%tmin, input%par, input%swfac1, input%swfac2, input%lai, 'INITIAL   ')
     end subroutine plant_initialize
 
-    subroutine plant_rate(input) bind(c, name='plant_rate')
+    subroutine plant_rate(input) bind(c, name = 'plant_rate')
         type(PlantInput) :: input
         call plant(input%doy, input%endsim, input%tmax, input%tmin, input%par, input%swfac1, input%swfac2, input%lai, 'RATE      ')
     end subroutine plant_rate
 
-    subroutine plant_integ(input) bind(c, name='plant_integ')
+    subroutine plant_integ(input) bind(c, name = 'plant_integ')
         type(PlantInput) :: input
         call plant(input%doy, input%endsim, input%tmax, input%tmin, input%par, input%swfac1, input%swfac2, input%lai, 'INTEG     ')
     end subroutine plant_integ
 
-    subroutine plant_output(input) bind(c, name='plant_output')
+    subroutine plant_output(input) bind(c, name = 'plant_output')
         type(PlantInput) :: input
         call plant(input%doy, input%endsim, input%tmax, input%tmin, input%par, input%swfac1, input%swfac2, input%lai, 'OUTPUT    ')
     end subroutine plant_output
 
-    subroutine plant_close(input) bind(c, name='plant_close')
+    subroutine plant_close(input) bind(c, name = 'plant_close')
         type(PlantInput) :: input
         call plant(input%doy, input%endsim, input%tmax, input%tmin, input%par, input%swfac1, input%swfac2, input%lai, 'CLOSE     ')
     end subroutine plant_close
