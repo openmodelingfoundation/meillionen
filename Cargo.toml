@@ -1,7 +1,6 @@
 [workspace]
 
 members = [
-    'simplecrop-plant',
-    'simplecrop-soil',
-    'simplecrop-weather'
+    'simplecrop-cli-wrapper',
+    'simplecrop-lib-wrapper'
 ]

@@ -19,12 +19,6 @@ trait DTSSMoore {
     fn output(self: &Self) -> Self::Output;
 }
 
-impl PlantModel {
-    fn new() -> Self {
-        Default::default()
-    }
-}
-
 impl DTSSMealy for PlantModel {
     type Input = PlantInput;
     type Output = f32;
@@ -45,7 +39,7 @@ mod tests {
 
     #[test]
     fn open() {
-        let mut model = PlantModel::new();
+        let mut model = PlantModel::default();
         model.lfmax = 12.0f32;
         model.emp2 = 0.64f32;
         model.emp1 = 0.104f32;
