@@ -6,7 +6,6 @@ use std::path::Path;
 
 fn main() {
     println!("cargo:rerun-if-changed=../simplecrop/include/SimpleCrop.h");
-    println!("cargo:rerun-if-changed=../simplecrop/include/Soil.h");
     println!("cargo:rerun-if-changed=../simplecrop/src/PlantComponent.f03");
     println!("cargo:rerun-if-changed=../simplecrop/src/SoilComponent.f03");
 
