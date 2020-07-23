@@ -1,24 +1,20 @@
 #![cfg_attr(not(debug_assertions), deny(warnings))]
 
 extern crate chrono;
+extern crate simplecrop_core;
 
-use std::path::PathBuf;
+use simplecrop_core::{IrrigationDataset, PlantConfig, SimCtnlConfig};
 use std::fs::File;
-use chrono::prelude::{DateTime, Utc};
+use std::path::PathBuf;
 use std::io::{Write};
 use std::io;
 
-#[derive(Debug, PartialEq)]
-struct Irrigation {
-    date: DateTime<Utc>,
-    amount: f32,
+trait ConfigWriter {
+    fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()>;
+    fn to_file(&self, base: &PathBuf) -> io::Result<()>;
 }
 
-pub struct IrrigationDataset {
-    data: Vec<Irrigation>
-}
-
-impl IrrigationDataset {
+impl ConfigWriter for IrrigationDataset {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()> {
         for obs in self.data.iter() {
             let row = format!("{:5}  {:1.1}\n", obs.date.timestamp(), obs.amount);
@@ -27,7 +23,7 @@ impl IrrigationDataset {
         Ok(())
     }
 
-    pub fn to_file(&self, base: &PathBuf) -> io::Result<()> {
+    fn to_file(&self, base: &PathBuf) -> io::Result<()> {
         let p = base.join("data/irrig.inp");
         let mut file = File::create(p)?;
         self.write_all(&mut file)?;
@@ -35,41 +31,22 @@ impl IrrigationDataset {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct PlantConfig {
-    lfmax: f32,
-    emp2: f32,
-    emp1: f32,
-    pd: f32,
-    nb: f32,
-    rm: f32,
-    fc: f32,
-    tb: f32,
-    intot: f32,
-    n: f32,
-    lai: f32,
-    w: f32,
-    wr: f32,
-    wc: f32,
-    p1: f32,
-    f1: f32,
-    sla: f32,
-}
-
-impl PlantConfig {
+impl ConfigWriter for PlantConfig {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()> {
         let data = format!(
             " {:>7.1} {:>7.2} {:>7.3} {:>7.1} {:>7.1} {:>7.3} \
             {:>7.2} {:>7.1} {:>7.1} {:>7.1} {:>7.3} {:>7.1} \
             {:>7.3} {:>7.3} {:>7.2} {:>7.3} {:>6.3}\n",
-            self.lfmax, self.emp2, self.emp1, self.pd, self.nb, self.rm, self.fc, self.tb, self.intot, self.n, self.lai, self.w, self.wr, self.wc, self.p1, self.f1, self.sla);
+            self.lfmax, self.emp2, self.emp1, self.pd, self.nb, self.rm,
+            self.fc, self.tb, self.intot, self.n, self.lai, self.w,
+            self.wr, self.wc, self.p1, self.f1, self.sla);
         buf.write(data.as_bytes())?;
         let footer: &'static str = "   Lfmax    EMP2    EMP1      PD      nb      rm      fc      tb   intot       n     lai       w      wr      wc      p1      f1    sla\n";
         buf.write(footer.as_bytes())?;
         Ok(())
     }
 
-    pub fn to_file(&self, base: &PathBuf) -> io::Result<()> {
+    fn to_file(&self, base: &PathBuf) -> io::Result<()> {
         let p = base.join("data/plant.inp");
         let mut file = File::create(p)?;
         self.write_all(&mut file)?;
@@ -77,13 +54,7 @@ impl PlantConfig {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct SimCtnlConfig {
-    doyp: i32,
-    frop: i32
-}
-
-impl SimCtnlConfig {
+impl ConfigWriter for SimCtnlConfig {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()> {
         let data = format!("{:>6} {:>5}\n", self.doyp, self.frop);
         buf.write(data.as_bytes())?;
@@ -92,7 +63,7 @@ impl SimCtnlConfig {
         Ok(())
     }
 
-    pub fn to_file(&self, base: &PathBuf) -> io::Result<()> {
+    fn to_file(&self, base: &PathBuf) -> io::Result<()> {
         let p = base.join("data/simctrl.inp");
         let mut file = File::create(p)?;
         self.write_all(&mut file)?;
@@ -102,7 +73,9 @@ impl SimCtnlConfig {
 
 #[cfg(test)]
 mod tests {
-    use crate::{IrrigationDataset, Irrigation, PlantConfig, SimCtnlConfig};
+    use crate::{ConfigWriter};
+    use simplecrop_core::{Irrigation, IrrigationDataset, PlantConfig, SimCtnlConfig};
+
     use chrono::{DateTime, NaiveDateTime, Utc};
     use std::fs::read_to_string;
     use std::io::Cursor;

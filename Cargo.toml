@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    'simplecrop-core',
     'simplecrop-cli-wrapper',
     'simplecrop-lib-wrapper'
 ]
