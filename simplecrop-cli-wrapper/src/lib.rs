@@ -184,12 +184,4 @@ mod tests {
             str::from_utf8(cur.get_ref()).unwrap(),
             "87001   5.1  20.0   4.4  23.9              10.7\n")
     }
-
-    #[test]
-    fn compare_strings() {
-        let x = 12.0f32;
-        let y = 5.3f32;
-        assert_eq!(format!(" {:>7.4}", x), " 12.0000");
-        assert_eq!(format!(" {:>7.4}", y), "  5.3000");
-    }
 }
