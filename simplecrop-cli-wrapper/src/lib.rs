@@ -3,7 +3,7 @@
 extern crate chrono;
 extern crate simplecrop_core;
 
-use simplecrop_core::{IrrigationDataset, PlantConfig, SimCtnlConfig};
+use simplecrop_core::{IrrigationDataset, PlantConfig, SimCtnlConfig, WeatherDataset, SoilConfig};
 use std::fs::File;
 use std::path::PathBuf;
 use std::io::{Write};
@@ -11,7 +11,6 @@ use std::io;
 
 trait ConfigWriter {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()>;
-    fn to_file(&self, base: &PathBuf) -> io::Result<()>;
 }
 
 impl ConfigWriter for IrrigationDataset {
@@ -22,11 +21,16 @@ impl ConfigWriter for IrrigationDataset {
         }
         Ok(())
     }
+}
 
-    fn to_file(&self, base: &PathBuf) -> io::Result<()> {
-        let p = base.join("data/irrig.inp");
-        let mut file = File::create(p)?;
-        self.write_all(&mut file)?;
+impl ConfigWriter for WeatherDataset {
+    fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()> {
+        for obs in self.data.iter() {
+            let row = format!(
+                "{:5}  {:>4.1}  {:>4.1}  {:>4.1}{:>6.1}              {:>4.1}\n",
+                obs.date.timestamp(), obs.srad, obs.tmax, obs.tmin, obs.rain, obs.par);
+            buf.write(row.as_bytes())?;
+        }
         Ok(())
     }
 }
@@ -34,9 +38,9 @@ impl ConfigWriter for IrrigationDataset {
 impl ConfigWriter for PlantConfig {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()> {
         let data = format!(
-            " {:>7.1} {:>7.2} {:>7.3} {:>7.1} {:>7.1} {:>7.3} \
-            {:>7.2} {:>7.1} {:>7.1} {:>7.1} {:>7.3} {:>7.1} \
-            {:>7.3} {:>7.3} {:>7.2} {:>7.3} {:>6.3}\n",
+            " {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} \
+            {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} \
+            {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4}\n",
             self.lfmax, self.emp2, self.emp1, self.pd, self.nb, self.rm,
             self.fc, self.tb, self.intot, self.n, self.lai, self.w,
             self.wr, self.wc, self.p1, self.f1, self.sla);
@@ -45,11 +49,20 @@ impl ConfigWriter for PlantConfig {
         buf.write(footer.as_bytes())?;
         Ok(())
     }
+}
 
-    fn to_file(&self, base: &PathBuf) -> io::Result<()> {
-        let p = base.join("data/plant.inp");
-        let mut file = File::create(p)?;
-        self.write_all(&mut file)?;
+impl ConfigWriter for SoilConfig {
+    fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()> {
+        let data = format!(
+            "     {:>5.2}     {:>5.2}     {:>5.2}     {:>7.2}     {:>5.2}     {:>5.2}     {:>5.2}\n",
+            self.wpp, self.fcp, self.stp, self.dp, self.drnp, self.cn, self.swc);
+        buf.write(data.as_bytes())?;
+        let footer: &'static str =
+            "       WPp       FCp       STp          DP      DRNp        CN        SWC\n";
+        buf.write(footer.as_bytes())?;
+        let units: &'static str =
+            "  (cm3/cm3) (cm3/cm3) (cm3/cm3)        (cm)  (frac/d)        -       (mm)\n";
+        buf.write(units.as_bytes())?;
         Ok(())
     }
 }
@@ -62,19 +75,12 @@ impl ConfigWriter for SimCtnlConfig {
         buf.write(footer.as_bytes())?;
         Ok(())
     }
-
-    fn to_file(&self, base: &PathBuf) -> io::Result<()> {
-        let p = base.join("data/simctrl.inp");
-        let mut file = File::create(p)?;
-        self.write_all(&mut file)?;
-        Ok(())
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{ConfigWriter};
-    use simplecrop_core::{Irrigation, IrrigationDataset, PlantConfig, SimCtnlConfig};
+    use simplecrop_core::{Irrigation, IrrigationDataset, PlantConfig, SimCtnlConfig, Weather, WeatherDataset, SoilConfig};
 
     use chrono::{DateTime, NaiveDateTime, Utc};
     use std::fs::read_to_string;
@@ -139,5 +145,51 @@ mod tests {
         simctnl.write_all(&mut cur).unwrap();
         let simctnl_ref_data = read_to_string("data/simctrl.inp").unwrap();
         assert_eq!(str::from_utf8(cur.get_ref()).unwrap(), simctnl_ref_data);
+    }
+
+    #[test]
+    fn write_soil() {
+        let soil = SoilConfig {
+            wpp:   0.06,
+            fcp:   0.17,
+            stp:   0.28,
+            dp:  145.00,
+            drnp:  0.10,
+            cn:   55.00,
+            swc: 246.50
+        };
+        let mut cur = Cursor::new(Vec::new());
+        soil.write_all(&mut cur);
+
+        let soil_ref_data = read_to_string("data/soil.inp").unwrap();
+        assert_eq!(str::from_utf8(cur.get_ref()).unwrap(), soil_ref_data);
+    }
+
+    #[test]
+    fn write_weather() {
+        let w = Weather {
+            date: DateTime::from_utc(NaiveDateTime::from_timestamp(87001, 0), Utc),
+            srad:  5.1,
+            tmax: 20.0,
+            tmin:  4.4,
+            rain: 23.9,
+            par:  10.7
+        };
+        let wd = WeatherDataset{ data: vec![w] };
+
+        let mut cur = Cursor::new(Vec::new());
+        wd.write_all(&mut cur);
+
+        assert_eq!(
+            str::from_utf8(cur.get_ref()).unwrap(),
+            "87001   5.1  20.0   4.4  23.9              10.7\n")
+    }
+
+    #[test]
+    fn compare_strings() {
+        let x = 12.0f32;
+        let y = 5.3f32;
+        assert_eq!(format!(" {:>7.4}", x), " 12.0000");
+        assert_eq!(format!(" {:>7.4}", y), "  5.3000");
     }
 }
