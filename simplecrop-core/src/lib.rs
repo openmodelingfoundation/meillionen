@@ -65,3 +65,41 @@ pub struct SimCtnlConfig {
     pub doyp: i32,
     pub frop: i32
 }
+
+#[derive(Debug, PartialEq)]
+pub struct PlantResult {
+    pub doy: i32,
+    pub n: f32,
+    pub intc: f32,
+    pub w: f32,
+    pub wc: f32,
+    pub wr: f32,
+    pub wf: f32,
+    pub lai: f32
+}
+
+#[derive(Debug, PartialEq)]
+pub struct PlantDataSet(pub Vec<PlantResult>);
+
+#[derive(Debug, PartialEq)]
+pub struct SoilResult {
+    pub doy: i32,
+    pub srad: f32,
+    pub tmax: f32,
+    pub tmin: f32,
+    pub rain: f32,
+    pub irr:  f32,
+    pub rof:  f32,
+    pub inf:  f32,
+    pub drn:  f32,
+    pub etp:  f32,
+    pub esa:  f32,
+    pub epa:  f32,
+    pub swc:  f32,
+    pub swc_dp: f32,
+    pub swfac1: f32,
+    pub swfac2: f32
+}
+
+#[derive(Debug, PartialEq)]
+pub struct SoilDataSet(pub Vec<SoilResult>);

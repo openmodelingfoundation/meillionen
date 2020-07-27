@@ -3,11 +3,12 @@
 extern crate chrono;
 extern crate simplecrop_core;
 
-use simplecrop_core::{IrrigationDataset, PlantConfig, SimCtnlConfig, WeatherDataset, SoilConfig};
+use simplecrop_core::{IrrigationDataset, PlantConfig, SimCtnlConfig, WeatherDataset, SoilConfig, SoilDataSet, SoilResult, PlantResult};
 use std::fs::File;
 use std::path::PathBuf;
-use std::io::{Write};
+use std::io::{Write, BufReader, BufRead};
 use std::io;
+use std::ops::Range;
 
 trait ConfigWriter {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()>;
@@ -77,14 +78,95 @@ impl ConfigWriter for SimCtnlConfig {
     }
 }
 
+fn deserialize_soil_result(vs: &Vec<&str>) -> Option<SoilResult> {
+    let (sdoy, srest) = vs.split_first().unwrap();
+    let doy = sdoy.parse::<i32>().ok()?;
+    let fs = srest.iter().map(|f| f.parse::<f32>().ok()).collect::<Option<Vec<f32>>>()?;
+    if let [srad, tmax, tmin, rain, irr, rof, inf, drn, etp, esa, epa, swc, swc_dp, swfac1, swfac2] = fs[..]
+    {
+        let sr = SoilResult {
+            doy,
+            srad,
+            tmax,
+            tmin,
+            rain,
+            irr,
+            rof,
+            inf,
+            drn,
+            etp,
+            esa,
+            epa,
+            swc,
+            swc_dp,
+            swfac1,
+            swfac2,
+        };
+        return Some(sr);
+    }
+    None
+}
+
+fn read_soil() {
+    let f = File::open("../simplecrop/output/soil.out").unwrap();
+    let mut rdr = BufReader::new(f);
+    let mut results = Vec::new();
+    for line in rdr.lines().skip(6) {
+        let record = line.unwrap();
+        let data: Vec<&str> = record.split_whitespace().collect();
+        if let Some(result) = deserialize_soil_result(&data) {
+            results.push(result);
+        } else {
+            println!("skipping {:?}", data)
+        }
+    }
+    println!("{:?}", results);
+}
+
+fn deserialize_plant_result(vs: &Vec<&str>) -> Option<PlantResult> {
+    let (sdoy, srest) = vs.split_first().unwrap();
+    let doy = sdoy.parse::<i32>().ok()?;
+    let fs = srest.iter().map(|f| f.parse::<f32>().ok()).collect::<Option<Vec<f32>>>()?;
+    if let [n, intc, w, wc, wr, wf, lai] = fs[..] {
+        let pr = PlantResult {
+            doy,
+            n,
+            intc,
+            w,
+            wc,
+            wr,
+            wf,
+            lai
+        };
+        return Some(pr)
+    }
+    None
+}
+
+fn read_plant() {
+    let f = File::open("../simplecrop/output/plant.out").unwrap();
+    let mut rdr = BufReader::new(f);
+    let mut results = Vec::new();
+    for line in rdr.lines().skip(9) {
+        let record = line.unwrap();
+        let data: Vec<&str> = record.split_whitespace().collect();
+        if let Some(result) = deserialize_plant_result(&data) {
+            results.push(result);
+        } else {
+            println!("skipping {:?}", data)
+        }
+    }
+    println!("{:?}", results);
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{ConfigWriter};
+    use crate::{ConfigWriter, read_soil, read_plant};
     use simplecrop_core::{Irrigation, IrrigationDataset, PlantConfig, SimCtnlConfig, Weather, WeatherDataset, SoilConfig};
 
     use chrono::{DateTime, NaiveDateTime, Utc};
-    use std::fs::read_to_string;
-    use std::io::Cursor;
+    use std::fs::{read_to_string, File};
+    use std::io::{Cursor, BufWriter, BufReader, BufRead};
     use std::str;
 
     #[test]
@@ -127,7 +209,7 @@ mod tests {
             wc: 0.255,
             p1: 0.03,
             f1: 0.028,
-            sla: 0.035
+            sla: 0.035,
         };
         let mut cur = Cursor::new(Vec::new());
         config.write_all(&mut cur).unwrap();
@@ -139,7 +221,7 @@ mod tests {
     fn write_simctnl() {
         let simctnl = SimCtnlConfig {
             doyp: 121,
-            frop: 3
+            frop: 3,
         };
         let mut cur = Cursor::new(Vec::new());
         simctnl.write_all(&mut cur).unwrap();
@@ -173,9 +255,9 @@ mod tests {
             tmax: 20.0,
             tmin:  4.4,
             rain: 23.9,
-            par:  10.7
+            par: 10.7,
         };
-        let wd = WeatherDataset{ data: vec![w] };
+        let wd = WeatherDataset { data: vec![w] };
 
         let mut cur = Cursor::new(Vec::new());
         wd.write_all(&mut cur);
@@ -183,5 +265,15 @@ mod tests {
         assert_eq!(
             str::from_utf8(cur.get_ref()).unwrap(),
             "87001   5.1  20.0   4.4  23.9              10.7\n")
+    }
+
+    #[test]
+    fn read_plant_t() {
+        read_plant();
+    }
+
+    #[test]
+    fn read_soil_t() {
+        read_soil();
     }
 }
