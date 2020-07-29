@@ -1,6 +1,7 @@
 extern crate chrono;
 
 use chrono::prelude::{DateTime, Utc};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, PartialEq)]
 pub struct Irrigation {
@@ -8,10 +9,8 @@ pub struct Irrigation {
     pub amount: f32,
 }
 
-#[derive(Debug, PartialEq)]
-pub struct IrrigationDataset {
-    pub data: Vec<Irrigation>
-}
+#[derive(Debug, Default, PartialEq)]
+pub struct IrrigationDataset(pub Vec<Irrigation>);
 
 #[derive(Debug, PartialEq)]
 pub struct Weather {
@@ -23,12 +22,10 @@ pub struct Weather {
     pub par: f32
 }
 
-#[derive(Debug, PartialEq)]
-pub struct WeatherDataset {
-    pub data: Vec<Weather>
-}
+#[derive(Debug, Default, PartialEq)]
+pub struct WeatherDataset(pub Vec<Weather>);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct PlantConfig {
     pub lfmax: f32,
     pub emp2: f32,
@@ -49,7 +46,7 @@ pub struct PlantConfig {
     pub sla: f32,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct SoilConfig {
     pub wpp: f32,
     pub fcp: f32,
@@ -60,13 +57,13 @@ pub struct SoilConfig {
     pub swc: f32
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct SimCtnlConfig {
     pub doyp: i32,
     pub frop: i32
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct PlantResult {
     pub doy: i32,
     pub n: f32,
@@ -78,7 +75,7 @@ pub struct PlantResult {
     pub lai: f32
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct PlantDataSet(pub Vec<PlantResult>);
 
 #[derive(Debug, PartialEq)]
@@ -101,5 +98,21 @@ pub struct SoilResult {
     pub swfac2: f32
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct SoilDataSet(pub Vec<SoilResult>);
+
+#[derive(Debug, Default, PartialEq)]
+pub struct SimpleCropConfig {
+    pub irrigation_dataset: IrrigationDataset,
+    pub plant: PlantConfig,
+    pub sim_ctnl: SimCtnlConfig,
+    pub soil: SoilConfig,
+    pub weather_dataset: WeatherDataset,
+    pub cli_path: PathBuf
+}
+
+#[derive(Debug, Default, PartialEq)]
+pub struct SimpleCropDataSet {
+    pub soil: SoilDataSet,
+    pub plant: PlantDataSet
+}
