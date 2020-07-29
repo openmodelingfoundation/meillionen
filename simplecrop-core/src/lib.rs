@@ -1,7 +1,6 @@
 extern crate chrono;
 
 use chrono::prelude::{DateTime, Utc};
-use std::path::{Path, PathBuf};
 
 #[derive(Debug, PartialEq)]
 pub struct Irrigation {
@@ -105,10 +104,9 @@ pub struct SoilDataSet(pub Vec<SoilResult>);
 pub struct SimpleCropConfig {
     pub irrigation_dataset: IrrigationDataset,
     pub plant: PlantConfig,
-    pub sim_ctnl: SimCtnlConfig,
+    pub simctrl: SimCtnlConfig,
     pub soil: SoilConfig,
     pub weather_dataset: WeatherDataset,
-    pub cli_path: PathBuf
 }
 
 #[derive(Debug, Default, PartialEq)]

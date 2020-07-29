@@ -3,5 +3,6 @@
 members = [
     'simplecrop-core',
     'simplecrop-cli',
+    'simplecrop-cli-python',
     'simplecrop-lib'
 ]

@@ -3,16 +3,14 @@
 extern crate chrono;
 extern crate simplecrop_core;
 
-use simplecrop_core::{IrrigationDataset, PlantConfig, SimCtnlConfig, WeatherDataset, SoilConfig, SoilDataSet, SoilResult, PlantResult, PlantDataSet, SimpleCropConfig, SimpleCropDataSet};
+pub use simplecrop_core::{IrrigationDataset, PlantConfig, SimCtnlConfig, WeatherDataset, SoilConfig, SoilDataSet, SoilResult, PlantResult, PlantDataSet, SimpleCropConfig, SimpleCropDataSet, Weather, Irrigation};
 use std::fs::{File, create_dir_all};
 use std::path::Path;
 use std::io::{Write, BufReader, BufRead, BufWriter};
 use std::io;
-use std::ops::Range;
 use std::process::{Command, Child};
-use std::convert::TryInto;
 
-trait ConfigWriter {
+pub trait ConfigWriter {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()>;
 }
 
@@ -80,7 +78,7 @@ impl ConfigWriter for SimCtnlConfig {
     }
 }
 
-trait ResultLoader {
+pub trait ResultLoader {
     fn load<P: AsRef<Path>>(p: P) -> io::Result<Self> where Self: std::marker::Sized;
 }
 
@@ -116,7 +114,7 @@ fn deserialize_soil_result(vs: &Vec<&str>) -> Option<SoilResult> {
 impl ResultLoader for SoilDataSet {
     fn load<P: AsRef<Path>>(p: P) -> io::Result<Self> {
         let f = File::open(p)?;
-        let mut rdr = BufReader::new(f);
+        let rdr = BufReader::new(f);
         let mut results = Vec::new();
         for line in rdr.lines().skip(6) {
             let record = line?;
@@ -154,7 +152,7 @@ fn deserialize_plant_result(vs: &Vec<&str>) -> Option<PlantResult> {
 impl ResultLoader for PlantDataSet {
     fn load<P: AsRef<Path>>(p: P) -> io::Result<Self> {
         let f = File::open(p)?;
-        let mut rdr = BufReader::new(f);
+        let rdr = BufReader::new(f);
         let mut results = Vec::new();
         for line in rdr.lines().skip(9) {
             let record = line.unwrap();
@@ -169,7 +167,7 @@ impl ResultLoader for PlantDataSet {
     }
 }
 
-trait ConfigSaver {
+pub trait ConfigSaver {
     fn save<P: AsRef<Path>>(&self, p: P) -> io::Result<()>;
 }
 
@@ -177,22 +175,22 @@ impl ConfigSaver for SimpleCropConfig {
     fn save<P: AsRef<Path>>(&self, p: P) -> io::Result<()> {
         let dp = p.as_ref().join("data");
         create_dir_all(&dp)?;
-        let read_f = |path: &str| File::open(&dp.join(path)).map(|f| BufWriter::new(f));
+        let read_f = |path: &str| File::create(&dp.join(path)).map(|f| BufWriter::new(f)).unwrap();
 
-        let mut weather_buf = read_f("weather.inp")?;
+        let mut weather_buf = read_f("weather.inp");
         self.weather_dataset.write_all(&mut weather_buf)?;
 
-        let mut irrigation_buf = read_f("irrig.inp")?;
+        let mut irrigation_buf = read_f("irrig.inp");
         self.irrigation_dataset.write_all(&mut irrigation_buf)?;
 
-        let mut plant_buf = read_f("plant.inp")?;
+        let mut plant_buf = read_f("plant.inp");
         self.plant.write_all(&mut plant_buf)?;
 
-        let mut soil_buf = read_f("soil.inp")?;
+        let mut soil_buf = read_f("soil.inp");
         self.soil.write_all(&mut soil_buf)?;
 
-        let mut simcntl_buf = read_f("simctnl.inp")?;
-        self.sim_ctnl.write_all(&mut simcntl_buf)?;
+        let mut simctrl_buf = read_f("simctrl.inp");
+        self.simctrl.write_all(&mut simctrl_buf)?;
         Ok(())
     }
 }
@@ -200,9 +198,9 @@ impl ConfigSaver for SimpleCropConfig {
 impl ResultLoader for SimpleCropDataSet {
     fn load<P: AsRef<Path>>(p: P) -> io::Result<Self> {
         let op = p.as_ref().join("output");
-        create_dir_all(&op);
-        let plant = PlantDataSet::load(&op)?;
-        let soil = SoilDataSet::load(&op)?;
+        create_dir_all(&op)?;
+        let plant = PlantDataSet::load(&op.join("plant.out"))?;
+        let soil = SoilDataSet::load(&op.join("soil.out"))?;
         Ok(Self {
             plant,
             soil,
@@ -210,9 +208,9 @@ impl ResultLoader for SimpleCropDataSet {
     }
 }
 
-pub fn execute<P: AsRef<Path>>(cfg: &SimpleCropConfig, p: P) -> io::Result<(SimpleCropDataSet, Child)> {
-    cfg.save(&p);
-    let r = Command::new(&cfg.cli_path).current_dir(&p).spawn()?;
+pub fn execute<P: AsRef<Path>>(cfg: &SimpleCropConfig, p: P, cli_path: P) -> io::Result<(SimpleCropDataSet, Child)> {
+    cfg.save(&p)?;
+    let r = Command::new(cli_path.as_ref()).current_dir(&p).spawn()?;
     let data = SimpleCropDataSet::load(&p)?;
     Ok((data, r))
 }
