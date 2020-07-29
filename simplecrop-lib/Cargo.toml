@@ -1,5 +1,5 @@
 [package]
-name = "simplecrop-lib-wrapper"
+name = "simplecrop-lib"
 version = "0.1.0"
 authors = ["Calvin Pritchard <pritchard.calvin@gmail.com>"]
 edition = "2018"

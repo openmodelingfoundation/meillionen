@@ -3,12 +3,14 @@
 extern crate chrono;
 extern crate simplecrop_core;
 
-use simplecrop_core::{IrrigationDataset, PlantConfig, SimCtnlConfig, WeatherDataset, SoilConfig, SoilDataSet, SoilResult, PlantResult};
-use std::fs::File;
-use std::path::PathBuf;
-use std::io::{Write, BufReader, BufRead};
+use simplecrop_core::{IrrigationDataset, PlantConfig, SimCtnlConfig, WeatherDataset, SoilConfig, SoilDataSet, SoilResult, PlantResult, PlantDataSet, SimpleCropConfig, SimpleCropDataSet};
+use std::fs::{File, create_dir_all};
+use std::path::Path;
+use std::io::{Write, BufReader, BufRead, BufWriter};
 use std::io;
 use std::ops::Range;
+use std::process::{Command, Child};
+use std::convert::TryInto;
 
 trait ConfigWriter {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()>;
@@ -16,7 +18,7 @@ trait ConfigWriter {
 
 impl ConfigWriter for IrrigationDataset {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()> {
-        for obs in self.data.iter() {
+        for obs in self.0.iter() {
             let row = format!("{:5}  {:1.1}\n", obs.date.timestamp(), obs.amount);
             buf.write(row.as_bytes())?;
         }
@@ -26,7 +28,7 @@ impl ConfigWriter for IrrigationDataset {
 
 impl ConfigWriter for WeatherDataset {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()> {
-        for obs in self.data.iter() {
+        for obs in self.0.iter() {
             let row = format!(
                 "{:5}  {:>4.1}  {:>4.1}  {:>4.1}{:>6.1}              {:>4.1}\n",
                 obs.date.timestamp(), obs.srad, obs.tmax, obs.tmin, obs.rain, obs.par);
@@ -78,6 +80,10 @@ impl ConfigWriter for SimCtnlConfig {
     }
 }
 
+trait ResultLoader {
+    fn load<P: AsRef<Path>>(p: P) -> Self;
+}
+
 fn deserialize_soil_result(vs: &Vec<&str>) -> Option<SoilResult> {
     let (sdoy, srest) = vs.split_first().unwrap();
     let doy = sdoy.parse::<i32>().ok()?;
@@ -107,20 +113,22 @@ fn deserialize_soil_result(vs: &Vec<&str>) -> Option<SoilResult> {
     None
 }
 
-fn read_soil() {
-    let f = File::open("../simplecrop/output/soil.out").unwrap();
-    let mut rdr = BufReader::new(f);
-    let mut results = Vec::new();
-    for line in rdr.lines().skip(6) {
-        let record = line.unwrap();
-        let data: Vec<&str> = record.split_whitespace().collect();
-        if let Some(result) = deserialize_soil_result(&data) {
-            results.push(result);
-        } else {
-            println!("skipping {:?}", data)
+impl ResultLoader for SoilDataSet {
+    fn load<P: AsRef<Path>>(p: P) -> Self {
+        let f = File::open(p).unwrap();
+        let mut rdr = BufReader::new(f);
+        let mut results = Vec::new();
+        for line in rdr.lines().skip(6) {
+            let record = line.unwrap();
+            let data: Vec<&str> = record.split_whitespace().collect();
+            if let Some(result) = deserialize_soil_result(&data) {
+                results.push(result);
+            } else {
+                eprintln!("skipping {:?}", data)
+            }
         }
+        Self(results)
     }
-    println!("{:?}", results);
 }
 
 fn deserialize_plant_result(vs: &Vec<&str>) -> Option<PlantResult> {
@@ -143,26 +151,74 @@ fn deserialize_plant_result(vs: &Vec<&str>) -> Option<PlantResult> {
     None
 }
 
-fn read_plant() {
-    let f = File::open("../simplecrop/output/plant.out").unwrap();
-    let mut rdr = BufReader::new(f);
-    let mut results = Vec::new();
-    for line in rdr.lines().skip(9) {
-        let record = line.unwrap();
-        let data: Vec<&str> = record.split_whitespace().collect();
-        if let Some(result) = deserialize_plant_result(&data) {
-            results.push(result);
-        } else {
-            println!("skipping {:?}", data)
+impl ResultLoader for PlantDataSet {
+    fn load<P: AsRef<Path>>(p: P) -> Self {
+        let f = File::open(p).unwrap();
+        let mut rdr = BufReader::new(f);
+        let mut results = Vec::new();
+        for line in rdr.lines().skip(9) {
+            let record = line.unwrap();
+            let data: Vec<&str> = record.split_whitespace().collect();
+            if let Some(result) = deserialize_plant_result(&data) {
+                results.push(result);
+            } else {
+                eprintln!("skipping {:?}", data)
+            }
+        }
+        Self(results)
+    }
+}
+
+trait ConfigSaver {
+    fn save<P: AsRef<Path>>(&self, p: P) -> io::Result<()>;
+}
+
+impl ConfigSaver for SimpleCropConfig {
+    fn save<P: AsRef<Path>>(&self, p: P) -> io::Result<()> {
+        let dp = p.as_ref().join("data");
+        create_dir_all(dp)?;
+        let read_f = |path: &str| File::open(&dp.join(path)).map(|f| BufWriter::new(f));
+
+        let mut weather_buf = read_f("weather.inp")?;
+        self.weather_dataset.write_all(&mut weather_buf)?;
+
+        let mut irrigation_buf = read_f("irrig.inp")?;
+        self.irrigation_dataset.write_all(&mut irrigation_buf)?;
+
+        let mut plant_buf = read_f("plant.inp")?;
+        self.plant.write_all(&mut plant_buf)?;
+
+        let mut soil_buf = read_f("soil.inp")?;
+        self.soil.write_all(&mut soil_buf)?;
+
+        let mut simcntl_buf = read_f("simctnl.inp")?;
+        self.sim_ctnl.write_all(&mut simcntl_buf)?;
+        Ok(())
+    }
+}
+
+impl ResultLoader for SimpleCropDataSet {
+    fn load<P: AsRef<Path>>(p: P) -> Self {
+        let plant = PlantDataSet::load(p.as_ref().join("output/plant.out"));
+        let soil = SoilDataSet::load(p.as_ref().join("output/soil.out"));
+        Self {
+            plant,
+            soil
         }
     }
-    println!("{:?}", results);
+}
+
+pub fn execute<P: AsRef<Path>>(cfg: &SimpleCropConfig, p: P) -> io::Result<(SimpleCropDataSet, Child)> {
+    cfg.save(&p);
+    let r = Command::new(&cfg.cli_path).current_dir(&p).spawn()?;
+    let data = SimpleCropDataSet::load(&p);
+    Ok((data, r))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{ConfigWriter, read_soil, read_plant};
-    use simplecrop_core::{Irrigation, IrrigationDataset, PlantConfig, SimCtnlConfig, Weather, WeatherDataset, SoilConfig};
+    use crate::{ConfigWriter, ResultLoader};
+    use simplecrop_core::{Irrigation, IrrigationDataset, PlantConfig, SimCtnlConfig, Weather, WeatherDataset, SoilConfig, SoilResult, PlantResult, SoilDataSet, PlantDataSet};
 
     use chrono::{DateTime, NaiveDateTime, Utc};
     use std::fs::{read_to_string, File};
@@ -171,8 +227,8 @@ mod tests {
 
     #[test]
     fn write_irrigation() {
-        let data = IrrigationDataset {
-            data: vec![
+        let data = IrrigationDataset(
+            vec![
                 Irrigation {
                     date: DateTime::from_utc(NaiveDateTime::from_timestamp(87001, 0), Utc),
                     amount: 0f32,
@@ -182,7 +238,7 @@ mod tests {
                     amount: 1f32,
                 }
             ]
-        };
+        );
         let mut cur = Cursor::new(Vec::new());
         data.write_all(&mut cur).unwrap();
         assert_eq!(
@@ -257,7 +313,7 @@ mod tests {
             rain: 23.9,
             par: 10.7,
         };
-        let wd = WeatherDataset { data: vec![w] };
+        let wd = WeatherDataset(vec![w]);
 
         let mut cur = Cursor::new(Vec::new());
         wd.write_all(&mut cur);
@@ -269,11 +325,41 @@ mod tests {
 
     #[test]
     fn read_plant_t() {
-        read_plant();
+        let data = PlantDataSet::load("../simplecrop/output/plant.out");
+        let comparison = PlantResult {
+            doy: 121,
+            n: 2.0,
+            intc: 0.0,
+            w: 0.3,
+            wc: 0.25,
+            wr: 0.05,
+            wf: 0.0,
+            lai: 0.01
+        };
+        assert_eq!(data.0[0], comparison);
     }
 
     #[test]
     fn read_soil_t() {
-        read_soil();
+        let data = SoilDataSet::load("../simplecrop/output/soil.out");
+        let comparison = SoilResult {
+            doy: 3,
+            srad: 12.1,
+            tmax: 14.4,
+            tmin: 1.1,
+            rain: 0.0,
+            irr: 0.0,
+            rof: 0.0,
+            inf: 0.0,
+            drn: 1.86,
+            etp: 2.25,
+            esa: 2.23,
+            epa: 0.02,
+            swc: 260.97,
+            swc_dp: 1.8,
+            swfac1: 1.0,
+            swfac2: 1.0
+        };
+        assert_eq!(data.0[0], comparison);
     }
 }

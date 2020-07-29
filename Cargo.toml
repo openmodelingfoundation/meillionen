@@ -2,6 +2,6 @@
 
 members = [
     'simplecrop-core',
-    'simplecrop-cli-wrapper',
-    'simplecrop-lib-wrapper'
+    'simplecrop-cli',
+    'simplecrop-lib'
 ]
