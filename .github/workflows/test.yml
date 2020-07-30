@@ -1,0 +1,25 @@
+name: Test Meillionen Packages
+
+on: [push]
+
+jobs:
+  build:
+    name: Test Packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Dependencies
+        run: |
+          sudo apt-get install -y gfortran python
+          sudo python -m pip install maturin
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Set Rust Version to Unstable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: unstable
+      - name: Test Workspace
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
