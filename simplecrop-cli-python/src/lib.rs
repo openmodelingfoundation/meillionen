@@ -9,8 +9,6 @@ use simplecrop_cli::{PlantConfig, SoilConfig, SimCtnlConfig, SimpleCropConfig, W
 use numpy::{PyArray1, ToPyArray};
 use arrow::array::{Float32Array};
 
-mod dataframes;
-
 #[pyclass]
 #[derive(Debug)]
 pub struct PySoilDataSet { inner: SoilDataSet }

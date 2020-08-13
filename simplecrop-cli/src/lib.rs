@@ -12,6 +12,7 @@ use std::io::{Write, BufReader, BufRead, BufWriter};
 use std::io;
 use std::process::{Command, Child};
 use crate::dataframes::ConfigWriter;
+use tempfile::TempDir;
 
 impl ConfigWriter for IrrigationDataset {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()> {
@@ -167,12 +168,12 @@ impl ResultLoader for PlantDataSet {
 }
 
 pub trait ConfigSaver {
-    fn save<P: AsRef<Path>>(&self, p: P) -> io::Result<()>;
+    fn save<P: AsRef<Path>>(&self, dir: P) -> io::Result<()>;
 }
 
 impl ConfigSaver for SimpleCropConfig {
-    fn save<P: AsRef<Path>>(&self, p: P) -> io::Result<()> {
-        let dp = p.as_ref().join("data");
+    fn save<P: AsRef<Path>>(&self, dir: P) -> io::Result<()> {
+        let dp = dir.as_ref().join("data");
         create_dir_all(&dp)?;
         let write_f = |path: &str| File::create(&dp.join(path)).map(|f| BufWriter::new(f)).unwrap();
 
@@ -207,16 +208,17 @@ impl ResultLoader for SimpleCropDataSet {
     }
 }
 
-pub fn execute<P: AsRef<Path>, Q: AsRef<Path>>(cli_path: P, p: Q, cfg: &SimpleCropConfig) -> io::Result<(SimpleCropDataSet, Child)> {
-    cfg.save(&p)?;
-    let r = Command::new(cli_path.as_ref()).current_dir(&p).spawn()?;
-    let data = SimpleCropDataSet::load(&p)?;
+pub fn execute<P: AsRef<Path>, Q: AsRef<Path>>(cli_path: P, dir: Q, cfg: &SimpleCropConfig) -> io::Result<(SimpleCropDataSet, Child)> {
+    cfg.save(&dir)?;
+    let r = Command::new(cli_path.as_ref()).current_dir(&dir).spawn()?;
+    let data = SimpleCropDataSet::load(&dir)?;
     Ok((data, r))
 }
 
 pub fn execute_in_tempdir<P: AsRef<Path>>(cli_path: P, cfg: &SimpleCropConfig) -> io::Result<(SimpleCropDataSet, Child)> {
-    let dir = tempfile::tempdir()?;
-    execute(cli_path, dir, cfg)
+    let dir = ".";
+    let r = execute(cli_path, dir, cfg)?;
+    Ok(r)
 }
 
 #[cfg(test)]
