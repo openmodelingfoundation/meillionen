@@ -3,16 +3,15 @@
 extern crate chrono;
 extern crate simplecrop_core;
 
+mod dataframes;
+
 pub use simplecrop_core::{IrrigationDataset, PlantConfig, SimCtnlConfig, WeatherDataset, SoilConfig, SoilDataSet, SoilResult, PlantResult, PlantDataSet, SimpleCropConfig, SimpleCropDataSet, Weather, Irrigation};
 use std::fs::{File, create_dir_all};
 use std::path::Path;
 use std::io::{Write, BufReader, BufRead, BufWriter};
 use std::io;
 use std::process::{Command, Child};
-
-pub trait ConfigWriter {
-    fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()>;
-}
+use crate::dataframes::ConfigWriter;
 
 impl ConfigWriter for IrrigationDataset {
     fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()> {
