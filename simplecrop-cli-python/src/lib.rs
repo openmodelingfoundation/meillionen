@@ -1,9 +1,15 @@
 extern crate simplecrop_cli;
+extern crate arrow;
+extern crate lazy_static;
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use pyo3::prelude::*;
 use pyo3::exceptions;
-use simplecrop_cli::{PlantConfig, SoilConfig, SimCtnlConfig, SimpleCropConfig, WeatherDataset, IrrigationDataset, execute, PlantDataSet, SoilDataSet, Weather, Irrigation};
+use simplecrop_cli::{PlantConfig, SoilConfig, SimCtnlConfig, SimpleCropConfig, WeatherDataset, IrrigationDataset, PlantDataSet, SoilDataSet, Weather, Irrigation, execute_in_tempdir};
+use numpy::{PyArray1, ToPyArray};
+use arrow::array::{Float32Array};
+
+mod dataframes;
 
 #[pyclass]
 #[derive(Debug)]
@@ -27,7 +33,7 @@ impl PyPlantDataSet {
     }
 }
 
-fn run(cli_path: String, current_dir_path: String) -> PyResult<(PyPlantDataSet, PySoilDataSet)> {
+fn run(cli_path: String) -> PyResult<(PyPlantDataSet, PySoilDataSet)> {
     // 365 days of weather
     let weather_dataset = WeatherDataset((1..1001).map(|doy| Weather {
         date: DateTime::from_utc(NaiveDateTime::from_timestamp(87000 + doy, 0), Utc),
@@ -87,10 +93,10 @@ fn run(cli_path: String, current_dir_path: String) -> PyResult<(PyPlantDataSet, 
         weather_dataset,
     };
 
-    let r = execute(
+    let r = execute_in_tempdir(
+        &cli_path,
         &config,
-        &current_dir_path,
-        &cli_path)
+        )
         .map_err(|e| exceptions::IOError::py_err(e.to_string()))?;
     Ok((PyPlantDataSet { inner: r.0.plant }, PySoilDataSet { inner: r.0.soil }))
 }
@@ -101,9 +107,27 @@ fn simplecrop_cli_python(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyPlantDataSet>()?;
 
     #[pyfn(m, "run")]
-    #[text_signature = "(cli_path, current_dir_path, /)"]
-    fn run_py(_py: Python, cli_path: String, current_dir_path: String) -> PyResult<(PyPlantDataSet, PySoilDataSet)> {
-        run(cli_path, current_dir_path)
+    #[text_signature = "(cli_path, /)"]
+    fn run_py(_py: Python, cli_path: String) -> PyResult<(PyPlantDataSet, PySoilDataSet)> {
+        run(cli_path)
+    }
+
+    #[pyfn(m, "run_crop_model")]
+    #[text_signature = "(*, plant_config)"]
+    fn run_crop_model_py<'py>(_py: Python<'py>, plant_config: &PyAny) -> PyResult<&'py PyArray1<f32>> {
+        let mut cols = Vec::new();
+        for attr in ["wpp", "fcp"].iter() {
+            let col: &PyArray1<f32> = plant_config.get_item(attr)?.extract()?;
+            let ro = col.readonly();
+            let s = ro.as_slice()?;
+            let mut builder = Float32Array::builder(s.len());
+            builder.append_slice(s).unwrap();
+            let arr = builder.finish();
+            cols.push(arr);
+        }
+        let added = arrow::compute::add(&cols[0], &cols[1]).unwrap();
+        let r = added.value_slice(0, added.len());
+        Ok(r.to_pyarray(_py))
     }
 
     Ok(())

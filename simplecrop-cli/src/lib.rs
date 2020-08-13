@@ -175,21 +175,21 @@ impl ConfigSaver for SimpleCropConfig {
     fn save<P: AsRef<Path>>(&self, p: P) -> io::Result<()> {
         let dp = p.as_ref().join("data");
         create_dir_all(&dp)?;
-        let read_f = |path: &str| File::create(&dp.join(path)).map(|f| BufWriter::new(f)).unwrap();
+        let write_f = |path: &str| File::create(&dp.join(path)).map(|f| BufWriter::new(f)).unwrap();
 
-        let mut weather_buf = read_f("weather.inp");
+        let mut weather_buf = write_f("weather.inp");
         self.weather_dataset.write_all(&mut weather_buf)?;
 
-        let mut irrigation_buf = read_f("irrig.inp");
+        let mut irrigation_buf = write_f("irrig.inp");
         self.irrigation_dataset.write_all(&mut irrigation_buf)?;
 
-        let mut plant_buf = read_f("plant.inp");
+        let mut plant_buf = write_f("plant.inp");
         self.plant.write_all(&mut plant_buf)?;
 
-        let mut soil_buf = read_f("soil.inp");
+        let mut soil_buf = write_f("soil.inp");
         self.soil.write_all(&mut soil_buf)?;
 
-        let mut simctrl_buf = read_f("simctrl.inp");
+        let mut simctrl_buf = write_f("simctrl.inp");
         self.simctrl.write_all(&mut simctrl_buf)?;
         Ok(())
     }
@@ -208,11 +208,16 @@ impl ResultLoader for SimpleCropDataSet {
     }
 }
 
-pub fn execute<P: AsRef<Path>>(cfg: &SimpleCropConfig, p: P, cli_path: P) -> io::Result<(SimpleCropDataSet, Child)> {
+pub fn execute<P: AsRef<Path>, Q: AsRef<Path>>(cli_path: P, p: Q, cfg: &SimpleCropConfig) -> io::Result<(SimpleCropDataSet, Child)> {
     cfg.save(&p)?;
     let r = Command::new(cli_path.as_ref()).current_dir(&p).spawn()?;
     let data = SimpleCropDataSet::load(&p)?;
     Ok((data, r))
+}
+
+pub fn execute_in_tempdir<P: AsRef<Path>>(cli_path: P, cfg: &SimpleCropConfig) -> io::Result<(SimpleCropDataSet, Child)> {
+    let dir = tempfile::tempdir()?;
+    execute(cli_path, dir, cfg)
 }
 
 #[cfg(test)]
