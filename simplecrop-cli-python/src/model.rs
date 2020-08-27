@@ -9,56 +9,6 @@ use ndarray::Array1;
 use std::ops::Index;
 use std::slice::SliceIndex;
 
-pub trait ConfigWriter {
-    fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()>;
-}
-
-#[derive(Debug, Default, PartialEq)]
-pub struct IrrigationDataset {
-    depth: Array1<f32>
-}
-
-impl IrrigationDataset {
-    pub fn new(v: Vec<f32>) -> Self {
-        Self {
-            depth: From::from(v)
-        }
-    }
-
-    fn save<W: Write>(&self, buf: &mut W) -> io::Result<()> {
-        let mut i = 1;
-        for obs in self.depth.iter() {
-            let row = format!("{:5}  {:1.1}\n", i, obs);
-            buf.write(row.as_bytes())?;
-            i += 1;
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug, Default, PartialEq)]
-pub struct WeatherDataset {
-    pub temp_max: Array1<f32>, // tmax
-    pub temp_min: Array1<f32>, // tmin
-    pub rainfall: Array1<f32>, // rain
-    pub photosynthetic_energy_flux: Array1<f32>, // par
-    pub energy_flux: Array1<f32> // srad
-}
-
-impl WeatherDataset {
-    fn save<W: Write>(&self, buf: &mut W) -> io::Result<()> {
-        let i = 0;
-        for obs in 0..self.temp_max.len() {
-            let row = format!(
-                "{:5}  {:>4.1}  {:>4.1}  {:>4.1}{:>6.1}              {:>4.1}\n",
-                i+1, self.energy_flux[i], self.temp_max[i], self.temp_min[i],
-                self.rainfall[i], self.photosynthetic_energy_flux[i]);
-            buf.write(row.as_bytes())?;
-        }
-        Ok(())
-    }
-}
-
 #[derive(Debug, Default, PartialEq)]
 pub struct DailyData {
     // irrigation related
@@ -92,86 +42,6 @@ impl DailyData {
                 self.rainfall[i], self.photosynthetic_energy_flux[i]);
             buf.write(row.as_bytes())?;
         }
-        Ok(())
-    }
-}
-
-#[derive(Debug, Default, PartialEq)]
-pub struct PlantConfig {
-    pub leaves_max_number: f32, // lfmax
-    pub emp2: f32,
-    pub emp1: f32,
-    pub density: f32, // pd
-    pub nb: f32, // nb
-    pub leaf_max_appearance_rate: f32, // rm
-    pub growth_canopy_fraction: f32,
-    pub min_repro_growth_temp: f32,
-    pub repro_phase_duration: f32,
-    pub leaves_number_of: f32,
-    pub leaf_area_index: f32,
-    pub matter: f32, // w
-    pub matter_root: f32, // wr
-    pub matter_canopy: f32, // wc
-    pub matter_leaves_removed: f32, // p1
-    pub development_phase: f32, // fl
-    pub leaf_specific_area: f32, // sla
-}
-
-impl PlantConfig {
-    fn save<W: Write>(&self, buf: &mut W) -> io::Result<()> {
-        let data = format!(
-            " {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} \
-            {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} \
-            {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4}\n",
-            self.leaves_max_number, self.emp2, self.emp1, self.density, self.nb, self.leaf_max_appearance_rate,
-            self.growth_canopy_fraction, self.min_repro_growth_temp, self.repro_phase_duration, self.leaves_number_of, self.leaf_area_index, self.matter,
-            self.matter_root, self.matter_canopy, self.matter_leaves_removed, self.development_phase, self.leaf_specific_area);
-        buf.write(data.as_bytes())?;
-        let footer: &'static str = "   Lfmax    EMP2    EMP1      PD      nb      rm      fc      tb   intot       n     lai       w      wr      wc      p1      f1    sla\n";
-        buf.write(footer.as_bytes())?;
-        Ok(())
-    }
-}
-
-#[derive(Debug, Default, PartialEq)]
-pub struct SoilConfig {
-    pub water_content_wilting_point: f32, // wpp
-    pub water_content_field_capacity: f32, // fcp
-    pub water_content_saturation: f32, // stp
-    pub profile_depth: f32, // dp
-    pub drainage_daily_percent: f32, // drnp
-    pub runoff_curve_number: f32, // cn
-    pub water_storage: f32 // swc
-}
-
-impl SoilConfig {
-    fn save<W: Write>(&self, buf: &mut W) -> io::Result<()> {
-        let data = format!(
-            "     {:>5.2}     {:>5.2}     {:>5.2}     {:>7.2}     {:>5.2}     {:>5.2}     {:>5.2}\n",
-            self.water_content_wilting_point, self.water_content_field_capacity, self.water_content_saturation, self.profile_depth, self.drainage_daily_percent, self.runoff_curve_number, self.water_storage);
-        buf.write(data.as_bytes())?;
-        let footer: &'static str =
-            "       WPp       FCp       STp          DP      DRNp        CN        SWC\n";
-        buf.write(footer.as_bytes())?;
-        let units: &'static str =
-            "  (cm3/cm3) (cm3/cm3) (cm3/cm3)        (cm)  (frac/d)        -       (mm)\n";
-        buf.write(units.as_bytes())?;
-        Ok(())
-    }
-}
-
-#[derive(Debug, Default, PartialEq)]
-pub struct SimCtnlConfig {
-    pub day_of_planting: i32, //doyp
-    pub printout_freq: i32 // frop
-}
-
-impl SimCtnlConfig {
-    fn save<W: Write>(&self, buf: &mut W) -> io::Result<()> {
-        let data = format!("{:>6} {:>5}\n", self.day_of_planting, self.printout_freq);
-        buf.write(data.as_bytes())?;
-        let footer: &'static str = "  DOYP  FROP\n";
-        buf.write(footer.as_bytes())?;
         Ok(())
     }
 }
@@ -212,7 +82,7 @@ pub struct YearlyData {
 }
 
 impl YearlyData {
-    fn save_plant_config<W: Write>(&self, buf: &mut W) -> io::Result<()> {
+    pub fn save_plant_config<W: Write>(&self, buf: &mut W) -> io::Result<()> {
         let data = format!(
             " {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} \
             {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} \
@@ -226,7 +96,7 @@ impl YearlyData {
         Ok(())
     }
 
-    fn save_simulation_config<W: Write>(&self, buf: &mut W) -> io::Result<()> {
+    pub fn save_simulation_config<W: Write>(&self, buf: &mut W) -> io::Result<()> {
         let data = format!("{:>6} {:>5}\n", self.day_of_planting, self.printout_freq);
         buf.write(data.as_bytes())?;
         let footer: &'static str = "  DOYP  FROP\n";
@@ -234,7 +104,7 @@ impl YearlyData {
         Ok(())
     }
 
-    fn save_soil_config<W: Write>(&self, buf: &mut W) -> io::Result<()> {
+    pub fn save_soil_config<W: Write>(&self, buf: &mut W) -> io::Result<()> {
         let data = format!(
             "     {:>5.2}     {:>5.2}     {:>5.2}     {:>7.2}     {:>5.2}     {:>5.2}     {:>5.2}\n",
             self.soil_water_content_wilting_point, self.soil_water_content_field_capacity, self.soil_water_content_saturation, self.soil_profile_depth, self.soil_drainage_daily_percent, self.soil_runoff_curve_number, self.soil_water_storage);
@@ -282,10 +152,6 @@ impl Default for YearlyData {
             printout_freq: 3,
         }
     }
-}
-
-pub trait ResultLoader {
-    fn load<P: AsRef<Path>>(p: P) -> io::Result<Self> where Self: std::marker::Sized;
 }
 
 #[derive(Debug, Default)]
@@ -402,7 +268,7 @@ pub struct SimpleCropDataSet {
 }
 
 impl SimpleCropDataSet {
-    fn load<P: AsRef<Path>>(p: P) -> io::Result<Self> {
+    pub fn load<P: AsRef<Path>>(p: P) -> io::Result<Self> {
         let op = p.as_ref().join("output");
         create_dir_all(&op)?;
         let plant = PlantDataSetBuilder::load(&op.join("plant.out"))?;
