@@ -24,3 +24,9 @@ import simplecrop_cli_python
 # run the model in the current directory
 simplecrop_cli_python.run("../simplecrop/target/cli/simplecrop", ".")
 ```
+
+Tests in the project can be run with
+
+```bash
+cargo test --no-default-features 
+```

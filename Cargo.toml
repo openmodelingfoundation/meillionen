@@ -7,7 +7,3 @@ members = [
     'simplecrop-cli-python',
     'simplecrop-lib',
 ]
-
-#exclude = [
-#    'simplecrop-cli-python'
-#]
