@@ -8,8 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Dependencies
-        run: |
-          sudo apt-get install -y gfortran
+        run: sudo apt-get install -y gfortran python3
       - name: Checkout Repository
         uses: actions/checkout@v2
         with:
@@ -22,3 +21,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --no-default-features
