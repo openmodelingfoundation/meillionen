@@ -14,21 +14,6 @@ pub trait FromPandas: Sized {
     fn from_pandas(obj: &PyAny) -> Result<Self, PyErr>;
 }
 
-// pub struct DataFrame<'a> {
-//     data: &'a [(&'a str, Box<dyn IntoPyArray>)]
-// }
-//
-// impl<'a> DataFrame<'a> {
-//     fn into_pandas(self, py: Python) -> PyResult<&PyAny> {
-//         let mut dict = PyDict::new(py);
-//         for (fieldname, arr) in self.data.into_iter() {
-//             dict.set_item(fieldname, arr.into_pyarray())
-//         }
-//         let pandas = PyModule::import(py, "pandas")?;
-//         pandas.call1("DataFrame", (dict,))
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
 }
