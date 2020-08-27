@@ -2,6 +2,13 @@
 
 This crate builds a python library using maturin.
 
+First you will need to set up a python environment for testing and building:
+
+```bash
+conda env install -f environment.yml
+conda activate simplecrop-cli
+```
+
 Use
 
 ```

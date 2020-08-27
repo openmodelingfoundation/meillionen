@@ -1,0 +1,7 @@
+name: simplecrop-cli
+channels:
+  - defaults
+dependencies:
+  - numpy
+  - pandas
+  - compilers
