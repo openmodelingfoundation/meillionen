@@ -379,17 +379,17 @@ mod tests {
         let config = YearlyData::default();
         let mut cur = Cursor::new(Vec::new());
         config.save_plant_config(&mut cur).unwrap();
-        let plant_ref_data = read_to_string("data/plant.inp").unwrap();
+        let plant_ref_data = read_to_string("../simplecrop/data/plant.inp").unwrap();
         assert_eq!(str::from_utf8(cur.get_ref()).unwrap(), plant_ref_data);
 
         let mut cur = Cursor::new(Vec::new());
         config.save_simulation_config(&mut cur).unwrap();
-        let simctnl_ref_data = read_to_string("data/simctrl.inp").unwrap();
+        let simctnl_ref_data = read_to_string("../simplecrop/data/simctrl.inp").unwrap();
         assert_eq!(str::from_utf8(cur.get_ref()).unwrap(), simctnl_ref_data);
 
         let mut cur = Cursor::new(Vec::new());
         config.save_soil_config(&mut cur);
-        let soil_ref_data = read_to_string("data/soil.inp").unwrap();
+        let soil_ref_data = read_to_string("../simplecrop/data/soil.inp").unwrap();
         assert_eq!(str::from_utf8(cur.get_ref()).unwrap(), soil_ref_data);
     }
 
