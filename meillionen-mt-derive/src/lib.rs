@@ -8,7 +8,7 @@ fn build_df_conversion(ident: &syn::Ident, ty: &syn::Type) -> proc_macro2::Token
     let gen = quote! {
         #ident: obj.get_item(#fieldname)?
             .call_method0("to_numpy")?
-            .extract::<&PyArray1<#ty>>()?
+            .extract::<&numpy::PyArray1<#ty>>()?
             .to_owned_array()
     };
     gen
@@ -46,7 +46,7 @@ fn impl_from_pandas(ast: &syn::DeriveInput) -> TokenStream {
 
     let gen = quote! {
         impl #impl_generics FromPandas for #name #ty_generics #where_clause {
-            fn from_pandas(obj: &PyAny) -> Result<Self, PyErr> {
+            fn from_pandas(obj: &pyo3::types::PyAny) -> Result<Self, pyo3::PyErr> {
                 Ok(Self {
                     #(#field_exprs),*
                 })
@@ -81,6 +81,7 @@ fn impl_into_pandas(ast: &syn::DeriveInput) -> TokenStream {
     let gen = quote! {
         impl #impl_generics IntoPandas for #name #ty_generics #where_clause {
             fn into_pandas(self, py: pyo3::Python) -> pyo3::PyResult<&pyo3::types::PyAny> {
+                use numpy::IntoPyArray;
                 let pandas = pyo3::types::PyModule::import(py, "pandas")?;
                 let kwargs = pyo3::types::PyDict::new(py);
                 #(#field_set_exprs);*

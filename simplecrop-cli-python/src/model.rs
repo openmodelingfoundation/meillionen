@@ -8,8 +8,10 @@ use std::process::{Command, Child};
 use ndarray::Array1;
 use std::ops::Index;
 use std::slice::SliceIndex;
+use meillionen_mt::{IntoPandas, FromPandas};
+use meillionen_mt_derive::{IntoPandas, FromPandas};
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, FromPandas)]
 pub struct DailyData {
     // irrigation related
     pub irrigation: Array1<f32>,
@@ -156,6 +158,7 @@ impl Default for YearlyData {
 
 #[derive(Debug, Default)]
 pub struct SoilDataSetBuilder {
+    pub day_of_year: Vec<i32>,
     pub soil_daily_runoff: Vec<f32>, // rof
     pub soil_daily_infiltration: Vec<f32>, // int
     pub soil_daily_drainage: Vec<f32>, // drn
@@ -175,6 +178,7 @@ impl SoilDataSetBuilder {
         let fs = srest.iter().map(|f| f.parse::<f32>().ok()).collect::<Option<Vec<f32>>>()?;
         if let [srad, tmax, tmin, rain, irr, rof, inf, drn, etp, esa, epa, swc, swc_dp, swfac1, swfac2] = fs[..]
         {
+            self.day_of_year.push(doy);
             self.soil_daily_runoff.push(rof);
             self.soil_daily_infiltration.push(inf);
             self.soil_daily_drainage.push(drn);
@@ -202,8 +206,24 @@ impl SoilDataSetBuilder {
     }
 }
 
+#[derive(Debug, IntoPandas)]
+pub struct SoilDataSet {
+    pub day_of_year: Array1<i32>,
+    pub soil_daily_runoff: Array1<f32>, // rof
+    pub soil_daily_infiltration: Array1<f32>, // int
+    pub soil_daily_drainage: Array1<f32>, // drn
+    pub soil_evapotranspiration: Array1<f32>, // etp
+    pub soil_evaporation: Array1<f32>, // esa
+    pub plant_potential_transpiration: Array1<f32>, // epa
+    pub soil_water_storage_depth: Array1<f32>, // swc
+    pub soil_water_profile_ratio: Array1<f32>, // swc / dp
+    pub soil_water_deficit_stress: Array1<f32>, // swfac1
+    pub soil_water_excess_stress: Array1<f32> // swfac2
+}
+
 #[derive(Debug, Default)]
 pub struct PlantDataSetBuilder {
+    day_of_year: Vec<i32>,
     plant_leaf_count: Vec<f32>,
     air_accumulated_temp: Vec<f32>,
     plant_matter: Vec<f32>,
@@ -219,6 +239,7 @@ impl PlantDataSetBuilder {
         let doy = sdoy.parse::<i32>().ok()?;
         let fs = srest.iter().map(|f| f.parse::<f32>().ok()).collect::<Option<Vec<f32>>>()?;
         if let [n, intc, w, wc, wr, wf, lai] = fs[..] {
+            self.day_of_year.push(doy);
             self.plant_leaf_count.push(n);
             self.air_accumulated_temp.push(intc);
             self.plant_matter.push(w);
@@ -243,28 +264,22 @@ impl PlantDataSetBuilder {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct SimpleCropDataSet {
-    // plant
-    pub plant_leaf_count: Vec<f32>,
-    pub air_accumulated_temp: Vec<f32>,
-    pub plant_matter: Vec<f32>,
-    pub plant_matter_canopy: Vec<f32>,
-    pub plant_matter_fruit:  Vec<f32>,
-    pub plant_matter_root: Vec<f32>,
-    pub plant_leaf_area_index: Vec<f32>,
+#[derive(Debug, IntoPandas)]
+pub struct PlantDataSet {
+    day_of_year: Array1<i32>,
+    plant_leaf_count: Array1<f32>,
+    air_accumulated_temp: Array1<f32>,
+    plant_matter: Array1<f32>,
+    plant_matter_canopy: Array1<f32>,
+    plant_matter_fruit:  Array1<f32>,
+    plant_matter_root: Array1<f32>,
+    plant_leaf_area_index: Array1<f32>,
+}
 
-    // soil
-    pub soil_daily_runoff: Array1<f32>, // rof
-    pub soil_daily_infiltration: Array1<f32>, // int
-    pub soil_daily_drainage: Array1<f32>, // drn
-    pub soil_evapotranspiration: Array1<f32>, // etp
-    pub soil_evaporation: Array1<f32>, // esa
-    pub plant_potential_transpiration: Array1<f32>, // epa
-    pub soil_water_storage_depth: Array1<f32>, // swc
-    pub soil_water_profile_ratio: Array1<f32>, // swc / dp
-    pub soil_water_deficit_stress: Array1<f32>, // swfac1
-    pub soil_water_excess_stress: Array1<f32> // swfac2
+#[derive(Debug)]
+pub struct SimpleCropDataSet {
+    pub plant: PlantDataSet,
+    pub soil: SoilDataSet
 }
 
 impl SimpleCropDataSet {
@@ -272,8 +287,8 @@ impl SimpleCropDataSet {
         let op = p.as_ref().join("output");
         create_dir_all(&op)?;
         let plant = PlantDataSetBuilder::load(&op.join("plant.out"))?;
-        let soil = SoilDataSetBuilder::load(&op.join("soil.out"))?;
-        Ok(Self {
+        let plant = PlantDataSet {
+            day_of_year: From::from(plant.day_of_year),
             plant_leaf_count: From::from(plant.plant_leaf_count),
             air_accumulated_temp: From::from(plant.air_accumulated_temp),
             plant_matter: From::from(plant.plant_matter),
@@ -281,7 +296,10 @@ impl SimpleCropDataSet {
             plant_matter_fruit: From::from(plant.plant_matter_fruit),
             plant_matter_root: From::from(plant.plant_matter_root),
             plant_leaf_area_index: From::from(plant.plant_leaf_area_index),
-
+        };
+        let soil = SoilDataSetBuilder::load(&op.join("soil.out"))?;
+        let soil = SoilDataSet {
+            day_of_year: From::from(soil.day_of_year),
             soil_daily_runoff: From::from(soil.soil_daily_runoff),
             soil_daily_infiltration: From::from(soil.soil_daily_infiltration),
             soil_daily_drainage: From::from(soil.soil_daily_drainage),
@@ -292,7 +310,18 @@ impl SimpleCropDataSet {
             soil_water_profile_ratio: From::from(soil.soil_water_profile_ratio),
             soil_water_deficit_stress: From::from(soil.soil_water_deficit_stress),
             soil_water_excess_stress: From::from(soil.soil_water_excess_stress)
+        };
+        Ok(Self {
+            plant,
+            soil
         })
+    }
+
+    pub fn into_python(self, py: pyo3::Python) -> pyo3::PyResult<&pyo3::types::PyAny> {
+        let dict = pyo3::types::PyDict::new(py);
+        dict.set_item("plant", self.plant.into_pandas(py)?)?;
+        dict.set_item("soil", self.soil.into_pandas(py)?)?;
+        Ok(dict)
     }
 }
 

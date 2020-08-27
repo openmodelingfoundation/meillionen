@@ -9,7 +9,6 @@ use pyo3::types::{PyDict, IntoPyDict};
 use ndarray::Array1;
 use meillionen_mt::{IntoPandas, FromPandas};
 use meillionen_mt_derive::{IntoPandas, FromPandas};
-use pyo3::callback::IntoPyCallbackOutput;
 
 #[pyclass]
 #[derive(Debug)]
@@ -28,16 +27,9 @@ pub struct Coords {
     ys: Array1<i64>
 }
 
-fn run(cli_path: String) -> PyResult<PySimpleCropDataSet> {
+fn run<'a>(py: Python<'a>, cli_path: String, daily_data: &PyAny) -> PyResult<&'a PyAny> {
     // 365 days of weather
-    let daily = DailyData {
-        irrigation: ndarray::Array1::from_elem(1000, 0.0),
-        energy_flux: ndarray::Array1::from_elem(1000, 5.1),
-        temp_max: ndarray::Array1::from_elem(1000, 20.0),
-        temp_min: ndarray::Array1::from_elem(1000, 4.4),
-        rainfall: ndarray::Array1::from_elem(1000, 23.9),
-        photosynthetic_energy_flux: ndarray::Array1::from_elem(1000, 10.7)
-    };
+    let daily = DailyData::from_pandas(daily_data)?;
 
     let yearly = YearlyData::default();
 
@@ -46,12 +38,12 @@ fn run(cli_path: String) -> PyResult<PySimpleCropDataSet> {
         yearly
     };
 
-    let r = config.run(
+    let results = config.run(
         &cli_path,
     ".",
         )
         .map_err(|e| exceptions::IOError::py_err(e.to_string()))?;
-    Ok(PySimpleCropDataSet { inner: r })
+    results.into_python(py)
 }
 
 #[pymodule]
@@ -59,9 +51,9 @@ fn simplecrop_cli_python(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PySimpleCropDataSet>()?;
 
     #[pyfn(m, "run")]
-    #[text_signature = "(cli_path, /)"]
-    fn run_py(_py: Python, cli_path: String) -> PyResult<PySimpleCropDataSet> {
-        run(cli_path)
+    #[text_signature = "(cli_path, daily_data)"]
+    fn run_py<'a>(_py: Python<'a>, cli_path: String, daily_data: &PyAny) -> PyResult<&'a PyAny> {
+        run(_py, cli_path, daily_data)
     }
 
     #[pyfn(m, "to_dataframe")]
