@@ -1,7 +1,9 @@
+mod model;
+
 use chrono::{DateTime, NaiveDateTime, Utc};
 use pyo3::prelude::*;
 use pyo3::exceptions;
-use simplecrop_cli::{SimpleCropConfig, DailyData, YearlyData, SimpleCropDataSet};
+use model::{SimpleCropConfig, DailyData, YearlyData, SimpleCropDataSet};
 use numpy::{PyArray1, ToPyArray, PyReadonlyArray1, IntoPyArray};
 use pyo3::types::{PyDict, IntoPyDict};
 use ndarray::Array1;

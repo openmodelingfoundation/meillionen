@@ -1,21 +1,17 @@
 #![cfg_attr(not(debug_assertions), deny(warnings))]
 
-extern crate chrono;
-extern crate simplecrop_core;
-
-mod dataframes;
-
-pub use simplecrop_core::{Weather, Irrigation};
 use std::fs::{File, create_dir_all};
 use std::path::Path;
 use std::io::{Write, BufReader, BufRead, BufWriter};
 use std::io;
 use std::process::{Command, Child};
-use crate::dataframes::ConfigWriter;
-use tempfile::TempDir;
 use ndarray::Array1;
 use std::ops::Index;
 use std::slice::SliceIndex;
+
+pub trait ConfigWriter {
+    fn write_all<W: Write>(&self, buf: &mut W) -> io::Result<()>;
+}
 
 #[derive(Debug, Default, PartialEq)]
 pub struct IrrigationDataset {
@@ -504,7 +500,7 @@ impl SimpleCropConfig {
 
 #[cfg(test)]
 mod tests {
-    use crate::{SimpleCropConfig, YearlyData, DailyData, PlantDataSetBuilder, SoilDataSetBuilder};
+    use crate::model::{SimpleCropConfig, YearlyData, DailyData, PlantDataSetBuilder, SoilDataSetBuilder};
 
     use chrono::{DateTime, NaiveDateTime, Utc};
     use std::fs::{read_to_string, File};

@@ -4,7 +4,6 @@ members = [
     'meillionen-mt',
     'meillionen-mt-derive',
     'simplecrop-core',
-    'simplecrop-cli',
     'simplecrop-cli-python',
     'simplecrop-lib',
 ]
