@@ -10,12 +10,13 @@ requires-dist = ['pyarrow']
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+meillionen-mt = { path = "../meillionen-mt" }
+meillionen-mt-derive = { path = "../meillionen-mt-derive" }
 simplecrop-cli = { path = "../simplecrop-cli" }
 pyo3 = { version = "0.11", features = ["extension-module"] }
 numpy = "0.11.0"
 ndarray = "0.13"
 chrono = ">=0.4"
-arrow = "1.0.0"
 lazy_static = "1.4"
 
 [lib]

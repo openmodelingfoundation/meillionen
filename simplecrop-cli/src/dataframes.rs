@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::path::Path;
 use std::io::Write;
 use std::io;
-use arrow::array::{Float32Array, Date32Array};
+use arrow::array::{Float32Array, Date32Array, PrimitiveArray};
 use chrono::{DateTime, Utc};
 
 pub trait ConfigWriter {

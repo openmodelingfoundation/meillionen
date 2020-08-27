@@ -1,131 +1,132 @@
-extern crate simplecrop_cli;
-extern crate arrow;
-extern crate lazy_static;
-
 use chrono::{DateTime, NaiveDateTime, Utc};
 use pyo3::prelude::*;
 use pyo3::exceptions;
-use simplecrop_cli::{PlantConfig, SoilConfig, SimCtnlConfig, SimpleCropConfig, WeatherDataset, IrrigationDataset, PlantDataSet, SoilDataSet, Weather, Irrigation, execute_in_tempdir};
-use numpy::{PyArray1, ToPyArray};
-use arrow::array::{Float32Array};
+use simplecrop_cli::{SimpleCropConfig, DailyData, YearlyData, SimpleCropDataSet};
+use numpy::{PyArray1, ToPyArray, PyReadonlyArray1, IntoPyArray};
+use pyo3::types::{PyDict, IntoPyDict};
+use ndarray::Array1;
+use meillionen_mt::{IntoPandas, FromPandas};
+use meillionen_mt_derive::FromPandas;
+use pyo3::callback::IntoPyCallbackOutput;
 
-#[pyclass]
-#[derive(Debug)]
-pub struct PySoilDataSet { inner: SoilDataSet }
+// #[pyclass]
+// #[derive(Debug)]
+// pub struct PySimpleCropDataSet { inner: SimpleCropDataSet }
+//
+// #[pymethods]
+// impl PySimpleCropDataSet {
+//     fn print(&self, _py: Python) {
+//         print!("{:?}", self.inner)
+//     }
+// }
 
-#[pymethods]
-impl PySoilDataSet {
-    fn print(&self, _py: Python) {
-        print!("{:?}", self.inner)
+#[derive(FromPandas)]
+pub struct Coords {
+    xs: Array1<f64>,
+    ys: Array1<i64>
+}
+
+impl IntoPandas for Coords {
+    fn into_pandas(self, py: Python) -> PyResult<&PyAny> {
+        let pandas = PyModule::import(py, "pandas")?;
+        let kwargs = PyDict::new(py);
+        kwargs.set_item("xs", self.xs.into_pyarray(py))?;
+        kwargs.set_item("ys", self.ys.into_pyarray(py))?;
+        pandas.call1("DataFrame", (kwargs,))
     }
 }
 
-#[pyclass]
-#[derive(Debug)]
-pub struct PyPlantDataSet { inner: PlantDataSet }
+// impl FromPandas for Coords {
+//     type Error = PyErr;
+//
+//     fn from_pandas(obj: &PyAny) -> Result<Self, Self::Error> {
+//         let xs = obj.get_item("xs").unwrap().extract::<&PyArray1<f64>>()?;
+//         let ys = obj.get_item("ys").unwrap().extract::<&PyArray1<i64>>()?;
+//         Ok(Self { xs: xs.to_owned_array(), ys: ys.to_owned_array() })
+//     }
+// }
 
-#[pymethods]
-impl PyPlantDataSet {
-    fn print(&self) {
-        print!("{:?}", self.inner)
-    }
-}
-
-fn run(cli_path: String) -> PyResult<(PyPlantDataSet, PySoilDataSet)> {
-    // 365 days of weather
-    let weather_dataset = WeatherDataset((1..1001).map(|doy| Weather {
-        date: DateTime::from_utc(NaiveDateTime::from_timestamp(87000 + doy, 0), Utc),
-        srad: 5.1,
-        tmax: 20.0,
-        tmin: 4.4,
-        rain: 23.9,
-        par: 10.7,
-    }).collect());
-
-    // > 293 days of irrigation
-    let irrigation_dataset = IrrigationDataset((1..1001).map(|doy| Irrigation {
-        date: DateTime::from_utc(NaiveDateTime::from_timestamp(87000 + doy, 0), Utc),
-        amount: 0f32
-    }).collect());
-
-    let plant = PlantConfig {
-        lfmax: 12.0,
-        emp2: 0.64,
-        emp1: 0.104,
-        pd: 5.0,
-        nb: 5.3,
-        rm: 0.100,
-        fc: 0.85,
-        tb: 10.0,
-        intot: 300.0,
-        n: 2.0,
-        lai: 0.013,
-        w: 0.3,
-        wr: 0.045,
-        wc: 0.255,
-        p1: 0.03,
-        f1: 0.028,
-        sla: 0.035,
-    };
-
-    let soil = SoilConfig {
-        wpp: 0.06,
-        fcp: 0.17,
-        stp: 0.28,
-        dp: 145.00,
-        drnp: 0.10,
-        cn: 55.00,
-        swc: 246.50,
-    };
-
-    let simcntl = SimCtnlConfig {
-        doyp: 121,
-        frop: 3,
-    };
-
-    let config = SimpleCropConfig {
-        irrigation_dataset,
-        plant,
-        soil,
-        simctrl: simcntl,
-        weather_dataset,
-    };
-
-    let r = execute_in_tempdir(
-        &cli_path,
-        &config,
-        )
-        .map_err(|e| exceptions::IOError::py_err(e.to_string()))?;
-    Ok((PyPlantDataSet { inner: r.0.plant }, PySoilDataSet { inner: r.0.soil }))
-}
+// fn run(cli_path: String) -> PyResult<PySimpleCropDataSet> {
+//     // 365 days of weather
+//     let daily = DailyData {
+//         irrigation: ndarray::Array1::from_elem(1000, 0.0),
+//         energy_flux: ndarray::Array1::from_elem(1000, 5.1),
+//         temp_max: ndarray::Array1::from_elem(1000, 20.0),
+//         temp_min: ndarray::Array1::from_elem(1000, 4.4),
+//         rainfall: ndarray::Array1::from_elem(1000, 23.9),
+//         photosynthetic_energy_flux: ndarray::Array1::from_elem(1000, 10.7)
+//     };
+//
+//     let yearly = YearlyData::default();
+//
+//     let config = SimpleCropConfig {
+//         daily,
+//         yearly
+//     };
+//
+//     let r = config.run(
+//         &cli_path,
+//     ".",
+//         )
+//         .map_err(|e| exceptions::IOError::py_err(e.to_string()))?;
+//     Ok(PySimpleCropDataSet { inner: r })
+// }
 
 #[pymodule]
 fn simplecrop_cli_python(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<PySoilDataSet>()?;
-    m.add_class::<PyPlantDataSet>()?;
+    // m.add_class::<PySimpleCropDataSet>()?;
 
     #[pyfn(m, "run")]
     #[text_signature = "(cli_path, /)"]
-    fn run_py(_py: Python, cli_path: String) -> PyResult<(PyPlantDataSet, PySoilDataSet)> {
+    fn run_py(_py: Python, cli_path: String) -> PyResult<PySimpleCropDataSet> {
         run(cli_path)
     }
 
-    #[pyfn(m, "run_crop_model")]
-    #[text_signature = "(*, plant_config)"]
-    fn run_crop_model_py<'py>(_py: Python<'py>, plant_config: &PyAny) -> PyResult<&'py PyArray1<f32>> {
-        let mut cols = Vec::new();
-        for attr in ["wpp", "fcp"].iter() {
-            let col: &PyArray1<f32> = plant_config.get_item(attr)?.extract()?;
-            let ro = col.readonly();
-            let s = ro.as_slice()?;
-            let mut builder = Float32Array::builder(s.len());
-            builder.append_slice(s).unwrap();
-            let arr = builder.finish();
-            cols.push(arr);
-        }
-        let added = arrow::compute::add(&cols[0], &cols[1]).unwrap();
-        let r = added.value_slice(0, added.len());
-        Ok(r.to_pyarray(_py))
+    #[pyfn(m, "to_dataframe")]
+    #[text_signature = "(pydf)"]
+    fn to_dataframe_py<'a>(_py: Python<'a>, pydf: &PyAny) -> PyResult<&'a PyAny> {
+        // let class_name = pydf.
+        //     getattr("__class__")?.
+        //     getattr("__name__")?.
+        //     extract::<&str>()?;
+        // let (xs, ys) = if class_name == "DataFrame" {
+        //     let xs = pydf
+        //         .get_item("xs")?
+        //         .call_method0("to_numpy")?
+        //         .extract::<&PyArray1<f64>>()?;
+        //     let ys = pydf
+        //         .get_item("ys")?
+        //         .call_method0("to_numpy")?
+        //         .extract::<&PyArray1<i64>>()?;
+        //     (xs, ys)
+        // } else if class_name == "dict" {
+        //     let xs = pydf
+        //         .get_item("xs")?
+        //         .extract::<&PyArray1<f64>>()?;
+        //     let ys = pydf
+        //         .get_item("ys")?
+        //         .extract::<&PyArray1<i64>>()?;
+        //     (xs, ys)
+        // } else {
+        //     Err(exceptions::TypeError::py_err("Argument needs to be a dict or a dataframe"))?
+        // };
+        //
+        // let mut coords = Coords {
+        //   xs: xs.to_owned_array(),
+        //   ys: ys.to_owned_array()
+        // };
+        let mut coords = Coords::from_pandas(pydf)?;
+        coords.xs = &coords.xs + &coords.xs;
+        coords.into_pandas(_py)
+    }
+
+    #[pyfn(m, "to_df")]
+    fn to_df_py<'a>(_py: Python<'a>) -> PyResult<&'a PyAny> {
+        let mut coords = Coords {
+          xs: Array1::from(vec![1.5,4.0,5.0,6.0]),
+          ys: Array1::from(vec![3,5,6,2])
+        };
+        coords.into_pandas(_py)
     }
 
     Ok(())
