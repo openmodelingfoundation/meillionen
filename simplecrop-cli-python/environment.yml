@@ -5,3 +5,5 @@ dependencies:
   - numpy
   - pandas
   - compilers
+  - jupyterlab
+  - landlab
