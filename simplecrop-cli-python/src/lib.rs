@@ -1,4 +1,5 @@
 mod model;
+mod data;
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use pyo3::prelude::*;

@@ -5,7 +5,7 @@ use std::path::Path;
 use std::io::{Write, BufReader, BufRead, BufWriter};
 use std::io;
 use std::process::{Command, Child};
-use ndarray::Array1;
+use ndarray::{Array1, Array3};
 use std::ops::Index;
 use std::slice::SliceIndex;
 use meillionen_mt::{IntoPandas, FromPandas};
@@ -393,15 +393,31 @@ impl SimpleCropConfig {
     }
 }
 
+fn write_surface_water() {
+    std::fs::remove_file("data.nc").unwrap_or_default();
+    let mut f = netcdf::create("data.nc").unwrap();
+    f.add_dimension("x", 5).unwrap();
+    f.add_dimension("y", 5).unwrap();
+    f.add_dimension("time", 10).unwrap();
+    let mut v = f.add_variable::<f32>("surface_water__depth", &["x", "y", "time"]).unwrap();
+    // write all input rainfall data for each raster cell at time t=0
+    v.put_values_strided(&[1.0; 25], Some(&[0,0,0]), None, &[1,1,10]).unwrap();
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::model::{SimpleCropConfig, YearlyData, DailyData, PlantDataSetBuilder, SoilDataSetBuilder};
+    use crate::model::{SimpleCropConfig, YearlyData, DailyData, PlantDataSetBuilder, SoilDataSetBuilder, write_surface_water};
 
     use chrono::{DateTime, NaiveDateTime, Utc};
     use std::fs::{read_to_string, File};
     use std::io::{Cursor, BufWriter, BufReader, BufRead};
     use std::str;
     use ndarray::Array1;
+
+    #[test]
+    fn write_sw() {
+        write_surface_water();
+    }
 
     #[test]
     fn write_yearly_data() {
