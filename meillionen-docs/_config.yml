@@ -1,0 +1,8 @@
+# Book settings
+title: "Presentation: Open Modeling Foundation Standards and Toolkits"
+author: Open Modeling Foundation
+logo: logo.png
+
+latex:
+  latex_documents:
+    targetname: book.tex
