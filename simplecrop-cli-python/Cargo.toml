@@ -12,6 +12,7 @@ requires-dist = ['numpy', 'pandas']
 [dependencies]
 meillionen-mt = { path = "../meillionen-mt" }
 meillionen-mt-derive = { path = "../meillionen-mt-derive" }
+itertools = "0.9.0"
 pyo3 = "0.11"
 netcdf = "0.5.1"
 numpy = "0.11.0"
@@ -25,3 +26,4 @@ crate-type = ['cdylib', 'rlib']
 
 [features]
 default = ["pyo3/extension-module", "netcdf/static"]
+static = ["netcdf/static"]
