@@ -35,5 +35,5 @@ simplecrop_cli_python.run("../simplecrop/target/cli/simplecrop", ".")
 Tests in the project can be run with
 
 ```bash
-cargo test --no-default-features 
+cargo test --no-default-features --features static        
 ```

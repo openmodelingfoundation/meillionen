@@ -118,6 +118,12 @@ There is no general support for checking unit compatibility and storage compatib
 
 The current structure of SimpleCrop requires that a year's worth of data. If SimpleCrop could take a day's worth of data at a time then it should be possible to have an example of using SimpleCrop in a double coupling context where evaporation from the plants has an impact on the weather. This would benefit from a different store class that allowed passing data between components over the network. Apache Arrow supports passing tensors and tabular data so it seems like it would be a good choice making it possible to pass the same data the surface water depth by day vectors that are currently needed by the SimpleCrop model.
 
+Suppose that you wanted to use a different water accumulation method for taking a topography and precipitation data to return a the amount of water that infiltrated the soil for all cells in the study area. If GRASS's `r.watershed` model was it could look something like
+
+```python
+from grass import Watershed
+```  
+
 Contribute
 ----------
 
