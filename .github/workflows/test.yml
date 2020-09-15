@@ -21,4 +21,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all --manifest-path simplecrop-cli-python/Cargo.toml --no-default-features --features static
+          args: --all --manifest-path simplecrop-cli/Cargo.toml --no-default-features --features static
