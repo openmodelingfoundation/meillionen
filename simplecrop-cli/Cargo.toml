@@ -1,5 +1,5 @@
 [package]
-name = "simplecrop-cli-python"
+name = "simplecrop-cli"
 version = "0.1.0"
 authors = ["Calvin Pritchard <pritchard.calvin@gmail.com>"]
 edition = "2018"
@@ -7,22 +7,29 @@ edition = "2018"
 [package.metadata.maturin]
 requires-dist = ['numpy', 'pandas']
 
+[package.metadata.maturin.scripts]
+CDFStore = "simplcrop_cli:CDFStore"
+CDFVariableRef = "simplecrop_cli:CDFVariableRef"
+run = "simplecrop_cli:run"
+to_dataframe = "simplecrop_cli:to_dataframe"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+chrono = ">=0.4"
+eyre = "0.6.0"
+itertools = "0.9.0"
+lazy_static = "1.4"
 meillionen-mt = { path = "../meillionen-mt" }
 meillionen-mt-derive = { path = "../meillionen-mt-derive" }
-itertools = "0.9.0"
-pyo3 = "0.11"
-netcdf = "0.5.1"
-num-traits = "0.2"
-numpy = "0.11.0"
 ndarray = "0.13"
-chrono = ">=0.4"
-lazy_static = "1.4"
+netcdf = "0.5.1"
+numpy = "0.11.0"
+num-traits = "0.2"
+pyo3 = "0.11"
 
 [lib]
-name = 'simplecrop_cli_python'
+name = 'simplecrop_cli'
 crate-type = ['cdylib', 'rlib']
 
 [features]

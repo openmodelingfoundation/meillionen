@@ -10,6 +10,7 @@ use pyo3::types::{PyDict, IntoPyDict};
 use ndarray::Array1;
 use meillionen_mt::{IntoPandas, FromPandas};
 use meillionen_mt_derive::{IntoPandas, FromPandas};
+use crate::data::{F64CDFVariableRef, CDFStore};
 
 #[pyclass]
 #[derive(Debug)]
@@ -48,8 +49,10 @@ fn run<'a>(py: Python<'a>, cli_path: String, daily_data: &PyAny) -> PyResult<&'a
 }
 
 #[pymodule]
-fn simplecrop_cli_python(_py: Python, m: &PyModule) -> PyResult<()> {
+fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PySimpleCropDataSet>()?;
+    m.add_class::<F64CDFVariableRef>()?;
+    m.add_class::<CDFStore>()?;
 
     #[pyfn(m, "run")]
     #[text_signature = "(cli_path, daily_data)"]

@@ -3,5 +3,5 @@
 members = [
     'meillionen-mt',
     'meillionen-mt-derive',
-    'simplecrop-cli-python',
+    'simplecrop-cli',
 ]

@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), deny(warnings))]
 
+use pyo3::prelude::*;
 use std::fs::{File, create_dir_all};
 use std::path::Path;
 use std::io::{Write, BufReader, BufRead, BufWriter};
@@ -8,7 +9,7 @@ use std::process::{Command, Child};
 use ndarray::{Array1, Array3};
 use std::ops::Index;
 use std::slice::SliceIndex;
-use meillionen_mt::{IntoPandas, FromPandas};
+use meillionen_mt::{IntoPandas, FromPandas, Variable, SliceType};
 use meillionen_mt_derive::{IntoPandas, FromPandas};
 
 #[derive(Debug, Default, PartialEq, FromPandas)]
@@ -391,6 +392,54 @@ impl SimpleCropConfig {
         let data = SimpleCropDataSet::load(&dir)?;
         Ok(data)
     }
+}
+
+pub struct GridRunner<T> {
+    dims: Vec<String>,
+    dims_in_grid: Vec<String>,
+    pub model: T
+}
+
+#[pyclass]
+pub struct SimpleCropModel {
+    infiltrated_water: Option<Box<dyn Variable<Index=Vec<usize>, Elem=f32> + Send>>
+}
+
+impl SimpleCropModel {
+    fn set_infiltrated_water(&mut self, infiltrated_water: Box<dyn Variable<Index=Vec<usize>, Elem=f32> + Send>) {
+        self.infiltrated_water = Some(infiltrated_water);
+    }
+
+    fn run(&self, cli_path: impl AsRef<Path>) {
+        let dd = DailyData::default();
+        let yd = YearlyData::default();
+
+        if let Some(infiltrated_water) = &self.infiltrated_water {
+            let dimensions = infiltrated_water.get_dimensions();
+            let x_range = &dimensions[0].size();
+            let y_range = &dimensions[0].size();
+
+            for x in 0..*x_range {
+                for y in 0..*y_range {
+                    let index = vec![x, y];
+                    let infiltrated_cell = infiltrated_water.slice(&index);
+                    println!("{} {} {}", x, y, infiltrated_cell)
+                }
+            }
+        }
+    }
+}
+
+#[pymethods]
+impl SimpleCropModel {
+    #[new]
+    pub fn __init__() -> Self {
+        Self {
+            infiltrated_water: None
+        }
+    }
+
+    pub fn set_variable(&mut self, var_ref: &str) {}
 }
 
 fn write_surface_water() {

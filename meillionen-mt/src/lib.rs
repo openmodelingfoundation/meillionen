@@ -55,10 +55,11 @@ impl Default for SliceType {
 }
 
 pub trait Variable {
-    type Output;
+    type Elem;
+    type Index;
 
     fn name(&self) -> String;
-    fn slice<SI>(&self, index: SI) -> Array1<Self::Output> where SI: AsRef<[SliceType]>;
+    fn slice(&self, index: &Self::Index) -> Array1<Self::Elem>;
     fn get_dimensions(&self) -> Vec<Dimension>;
 }
 
@@ -86,19 +87,21 @@ impl<T> VarView<T> where T: Variable {
     }
 }
 
-impl<T> Variable for VarView<T> where T: Variable<Output=T> {
-    type Output = T;
+impl<T> Variable for VarView<T>
+where
+    T: Variable<Index=Vec<SliceType>, Elem=T> {
+    type Elem = T;
+    type Index = Vec<SliceType>;
 
     fn name(&self) -> String {
         self.sv.name()
     }
 
-    fn slice<S>(&self, index: S) -> Array1<Self::Output> where S: AsRef<[SliceType]> {
-        let index = index.as_ref();
+    fn slice(&self, index: &Self::Index) -> Array1<Self::Elem> {
         assert_eq!(index.len(), self.indice_map.len());
         let inner_index = self.indice_map.iter()
             .map(|i| index[i.clone()]).collect::<Vec<_>>();
-        self.sv.slice(inner_index)
+        self.sv.slice(&inner_index)
     }
 
     fn get_dimensions(&self) -> Vec<Dimension> {
