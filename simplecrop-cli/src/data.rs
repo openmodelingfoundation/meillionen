@@ -117,7 +117,7 @@ impl Variable for F64CDFVariableRef {
             }).collect::<Vec<usize>>();
         let mut buffer = Array1::<Self::Elem>::zeros(size).to_vec();
 
-        let strides = (0isize..TryFrom::try_from(index.len()).unwrap()).collect::<Vec<isize>>();
+        let strides = Array1::<isize>::ones(index.len()).to_vec();
         variable.values_strided_to(
             buffer.as_mut(),
             Some(indices.as_slice()),
@@ -169,6 +169,6 @@ mod tests {
         let store = CDFStore::try_from(Path::new("netcdf-dim-iter.nc")).unwrap();
         let var = store.get_f64("surface_water__depth").unwrap();
         let arr = var.slice(&vec![SliceType::All, SliceType::Index(0), SliceType::Index(0)]);
-        assert_eq!(arr, Array1::from(vec![0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0, 105.0, 120.0, 135.0, 150.0, 165.0, 180.0, 195.0, 210.0]));
+        assert_eq!(arr, Array1::from(vec![0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0, 105.0, 120.0, 135.0]));
     }
 }
