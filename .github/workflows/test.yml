@@ -1,6 +1,10 @@
 name: Test Meillionen Packages
 
-on: [push]
+on:
+  push:
+    paths-ignore:
+    - 'meillionen-docs/**'
+    - 'notebooks/**' 
 
 jobs:
   build:
