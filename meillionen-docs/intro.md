@@ -3,9 +3,6 @@ Open Modeling Foundation
 
 The Open Modeling Foundation (OMF) is an alliance of modeling organizations that coordinates and administers a common, community developed body of standards and best practices among diverse communities of modeling scientists.
 
-Standards
----------
-
 The OMF aims to provide standards and guidelines for
 
 - [Accessibility](https://openmodelingfoundation.github.io/standards/) - metadata, data and source code storage and retrieval standards
@@ -13,13 +10,15 @@ The OMF aims to provide standards and guidelines for
 - [Interoperability](https://openmodelingfoundation.github.io/standards/interoperability/) - how to develop model components that allow for easy integration with other model components 
 - [Reproducibility](https://openmodelingfoundation.github.io/standards/reproducibility/) - how to make a model analysis repeatable given the same code, dependencies and data inputs
 
-It also works to achieve those aims through
+It also works to achieve to make adhering to those standards easier by developing
 
 - teaching materials
-- development of libraries for model interoperability and reproducibility
+- libraries for model interoperability and reproducibility
 
-Modeling Data Interoperability Toolkit Goals
---------------------------------------------
+Modeling Data Interoperability Toolkit
+--------------------------------------
+
+Computational models for hydrology, ecology, social systems and others areas are written in a variety of frameworks and languages. The OMF intends to make the use of model written in other frameworks and languages easier by providing a cross-language data communication library. The data communication library aims to
 
 1. Reduce the burden of coupling computational models written in different frameworks and languages for model consumers
 2. Have a low barrier to entry for model developers to make their models couple easily with other standards adopting models
@@ -27,9 +26,9 @@ Modeling Data Interoperability Toolkit Goals
 4. Agnostic to execution strategy - allow for use in workflow manager for DAG jobs, support models with two-way coupling as well
 5. Only deal with data access to make it possible to integrate with multiple frameworks. 
 
-The pre-alpha [meillionen](https://github.com/openmodelingfoundation/meillionen) data communication library is in the early stages of attempting to address those goals when used alongside an existing modelling toolkit like [PyMT](https://pymt.readthedocs.io/en/latest/). A more complete version of `meillionen` would have
+The pre-alpha [meillionen](https://github.com/openmodelingfoundation/meillionen) library is in the early stages of attempting to address those goals when used alongside an existing modelling toolkit like [PyMT](https://pymt.readthedocs.io/en/latest/). A more complete version of `meillionen` would have
 
-- A data access library that can be embedded in Python (and eventually other languages like R and Julia) to facilitate passing data between model components. At minimum it would need to support passing tabular and tensor data by file and by memory (by network would also be great to support)
+- A data access library that can be embedded in Python (and eventually other languages like R and Julia) to facilitate passing data between model components. At minimum it would need to support passing tabular and tensor data by file, network memory
 - Support reading and writing data
 - Support units of measure and storage type conversion
 - Case Studies to show how to couple models and how to adapt existing models into the framework
@@ -56,12 +55,11 @@ level) compared to SimpleCrop and is spatially explicit.
 
 In order to couple `OverlandFlow` with `SimpleCrop` we need to have figure out what `OverlandFlow` outputs to connect with `SimpleCrop` inputs. From inspecting the overland flow model it is apparent that we can feed simplecrops `surface_water__depth` output to Simple Crop's `rainfall__depth` input. However, there are still some dimension mismatches in connecting the models. The overland flow model has an `x` dimension and a `y` dimension but the `time` dimension is missing because water the overland flow model models individual rainfall events which need to be aggregated up to daily value to get a daily amount of water fed to the crops occupying a particular cell. The Simple Crop `rainfall__depth` input has a `time` dimension but no `x` and `y` dimensions . In order to reconcile these dimension mismatches we have to run the overland flow model once for each day to feed into Simple Crop. For Simple Crop to be able to be compatible we need to run the model at `x`, `y` coordinate pair.
 
-The overall code need to couple the overland flow model with the SimpleCrop model is shown below. Components match the interfaces used by the PyMT library. Each component has getters and setters to allow the passing of data from one model component to another. Component setter names are supposed to follow CSDMS standard name practices.
+The overall code need to couple the overland flow model with the SimpleCrop model is shown below (the notebook folder contains examples). Components match the interfaces used by the PyMT library. Each component has getters and setters to allow the passing of data from one model component to another. Component setter names are supposed to follow [CSDMS standard name](https://csdms.colorado.edu/wiki/CSDMS_Standard_Names) practices.
 
 ```python
 from landlab.components.overland_flow import Overland
 import simplecrop_cli
-import simplecrop_cli as mt
 
 days_with_rain = get_days_with_rain_data()
 
@@ -73,7 +71,7 @@ of.finalize()
 
 sc = simplecrop_cli.SimpleCrop()
 sc.initialize()
-sc.set_value('surface_water__depth', of.get_value('surface_water__depth'))
+sc.set_value('infiltration_water__depth', of.get_value('surface_water__depth'))
 sc.update()
 sc.finalize()
 ```
@@ -98,7 +96,7 @@ ws.finalize()
 
 sc = simplecrop_cli.SimpleCrop()
 sc.initialize()
-sc.set_value('surface_water__depth', ws.get_value('surface_water__depth'))
+sc.set_value('infiltration_water__depth', ws.get_value('surface_water__depth'))
 sc.update()
 sc.finalize()
 ```  
@@ -123,14 +121,16 @@ ws.finalize()
 
 sc = simplecrop_cli.SimpleCrop(mt.NetCDFStoreWriter('simplecrop.nc'))
 sc.initialize()
-sc.set_value('surface_water__depth', ws.get_value('surface_water__depth'))
+sc.set_value('infiltration_water__depth', ws.get_value('surface_water__depth'))
 sc.update()
 sc.finalize()
 ``` 
 
 Notice that this example imports the meillionen_mt python library to build a store interface to access the results of the overland flow model using the same PyMT compatible getter interface.
 
-There is no general support for checking unit compatibility and storage compatibility yet but work will be done to ensure that units are checked and converted and the right storage format is used. 
+There is no general support for checking unit compatibility and storage compatibility yet but work will be done to ensure that units are checked and converted and the right storage format is used.
+
+In the near future work will focus on the development of improving Python interfaces and broadcasting. Right now you can ask for the name and size of a NetCDF store variable but indexing and slicing the variable are unavailable. Support for slices returning n-dimensional arrays with labels and dropped singleton dimensions as well as dataframes is being worked on.
 
 Contribute
 ----------
@@ -167,4 +167,4 @@ Be sure to follow our [contributor code of conduct](https://openmodelingfoundati
 
 ### Model Interoperability Toolkit (meillionen)
 
-The data interoperability project project is at https://github.com/openmodelingfoundation/meillionen. Clone it, make changes and contribute! Suggestions on APIs for how to query a data stores or example models to add to the documentation are also greatly appreciated. The project is still in the very early stages so don't expect any backwards compatibility until a basic data store query interface has been finalized.
+The data interoperability project project is at https://github.com/openmodelingfoundation/meillionen. Clone it, make changes and contribute! Suggestions on APIs for how to query a data stores (in Rust and Python) or example models to add to the documentation are also greatly appreciated. The project is still in the very early stages so don't expect any backwards compatibility until a basic data store query interface has been finalized.
