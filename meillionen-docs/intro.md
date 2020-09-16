@@ -5,7 +5,7 @@ The Open Modeling Foundation (OMF) is an alliance of modeling organizations that
 
 The OMF aims to provide standards and guidelines for
 
-- [Accessibility](https://openmodelingfoundation.github.io/standards/) - metadata, data and source code storage and retrieval standards
+- [Accessibility](https://openmodelingfoundation.github.io/standards/accessibility/) - metadata, data and source code storage and retrieval standards
 - [Documentation](https://openmodelingfoundation.github.io/standards/documentation/) - what needs to included in the description of a model (and how to extend the documentation standards)
 - [Interoperability](https://openmodelingfoundation.github.io/standards/interoperability/) - how to develop model components that allow for easy integration with other model components 
 - [Reproducibility](https://openmodelingfoundation.github.io/standards/reproducibility/) - how to make a model analysis repeatable given the same code, dependencies and data inputs
