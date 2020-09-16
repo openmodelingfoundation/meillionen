@@ -7,7 +7,7 @@ use std::path::Iter;
 use std::marker::PhantomData;
 use itertools::Itertools;
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Dimension {
     name: String,
     sz: usize

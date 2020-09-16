@@ -1,7 +1,9 @@
 #![cfg_attr(not(debug_assertions), deny(warnings))]
 
 use pyo3::prelude::*;
+use pyo3::exceptions;
 use std::fs::{File, create_dir_all};
+use itertools::Itertools;
 use std::path::Path;
 use std::io::{Write, BufReader, BufRead, BufWriter};
 use std::io;
@@ -9,10 +11,14 @@ use std::process::{Command, Child};
 use ndarray::{Array1, Array3};
 use std::ops::Index;
 use std::slice::SliceIndex;
-use meillionen_mt::{IntoPandas, FromPandas, Variable, SliceType};
+use meillionen_mt::{IntoPandas, FromPandas, Variable, SliceType, Dimension};
 use meillionen_mt_derive::{IntoPandas, FromPandas};
+use crate::data::F64CDFVariableRef;
+use std::convert::{TryFrom, TryInto};
+use std::env::var;
+use eyre::WrapErr;
 
-#[derive(Debug, Default, PartialEq, FromPandas)]
+#[derive(Clone, Debug, Default, PartialEq, FromPandas)]
 pub struct DailyData {
     // irrigation related
     pub irrigation: Array1<f32>,
@@ -37,8 +43,7 @@ impl DailyData {
     }
 
     pub fn save_weather<W: Write>(&self, buf: &mut W) -> io::Result<()> {
-        let i = 0;
-        for obs in 0..self.temp_max.len() {
+        for i in 0..self.temp_max.len() {
             let row = format!(
                 "{:5}  {:>4.1}  {:>4.1}  {:>4.1}{:>6.1}              {:>4.1}\n",
                 i+1, self.energy_flux[i], self.temp_max[i], self.temp_min[i],
@@ -194,8 +199,8 @@ impl SoilDataSetBuilder {
         Some(())
     }
 
-    fn load<P: AsRef<Path>>(p: P) -> io::Result<Self> {
-        let f = File::open(p)?;
+    fn load<P: AsRef<Path>>(p: P) -> eyre::Result<Self> {
+        let f = File::open(&p).map_err(|e| eyre::eyre!("Could not open {}. {}", p.as_ref().to_string_lossy(), e.to_string()))?;
         let rdr = BufReader::new(f);
         let mut results = SoilDataSetBuilder::default();
         for line in rdr.lines().skip(6) {
@@ -252,8 +257,10 @@ impl PlantDataSetBuilder {
         Some(())
     }
 
-    fn load<P: AsRef<Path>>(p: P) -> io::Result<Self> {
-        let f = File::open(p)?;
+    fn load<P: AsRef<Path>>(p: P) -> eyre::Result<Self> {
+        println!("Current Directory: {}", std::env::current_dir().unwrap().display());
+        let f = File::open(&p)
+            .map_err(|e| eyre::eyre!("Could not open {}. {}", p.as_ref().to_string_lossy(), e.to_string()))?;
         let rdr = BufReader::new(f);
         let mut results = PlantDataSetBuilder::default();
         for line in rdr.lines().skip(9) {
@@ -284,7 +291,7 @@ pub struct SimpleCropDataSet {
 }
 
 impl SimpleCropDataSet {
-    pub fn load<P: AsRef<Path>>(p: P) -> io::Result<Self> {
+    pub fn load<P: AsRef<Path>>(p: P) -> eyre::Result<Self> {
         let op = p.as_ref().join("output");
         create_dir_all(&op)?;
         let plant = PlantDataSetBuilder::load(&op.join("plant.out"))?;
@@ -326,120 +333,132 @@ impl SimpleCropDataSet {
     }
 }
 
-const SET_VARS: [&str; 6] = [
-    // weather
-    "air__max_temperature",
-    "air__min_temperature",
-    "rainfall~daily__height",
-    "soil_top_level_solar_radiation~net~photosynthetic__energy_flux",
-    "soil_top_level_solar_radiation~net__energy_flux",
-
-    // irrigation
-    "irrigation~daily__height",
-];
-
-const GET_VARS: [&str; 15] = [
-    "plant_matter~dry__mass-per-area", // w
-    "plant_matter_canopy~dry__mass-per-area", // wc
-    "plant_matter_fruit~dry__mass-per-area", // wf
-    "plant_matter_root~dry__mass-per-area", // wr
-    "air__daily_accumulated_temperature", // int
-    "plant__leaf_area_index", // lai
-
-    "soil__one-day_runoff_depth", // rof
-    "soil__one-day_infiltration_depth", // inf
-    "soil_subsurface__one-day_drainage_depth", // drn
-    "plant__one-day_potential_transpiration_depth", // ept
-    "soil__one-day_evaporation_depth", // esa
-    "plant__one-day_transpiration_depth", // epa
-    "soil__water_storage_depth", // swc
-    "soil__water_deficit_stress_factor", // swfac1
-    "soil__water_excess_stress_factor" // swfac2
-];
-
-
 pub struct SimpleCropConfig {
     pub daily: DailyData,
     pub yearly: YearlyData
 }
 
 impl SimpleCropConfig {
-    fn save<P: AsRef<Path>>(&self, dir: P) -> io::Result<()> {
+    fn save<P: AsRef<Path>>(&self, dir: P) -> eyre::Result<()> {
         let dp = dir.as_ref().join("data");
         create_dir_all(&dp)?;
         let write_f = |path: &str| File::create(&dp.join(path)).map(|f| BufWriter::new(f)).unwrap();
 
         let mut weather_buf = write_f("weather.inp");
-        self.daily.save_weather(&mut weather_buf)?;
+        self.daily.save_weather(&mut weather_buf).wrap_err("weather save failed")?;
 
         let mut irrigation_buf = write_f("irrig.inp");
-        self.daily.save_irrigation(&mut irrigation_buf)?;
+        self.daily.save_irrigation(&mut irrigation_buf).wrap_err("irrigation save failed")?;
 
         let mut plant_buf = write_f("plant.inp");
-        self.yearly.save_plant_config(&mut plant_buf)?;
+        self.yearly.save_plant_config(&mut plant_buf).wrap_err("plant save failed")?;
 
         let mut soil_buf = write_f("soil.inp");
-        self.yearly.save_soil_config(&mut soil_buf)?;
+        self.yearly.save_soil_config(&mut soil_buf).wrap_err("soil save failed")?;
 
         let mut simctrl_buf = write_f("simctrl.inp");
-        self.yearly.save_simulation_config(&mut simctrl_buf)?;
+        self.yearly.save_simulation_config(&mut simctrl_buf).wrap_err("simctrl save failed")?;
         Ok(())
     }
 
-    pub fn run(&self, cli_path: impl AsRef<Path>, dir: impl AsRef<Path>) -> io::Result<SimpleCropDataSet> {
+    pub fn run(&self, cli_path: impl AsRef<Path>, dir: impl AsRef<Path>) -> eyre::Result<()> {
+        let cli_path = cli_path
+            .as_ref().canonicalize()
+            .map_err(|e| eyre::eyre!(e.to_string()))?;
         self.save(&dir);
-        let r = Command::new(cli_path.as_ref()).current_dir(&dir).spawn()?;
-        let data = SimpleCropDataSet::load(&dir)?;
-        Ok(data)
+        create_dir_all(&dir.as_ref().join("output"));
+        let r = Command::new(cli_path)
+            .current_dir(&dir).spawn()?;
+        Ok(())
     }
-}
-
-pub struct GridRunner<T> {
-    dims: Vec<String>,
-    dims_in_grid: Vec<String>,
-    pub model: T
 }
 
 #[pyclass]
-pub struct SimpleCropModel {
-    infiltrated_water: Option<Box<dyn Variable<Index=Vec<usize>, Elem=f32> + Send>>
-}
-
-impl SimpleCropModel {
-    fn set_infiltrated_water(&mut self, infiltrated_water: Box<dyn Variable<Index=Vec<usize>, Elem=f32> + Send>) {
-        self.infiltrated_water = Some(infiltrated_water);
-    }
-
-    fn run(&self, cli_path: impl AsRef<Path>) {
-        let dd = DailyData::default();
-        let yd = YearlyData::default();
-
-        if let Some(infiltrated_water) = &self.infiltrated_water {
-            let dimensions = infiltrated_water.get_dimensions();
-            let x_range = &dimensions[0].size();
-            let y_range = &dimensions[0].size();
-
-            for x in 0..*x_range {
-                for y in 0..*y_range {
-                    let index = vec![x, y];
-                    let infiltrated_cell = infiltrated_water.slice(&index);
-                    println!("{} {} {}", x, y, infiltrated_cell)
-                }
-            }
-        }
-    }
+pub struct SimpleCrop {
+    cli_path: String,
+    infiltrated_water: Option<F64CDFVariableRef>,
+    daily: DailyData,
+    dims: Vec<Dimension>,
+    dims_in_grid: Vec<Dimension>,
+    dim_positions: Vec<usize>
 }
 
 #[pymethods]
-impl SimpleCropModel {
+impl SimpleCrop {
     #[new]
-    pub fn __init__() -> Self {
-        Self {
-            infiltrated_water: None
-        }
+    pub fn __init__(cli_path: String, daily_data: &PyAny) -> PyResult<SimpleCrop> {
+        let daily = DailyData::from_pandas(daily_data)?;
+        Ok(Self {
+            cli_path,
+            infiltrated_water: None,
+            daily,
+            dims: vec![],
+            dims_in_grid: vec![],
+            dim_positions: vec![]
+        })
     }
 
-    pub fn set_variable(&mut self, var_ref: &str) {}
+    pub fn set_value(mut self_: PyRefMut<Self>, variable_name: &str, variable: F64CDFVariableRef) -> PyResult<()> {
+        if variable_name != "infiltration_water__depth" {
+            return Err(exceptions::KeyError::py_err(
+                format!("{} is not a valid variable name. Only infiltration_water__depth is a valid name", variable_name)))
+        }
+        let variable = variable.clone();
+        self_.infiltrated_water = Some(variable.clone());
+        self_.dims = variable.clone().get_dimensions();
+        let dim_positions = variable.clone().get_dimensions().into_iter().enumerate().filter(|(i, d)| d.name() != "time").collect::<Vec<(usize, Dimension)>>();
+        println!("{:?}", dim_positions);
+        self_.dims_in_grid = dim_positions.clone().into_iter().map(|(p, d)| d.clone()).collect();
+        self_.dim_positions = dim_positions.clone().into_iter().map(|(p, d)| p).collect();
+        Ok(())
+    }
+
+    pub fn initialize(self_: PyRef<Self>) {}
+    pub fn finalize(self_: PyRef<Self>) {}
+
+    pub fn update(self_: PyRef<Self>) -> PyResult<()> {
+        self_.run().map_err(|e| exceptions::IOError::py_err(e.to_string()))
+    }
+}
+
+impl SimpleCrop {
+    fn set_infiltrated_water(&mut self, infiltrated_water: F64CDFVariableRef) {
+        self.infiltrated_water = Some(infiltrated_water);
+    }
+
+    fn run(&self) -> eyre::Result<()> {
+        let cli_path = Path::new(self.cli_path.as_str()).canonicalize().unwrap();
+        let dir = std::env::current_dir().unwrap();
+        let mut ranges = self.dims_in_grid.iter().map(|d| 0..d.size()).collect::<Vec<_>>();
+        let infiltrated_water_all = self.infiltrated_water.as_ref().ok_or_else(|| eyre::eyre!("infiltrated_water not set"))?;
+        let mut i: i32 = 0;
+        let err = ranges.into_iter().multi_cartesian_product()
+            .map(|inds| {
+                println!("{:?} {}", inds.as_slice(), std::env::current_dir().unwrap().display());
+                let mut slice = Array1::<SliceType>::default(self.dims.len());
+                for (i, pos) in self.dim_positions.iter().enumerate() {
+                    slice[i] = SliceType::Index(pos.clone());
+                }
+                let infiltrated_water = infiltrated_water_all.slice(&slice.to_vec());
+                let mut daily = self.daily.clone();
+                daily.rainfall = Array1::from(infiltrated_water.into_raw_vec().iter()
+                    .map(|f| (100000f64 * f.clone()) as f32).collect::<Vec<_>>());
+                println!("Array {:?}", daily.rainfall);
+                let yearly = YearlyData::default();
+                let config = SimpleCropConfig { daily, yearly };
+                let result = config.run(&cli_path, &dir.join("runs").join(i.to_string()));
+                i += 1;
+                if let Err(e) = result {
+                    return Err(eyre::eyre!(e.to_string()));
+                }
+                Ok(())
+            })
+            .find(Result::is_err);
+        if let Some(e) = err {
+            return e;
+        }
+        Ok(())
+    }
 }
 
 fn write_surface_water() {

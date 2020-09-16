@@ -18,17 +18,20 @@ It also works to achieve those aims through
 - teaching materials
 - development of libraries for model interoperability and reproducibility
 
-Modeling Interoperability Toolkit Goals
----------------------------------------
+Modeling Data Interoperability Toolkit Goals
+--------------------------------------------
 
 1. Reduce the burden of coupling computational models written in different frameworks and languages for model consumers
 2. Have a low barrier to entry for model developers to make their models couple easily with other standards adopting models
 3. Support for basic metadata standards so that modellers can find models they're interested in.
-4. Agnostic to execution strategy - allow for use is workflow manager for DAG jobs, support models with two-way coupling as well 
+4. Agnostic to execution strategy - allow for use in workflow manager for DAG jobs, support models with two-way coupling as well
+5. Only deal with data access to make it possible to integrate with multiple frameworks. 
 
 The pre-alpha [meillionen](https://github.com/openmodelingfoundation/meillionen) data communication library is in the early stages of attempting to address those goals when used alongside an existing modelling toolkit like [PyMT](https://pymt.readthedocs.io/en/latest/). A more complete version of `meillionen` would have
 
 - A data access library that can be embedded in Python (and eventually other languages like R and Julia) to facilitate passing data between model components. At minimum it would need to support passing tabular and tensor data by file and by memory (by network would also be great to support)
+- Support reading and writing data
+- Support units of measure and storage type conversion
 - Case Studies to show how to couple models and how to adapt existing models into the framework
 - Documentation for how to use with existing and new models
 - Documentation for how to use with different compute environments
@@ -57,72 +60,77 @@ The overall code need to couple the overland flow model with the SimpleCrop mode
 
 ```python
 from landlab.components.overland_flow import Overland
-import simplecrop_cli_python
-import meillionen_mt as mt
+import simplecrop_cli
+import simplecrop_cli as mt
 
 days_with_rain = get_days_with_rain_data()
 
-of = Overland(mt.NetCDFStoreWriter('overland.nc'))
+of = Overland()
 of.set_value('rainfall__depth', days_with_rain)
 of.initialize()
 of.update()
 of.finalize()
 
-sc = simplecrop_cli_python.SimpleCrop(mt.NetCDFStoreWriter('simplecrop.nc'))
+sc = simplecrop_cli.SimpleCrop()
 sc.initialize()
 sc.set_value('surface_water__depth', of.get_value('surface_water__depth'))
 sc.update()
 sc.finalize()
 ```
 
-Since the overall model has only one-way model coupling these model component runs be separated and run in a Makefile. This
-would look like
-
-```makefile
-overland.nc: overland.py
-    python3 overland.py
-
-simplecrop.nc: simplecrop.py overland.nc
-    python3 simplecrop.py
-```
-
-```python
-from landlab.components.overland_flow import Overland
-import meillionen_mt as mt
-
-days_with_rain = get_days_with_rain_data()
-
-of = Overland(mt.NetCDFStoreWriter('overland.nc'))
-of.set_value('rainfall__depth', days_with_rain)
-of.initialize()
-of.update()
-of.finalize()
-```
-
-```python
-import simplecrop_cli_python
-import meillionen_mt as mt
-
-of = mt.NetCDFStore('overland.nc')
-
-sc = simplecrop_cli_python.SimpleCrop(mt.NetCDFStoreWriter('simplecrop.nc'))
-sc.initialize()
-sc.set_value('surface_water__depth', of.get_value('surface_water__depth'))
-sc.update()
-sc.finalize()
-```
-
-Notice that the example imports the meillionen_mt python library to build a store interface to access the results of the overland flow model using the same PyMT compatible getter interface.
-
-There is no general support for checking unit compatibility and storage compatibility yet but work will be done to ensure that units are checked and converted and the right storage format is used. 
+Data passing here follows PyMT conventions. Data flows from the overland flow model to the SimpleCrop model by getting the `surface_water__depth` from the overland flow model and settings it to the SimpleCrop model's `surface_water__depth`  variable. The SimpleCrop model performs automatic broadcasting on th dimensions of the `surface_water__depth` variable passed in when running SimpleCrop. Since the output `surface_water__depth` variable from overland flow has `x`, `y`, and `time` dimensions and the SimpleCrop model input expects data with only a `time` dimension the SimpleCrop class must broadcast over the `x`, `y` dimensions and run the SimpleCrop model for each `x` and `y`. 
 
 The current structure of SimpleCrop requires that a year's worth of data. If SimpleCrop could take a day's worth of data at a time then it should be possible to have an example of using SimpleCrop in a double coupling context where evaporation from the plants has an impact on the weather. This would benefit from a different store class that allowed passing data between components over the network. Apache Arrow supports passing tensors and tabular data so it seems like it would be a good choice making it possible to pass the same data the surface water depth by day vectors that are currently needed by the SimpleCrop model.
 
-Suppose that you wanted to use a different water accumulation method for taking a topography and precipitation data to return a the amount of water that infiltrated the soil for all cells in the study area. If GRASS's `r.watershed` model was it could look something like
+Suppose that you wanted to use a different water accumulation method for taking a topography and precipitation data to return a the amount of water that infiltrated the soil for all cells in the study area. If GRASS's `r.watershed` model had a PyMT wrapper it could look something like
 
 ```python
 from grass import Watershed
+import simplecrop_cli
+
+days_with_rain = get_days_with_rain_data()
+
+ws = Watershed()
+ws.set_value('rainfall__depth', days_with_rain)
+ws.initialize()
+ws.update()
+ws.finalize()
+
+sc = simplecrop_cli.SimpleCrop()
+sc.initialize()
+sc.set_value('surface_water__depth', ws.get_value('surface_water__depth'))
+sc.update()
+sc.finalize()
 ```  
+
+Note that the only thing you would have to do is import a different model
+and run the model.
+
+Currently the framework does not have any write support for data stores. With write support it would look something like
+
+```python
+from grass import Watershed
+import simplecrop_cli
+import meillionen_mt as mt
+
+days_with_rain = get_days_with_rain_data()
+
+ws = Watershed(mt.NetCDFStoreWriter('overland.nc'))
+ws.set_value('rainfall__depth', days_with_rain)
+ws.initialize()
+ws.update()
+ws.finalize()
+
+sc = simplecrop_cli.SimpleCrop(mt.NetCDFStoreWriter('simplecrop.nc'))
+sc.initialize()
+sc.set_value('surface_water__depth', ws.get_value('surface_water__depth'))
+sc.update()
+sc.finalize()
+``` 
+
+Notice that this example imports the meillionen_mt python library to build a store interface to access the results of the overland flow model using the same PyMT compatible getter interface.
+
+There is no general support for checking unit compatibility and storage compatibility yet but work will be done to ensure that units are checked and converted and the right storage format is used. 
 
 Contribute
 ----------

@@ -59,6 +59,7 @@ impl TryFrom<&Path> for CDFStore {
     type Error = eyre::Report;
 
     fn try_from(value: &Path) -> Result<Self, Self::Error> {
+        println!("{}", value.to_str().unwrap());
         let file = Arc::new(netcdf::open(value).wrap_err(format!("CDFStore {} could not be created", value.to_str().unwrap()))?);
         Ok(Self {
             file

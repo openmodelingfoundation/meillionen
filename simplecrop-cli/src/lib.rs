@@ -11,6 +11,7 @@ use ndarray::Array1;
 use meillionen_mt::{IntoPandas, FromPandas};
 use meillionen_mt_derive::{IntoPandas, FromPandas};
 use crate::data::{F64CDFVariableRef, CDFStore};
+use crate::model::SimpleCrop;
 
 #[pyclass]
 #[derive(Debug)]
@@ -29,7 +30,7 @@ pub struct Coords {
     ys: Array1<i64>
 }
 
-fn run<'a>(py: Python<'a>, cli_path: String, daily_data: &PyAny) -> PyResult<&'a PyAny> {
+fn run(py: Python, cli_path: String, daily_data: &PyAny) -> PyResult<()> {
     // 365 days of weather
     let daily = DailyData::from_pandas(daily_data)?;
 
@@ -40,12 +41,11 @@ fn run<'a>(py: Python<'a>, cli_path: String, daily_data: &PyAny) -> PyResult<&'a
         yearly
     };
 
-    let results = config.run(
+    Ok(config.run(
         &cli_path,
     ".",
         )
-        .map_err(|e| exceptions::IOError::py_err(e.to_string()))?;
-    results.into_python(py)
+        .map_err(|e| exceptions::IOError::py_err(e.to_string()))?)
 }
 
 #[pymodule]
@@ -53,10 +53,11 @@ fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PySimpleCropDataSet>()?;
     m.add_class::<F64CDFVariableRef>()?;
     m.add_class::<CDFStore>()?;
+    m.add_class::<SimpleCrop>()?;
 
     #[pyfn(m, "run")]
     #[text_signature = "(cli_path, daily_data)"]
-    fn run_py<'a>(_py: Python<'a>, cli_path: String, daily_data: &PyAny) -> PyResult<&'a PyAny> {
+    fn run_py(_py: Python, cli_path: String, daily_data: &PyAny) -> PyResult<()> {
         run(_py, cli_path, daily_data)
     }
 
