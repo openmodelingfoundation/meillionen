@@ -442,7 +442,7 @@ impl SimpleCrop {
                 let infiltrated_water = infiltrated_water_all.slice(&slice.to_vec());
                 let mut daily = self.daily.clone();
                 daily.rainfall = Array1::from(infiltrated_water.into_raw_vec().iter()
-                    .map(|f| (100000f64 * f.clone()) as f32).collect::<Vec<_>>());
+                    .map(|f| (100f64 * f.clone()) as f32).collect::<Vec<_>>());
                 println!("Array {:?}", daily.rainfall);
                 let yearly = YearlyData::default();
                 let config = SimpleCropConfig { daily, yearly };
