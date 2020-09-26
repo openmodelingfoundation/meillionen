@@ -3,6 +3,15 @@ title: "Presentation: Open Modeling Foundation Standards and Toolkits"
 author: Open Modeling Foundation
 logo: logo.png
 
+html:
+  use_edit_page_button: true
+  use_issues_button: true
+  use_repository_button: true
+
 latex:
   latex_documents:
     targetname: book.tex
+
+repository:
+  url: https://github.com/openmodelingfoundation/meillionen
+  path_to_book: meillionen-docs
