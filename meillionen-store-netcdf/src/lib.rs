@@ -7,6 +7,8 @@ use thiserror::Error;
 use std::convert::TryFrom;
 use std::collections::BTreeMap;
 use std::fmt::Display;
+use itertools::Itertools;
+use std::borrow::BorrowMut;
 
 #[derive(Error, Debug)]
 pub enum SchemaValidation {
@@ -25,6 +27,20 @@ pub enum StoreRetrieveError {
         expected: usize,
         received: usize
     },
+    #[error("variable {0} not found")]
+    NotFound(String)
+}
+
+#[derive(Error, Debug)]
+pub enum SourcePutError {
+    #[error("type mismatch for variable {name}, expected {expected:?} but received {received:?}")]
+    TypeMismatch {
+        name: String,
+        expected: VarType,
+        received: VarType
+    },
+    #[error("library from base error library {0}")]
+    Base(String),
     #[error("variable {0} not found")]
     NotFound(String)
 }
@@ -104,7 +120,7 @@ impl Schema {
 
 trait Source {
     fn schema(&self) -> &Schema;
-    fn put_into(&mut self, q: &Query, rb: &RecordBatch) -> Option<String>;
+    fn put_into(&mut self, q: &Query, rb: &RecordBatch) -> Result<(), SourcePutError>;
     fn retrieve(&self, q: &Query) -> Result<RecordBatch, StoreRetrieveError>;
     fn variables(&self) -> Vec<String>;
 }
@@ -141,48 +157,125 @@ impl Query {
     }
 }
 
+#[derive(Debug)]
+pub struct CDFSliceData {
+    pub capacity: usize,
+    pub indices: Vec<usize>,
+    pub slice_len: Vec<usize>,
+    pub strides: Vec<isize>
+}
+
 pub struct CDFSource {
     pub schema: Schema,
-    pub file: Arc<netcdf::File>
+    pub file: netcdf::MutableFile
 }
 
 impl CDFSource {
     pub fn try_new(path: String, schema: Schema) -> netcdf::error::Result<Self> {
-        let file = Arc::new(netcdf::open(path)?);
+        let file = netcdf::append(path)?;
         Ok(Self {
             schema,
             file
         })
     }
 
-    fn retrieve_f64(variable: &netcdf::Variable, capacity: usize, indices: &[usize], slice_len: &[usize], strides: &[isize]) -> ArrayRef {
-        let mut b = vec![0f64; capacity];
-        let n = slice_len.len();
+    fn retrieve_f64(variable: &netcdf::Variable, sd: &CDFSliceData) -> ArrayRef {
+        let mut b = vec![0f64; sd.capacity];
+        let n = sd.slice_len.len();
 
-        variable.values_strided_to(b.as_mut_slice(), Some(indices), Some(slice_len), strides).unwrap();
+        variable.values_strided_to(
+            b.as_mut_slice(),
+            Some(sd.indices.as_slice()),
+            Some(sd.slice_len.as_slice()),
+            sd.strides.as_slice()).unwrap();
 
         let mut res = Float64Builder::new(n);
         res.append_slice(b.as_slice());
         Arc::new(res.finish())
     }
 
-    fn retrieve_i64(variable: &netcdf::Variable, capacity: usize, indices: &[usize], slice_len: &[usize], strides: &[isize]) -> ArrayRef {
-        let mut b = vec![0i64; capacity];
-        let n = slice_len.len();
+    fn retrieve_i64(variable: &netcdf::Variable, sd: &CDFSliceData) -> ArrayRef {
+        let mut b = vec![0i64; sd.capacity];
+        let n = sd.slice_len.len();
 
-        variable.values_strided_to(b.as_mut_slice(), Some(indices), Some(slice_len), strides).unwrap();
+        variable.values_strided_to(
+            b.as_mut_slice(),
+            Some(sd.indices.as_slice()),
+            Some(sd.slice_len.as_slice()),
+            sd.strides.as_slice()).unwrap();
 
         let mut res= Int64Builder::new(n);
         res.append_slice(b.as_slice());
         Arc::new(res.finish())
     }
 
-    fn retrieve_str(variable: &netcdf::Variable, capacity: usize, indices: &[usize], slice_len: &[usize], strides: &[isize]) -> ArrayRef {
-        let mut b = arrow::array::StringBuilder::new(capacity);
-        // let n = slice_len.len();
-        //
-        // variable.values_strided_to(b.into(), Some(indices), Some(slice_len), strides).unwrap();
+    fn retrieve_str(variable: &netcdf::Variable, sd: &CDFSliceData) -> ArrayRef {
+        let mut b = arrow::array::StringBuilder::new(sd.capacity);
         Arc::new(b.finish())
+    }
+
+    fn put_f64(variable: &mut netcdf::VariableMut, name: &str, data: &ArrayRef, sd: &CDFSliceData) -> Result<(), SourcePutError> {
+        use SourcePutError::*;
+        let arr = data.as_any()
+            .downcast_ref::<Float64Array>()
+            .ok_or_else(|| TypeMismatch {
+                name: name.to_string(),
+                expected: VarType::F64,
+                received: VarType::from_arrow(data.data_type()).unwrap()
+            })?;
+        let slice = arr.value_slice(0, arr.len());
+        variable
+            .put_values_strided(slice, Some(&sd.indices), Some(&sd.slice_len), &sd.strides)
+            .map_err(|e| Base(e.to_string()))?;
+        Ok(())
+    }
+
+    fn put_i64(variable: &mut netcdf::VariableMut, name: &str, data: &ArrayRef, sd: &CDFSliceData) -> Result<(), SourcePutError> {
+        use SourcePutError::*;
+        let arr = data.as_any()
+            .downcast_ref::<Int64Array>()
+            .ok_or_else(|| TypeMismatch {
+                name: name.to_string(),
+                expected: VarType::I64,
+                received: VarType::from_arrow(data.data_type()).unwrap()
+            })?;
+        let slice = arr.value_slice(0, arr.len());
+        variable
+            .put_values_strided(slice, Some(&sd.indices), Some(&sd.slice_len), &sd.strides)
+            .map_err(|e| Base(e.to_string()))?;
+        Ok(())
+    }
+
+    fn put_str(variable: &mut netcdf::VariableMut, name: &str, data: &ArrayRef, sd: &CDFSliceData) -> Result<(), SourcePutError> {
+        Ok(())
+    }
+
+    fn build_slice(variable: &netcdf::Variable, q: &Query) -> CDFSliceData {
+        let n = variable.dimensions().len();
+        let slices = variable.dimensions().iter()
+            .map(|d|
+                q.get_filter(d.name().as_str())
+                    .map(|f| 1)
+                    .unwrap_or(d.len())
+            );
+
+        let slice_len = slices.collect::<Vec<usize>>();
+        let capacity: usize = slice_len.iter().product();
+
+        let indices = variable.dimensions().iter()
+            .map(|d| {
+                q.get_filter(d.name().as_str()).map(|f| f.i).unwrap_or(0)
+            })
+            .collect::<Vec<usize>>();
+
+        let strides: Vec<isize> = vec![1; n];
+
+        CDFSliceData {
+            capacity,
+            indices,
+            slice_len,
+            strides
+        }
     }
 
     fn validate(&self, rb: &RecordBatch) -> Result<(), Vec<SchemaValidation>> {
@@ -204,7 +297,6 @@ impl CDFSource {
             return Err(errors)
         }
         Ok(())
-
     }
 }
 
@@ -213,15 +305,26 @@ impl Source for CDFSource {
         &self.schema
     }
 
-    fn put_into(&mut self, q: &Query, rb: &RecordBatch) -> Option<String> {
-        let s = self.schema();
-        let schema = rb.schema();
-        for f in schema.fields() {
-            let tp = s.get_type(f.name());
+    fn put_into(&mut self, q: &Query, rb: &RecordBatch) -> Result<(), SourcePutError> {
+        use SourcePutError::{NotFound};
+        let fname= &q.select;
+        let (pos, field) = rb.schema().fields().iter()
+            .find_position(|f| f.name() == fname)
+            .ok_or_else(|| NotFound(fname.to_string()))?;
+        let data = rb.column(pos);
 
+        let mut variable = self.file.variable_mut(fname).ok_or_else(|| NotFound(fname.to_string()))?;
+        let sd = CDFSource::build_slice(&variable, q);
+
+        if let Some(vt) = VarType::from_arrow(data.data_type()) {
+             let r = match vt {
+                 VarType::F64 => CDFSource::put_f64(&mut variable, fname, data, &sd),
+                 VarType::I64 => CDFSource::put_i64(&mut variable, fname, data, &sd),
+                 VarType::String => CDFSource::put_str(&mut variable, fname, data, &sd)
+             };
+             return r
         }
-
-        None
+        Ok(())
     }
 
     fn retrieve(&self, q: &Query) -> Result<RecordBatch, StoreRetrieveError> {
@@ -234,31 +337,15 @@ impl Source for CDFSource {
         }
         let tp = self.schema.get_type(q.select.as_ref()).ok_or_else(|| StoreRetrieveError::NotFound(q.select.clone()))?;
 
-        let slices = variable.dimensions().iter()
-            .map(|d|
-                q.get_filter(d.name().as_str())
-                    .map(|f| 1)
-                    .unwrap_or(d.len())
-            );
+        let sd = CDFSource::build_slice(&variable, q);
 
-        let slice_len = slices.collect::<Vec<usize>>();
-        let capacity: usize = slice_len.iter().product();
-
-        let indices = variable.dimensions().iter()
-            .map(|d| {
-                q.get_filter(d.name().as_str()).map(|f| f.i).unwrap_or(0)
-            })
-            .collect::<Vec<usize>>();
-
-        let strides: Vec<isize> = vec![1; n];
-
-        println!("indices: {:?}", indices);
-        println!("slice_len: {:?}", slice_len);
-        println!("strides: {:?}", strides);
+        println!("indices: {:?}", sd.indices);
+        println!("slice_len: {:?}", sd.slice_len);
+        println!("strides: {:?}", sd.strides);
         let r: ArrayRef = match tp {
-            VarType::F64 => CDFSource::retrieve_f64(&variable, capacity, indices.as_slice(), slice_len.as_slice(), strides.as_slice()),
-            VarType::I64 => CDFSource::retrieve_i64(&variable, capacity, indices.as_slice(), slice_len.as_slice(), strides.as_slice()),
-            VarType::String => CDFSource::retrieve_str(&variable, capacity, indices.as_slice(), slice_len.as_slice(), strides.as_slice())
+            VarType::F64 => CDFSource::retrieve_f64(&variable, &sd),
+            VarType::I64 => CDFSource::retrieve_i64(&variable, &sd),
+            VarType::String => CDFSource::retrieve_str(&variable, &sd)
         };
 
         let schema = self.schema.to_schema();
@@ -303,8 +390,8 @@ impl ProxySource {
 impl Source for ProxySource {
     fn schema(&self) -> &Schema { &self.schema }
 
-    fn put_into(&mut self, q: &Query, rb: &RecordBatch) -> Option<String> {
-        None
+    fn put_into(&mut self, q: &Query, rb: &RecordBatch) -> Result<(), SourcePutError> {
+        Ok(())
     }
 
     fn retrieve(&self, q: &Query) -> Result<RecordBatch, StoreRetrieveError> {
@@ -326,11 +413,11 @@ impl Source for ProxySource {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use arrow::array::Float64Array;
+    use arrow::array::{Float64Array, Float64BufferBuilder, BufferBuilderTrait};
 
     #[test]
-    fn slice() {
-        let filename = "netcdf-store-ex.nc";
+    fn retrieve() {
+        let filename = "netcdf-store-retrieve.nc";
         {
             std::fs::remove_file(filename).unwrap_or_default();
             let mut f = netcdf::create(filename).unwrap();
@@ -359,5 +446,57 @@ mod tests {
             .unwrap();
         let vals = slice.value_slice(0, slice.len());
         assert_eq!(vals, &[0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0, 105.0, 120.0, 135.0])
+    }
+
+    #[test]
+    fn put() {
+        use arrow::datatypes as dt;
+        use arrow::array::Float64Array;
+        let filename = "netcdf-store-put.nc";
+        {
+            std::fs::remove_file(filename).unwrap_or_default();
+            let mut f = netcdf::create(filename).unwrap();
+            f.add_dimension("time", 10).unwrap();
+            f.add_dimension("y", 5).unwrap();
+            f.add_dimension("x", 3).unwrap();
+            let mut v = f.add_variable::<f64>("surface_water__depth", &["time", "y", "x"]).unwrap();
+            // write all input rainfall data for each raster cell at time t=0
+            v.put_values_strided((0..150).into_iter().map(|e| e as f64).collect::<Vec<f64>>().as_slice(),
+                                 Some(&[0,0,0]), Some(&[10,5,3]), &[1,1,1]).unwrap();
+        }
+        let mut source = CDFSource::try_new(
+            filename.to_string(),
+            Schema::new(vec![
+                Var::new("surface_water__depth".to_string(), VarType::F64),
+            ]))
+            .unwrap();
+        let q = Query::new(
+            "surface_water__depth".to_string(),
+                  vec![Filter::new("y".to_string(), 0), Filter::new("x".to_string(), 0)]);
+        let rb = RecordBatch::try_new(
+            Arc::new(dt::Schema::new(
+                vec![
+                    dt::Field::new(
+                        "surface_water__depth",
+                        dt::DataType::Float64,
+                        false)
+                ])),
+                vec![
+                    {
+                        let mut b = Float64Builder::new(10);
+                        b.append_slice(&[500f64; 10]);
+                        Arc::new(b.finish())
+                    }
+                ]
+        ).unwrap();
+        source.put_into(&q, &rb);
+        let rb = source.retrieve(&q).unwrap();
+        let slice = rb
+            .column(0)
+            .as_any()
+            .downcast_ref::<Float64Array>()
+            .unwrap();
+        let vals = slice.value_slice(0, slice.len());
+        assert_eq!(vals, &[500f64; 10])
     }
 }
