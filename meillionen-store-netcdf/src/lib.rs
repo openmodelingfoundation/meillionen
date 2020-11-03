@@ -4,10 +4,23 @@ use netcdf::Variable;
 use arrow::datatypes;
 use arrow::array::{ArrayRef, Int64Array, Int64Builder, Float64Builder, Float64Array};
 use thiserror::Error;
+use std::convert::TryFrom;
+use std::collections::BTreeMap;
+use std::fmt::Display;
+
+#[derive(Error, Debug)]
+pub enum SchemaValidation {
+    #[error("type mismatch in column {name:?}, expected {expected:?} received {received:?}")]
+    TypeMismatch {
+        name: String,
+        expected: VarType,
+        received: VarType
+    }
+}
 
 #[derive(Error, Debug)]
 pub enum StoreRetrieveError {
-    #[error("dimension mismatch, expected {expected} but received {received}")]
+    #[error("dimension mismatch, expected {expected:?} but received {received:?}")]
     DimMismatch {
         expected: usize,
         received: usize
@@ -16,6 +29,7 @@ pub enum StoreRetrieveError {
     NotFound(String)
 }
 
+#[derive(Clone, Debug)]
 pub enum VarType {
     F64,
     I64,
@@ -30,8 +44,18 @@ impl VarType {
             VarType::String => datatypes::DataType::Utf8
         }
     }
+
+    fn from_arrow(dt: &datatypes::DataType) -> Option<Self> {
+        match dt {
+            datatypes::DataType::Float64 => Some(VarType::F64),
+            datatypes::DataType::Int64 => Some(VarType::I64),
+            datatypes::DataType::Utf8 => Some(VarType::String),
+            _ => None
+        }
+    }
 }
 
+#[derive(Clone)]
 pub struct Var {
     name: String,
     tp: VarType
@@ -61,6 +85,8 @@ impl Schema {
         Some(&self.vars.iter().find(|v| v.name == name)?.tp)
     }
 
+
+
     pub fn to_schema(&self) -> datatypes::SchemaRef {
         Arc::new(
             datatypes::Schema::new(
@@ -68,12 +94,19 @@ impl Schema {
                     .map(|v| datatypes::Field::new(v.name.as_ref(), v.tp.to_arrow(), false))
                     .collect()))
     }
+
+    pub(crate) fn add_vars(&mut self, schema: &Schema) {
+        for v in schema.vars.iter() {
+            self.vars.push(v.clone());
+        }
+    }
 }
 
-trait Store {
+trait Source {
     fn schema(&self) -> &Schema;
     fn put_into(&mut self, q: &Query, rb: &RecordBatch) -> Option<String>;
     fn retrieve(&self, q: &Query) -> Result<RecordBatch, StoreRetrieveError>;
+    fn variables(&self) -> Vec<String>;
 }
 
 pub struct Filter {
@@ -108,12 +141,12 @@ impl Query {
     }
 }
 
-pub struct CDFStore {
+pub struct CDFSource {
     pub schema: Schema,
     pub file: Arc<netcdf::File>
 }
 
-impl CDFStore {
+impl CDFSource {
     pub fn try_new(path: String, schema: Schema) -> netcdf::error::Result<Self> {
         let file = Arc::new(netcdf::open(path)?);
         Ok(Self {
@@ -149,17 +182,45 @@ impl CDFStore {
         // let n = slice_len.len();
         //
         // variable.values_strided_to(b.into(), Some(indices), Some(slice_len), strides).unwrap();
-
         Arc::new(b.finish())
+    }
+
+    fn validate(&self, rb: &RecordBatch) -> Result<(), Vec<SchemaValidation>> {
+        use SchemaValidation::TypeMismatch;
+        let mut errors = Vec::new();
+        for f in rb.schema().fields() {
+            if let Some(s) = self.schema.get_type(f.name()) {
+                if s.to_arrow() != f.data_type().clone() {
+                    VarType::from_arrow(f.data_type())
+                        .map(|vt| TypeMismatch {
+                            name: f.name().clone(),
+                            expected: s.clone(),
+                            received: VarType::F64
+                        });
+                }
+            }
+        }
+        if errors.len() > 0 {
+            return Err(errors)
+        }
+        Ok(())
+
     }
 }
 
-impl Store for CDFStore {
+impl Source for CDFSource {
     fn schema(&self) -> &Schema {
         &self.schema
     }
 
     fn put_into(&mut self, q: &Query, rb: &RecordBatch) -> Option<String> {
+        let s = self.schema();
+        let schema = rb.schema();
+        for f in schema.fields() {
+            let tp = s.get_type(f.name());
+
+        }
+
         None
     }
 
@@ -195,14 +256,70 @@ impl Store for CDFStore {
         println!("slice_len: {:?}", slice_len);
         println!("strides: {:?}", strides);
         let r: ArrayRef = match tp {
-            VarType::F64 => CDFStore::retrieve_f64(&variable, capacity, indices.as_slice(), slice_len.as_slice(), strides.as_slice()),
-            VarType::I64 => CDFStore::retrieve_i64(&variable, capacity, indices.as_slice(), slice_len.as_slice(), strides.as_slice()),
-            VarType::String => CDFStore::retrieve_str(&variable, capacity, indices.as_slice(), slice_len.as_slice(), strides.as_slice())
+            VarType::F64 => CDFSource::retrieve_f64(&variable, capacity, indices.as_slice(), slice_len.as_slice(), strides.as_slice()),
+            VarType::I64 => CDFSource::retrieve_i64(&variable, capacity, indices.as_slice(), slice_len.as_slice(), strides.as_slice()),
+            VarType::String => CDFSource::retrieve_str(&variable, capacity, indices.as_slice(), slice_len.as_slice(), strides.as_slice())
         };
 
         let schema = self.schema.to_schema();
 
         Ok(RecordBatch::try_new(schema, vec![r]).unwrap())
+    }
+
+    fn variables(&self) -> Vec<String> {
+        let mut r = Vec::new();
+        for f in self.schema.vars.iter() {
+            r.push(f.name.clone());
+        }
+        r
+    }
+}
+
+struct ProxySource {
+    schema: Schema,
+    sources: Vec<Arc<dyn Source>>,
+    lookups: BTreeMap<String, usize>
+}
+
+impl ProxySource {
+    fn new() -> Self {
+        Self {
+            schema: Schema::new(Vec::new()),
+            sources: Vec::new(),
+            lookups: BTreeMap::new()
+        }
+    }
+
+    fn add(&mut self, source: Arc<dyn Source>) {
+        let n = self.sources.len();
+        for v in source.variables().iter() {
+            self.lookups.insert(v.clone(), n);
+        }
+        self.schema.add_vars(source.schema());
+        self.sources.push(source);
+    }
+}
+
+impl Source for ProxySource {
+    fn schema(&self) -> &Schema { &self.schema }
+
+    fn put_into(&mut self, q: &Query, rb: &RecordBatch) -> Option<String> {
+        None
+    }
+
+    fn retrieve(&self, q: &Query) -> Result<RecordBatch, StoreRetrieveError> {
+        let index = self.lookups[&q.select];
+        self.sources[index].retrieve(q)
+    }
+
+    fn variables(&self) -> Vec<String> {
+        let mut vs = Vec::new();
+        for s in self.sources.iter() {
+            for v in s.variables().iter() {
+                vs.push(v.clone());
+            }
+        }
+        vs
     }
 }
 
@@ -225,7 +342,7 @@ mod tests {
             v.put_values_strided((0..150).into_iter().map(|e| e as f64).collect::<Vec<f64>>().as_slice(),
                                  Some(&[0,0,0]), Some(&[10,5,3]), &[1,1,1]).unwrap();
         }
-        let store = CDFStore::try_new(
+        let source = CDFSource::try_new(
             filename.to_string(),
             Schema::new(vec![
                 Var::new("surface_water__depth".to_string(), VarType::F64),
@@ -234,7 +351,7 @@ mod tests {
         let q = Query::new(
             "surface_water__depth".to_string(),
                   vec![Filter::new("y".to_string(), 0), Filter::new("x".to_string(), 0)]);
-        let rb = store.retrieve(&q).unwrap();
+        let rb = source.retrieve(&q).unwrap();
         let slice = rb
             .column(0)
             .as_any()
