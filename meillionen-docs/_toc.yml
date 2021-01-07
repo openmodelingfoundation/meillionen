@@ -1,4 +1,5 @@
-file: intro
+file: environments
 sections:
+- file: intro
 - file: roadmap
-#- file: notebooks
+- file: markdown
