@@ -54,6 +54,24 @@ impl Default for SliceType {
     }
 }
 
+impl SliceType {
+    fn is_index(&self) -> bool {
+        if let SliceType::Index(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn is_all(&self) -> bool {
+        if let SliceType::All = self {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 pub trait Variable {
     type Elem;
     type Index;

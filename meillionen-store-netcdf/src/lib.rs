@@ -9,6 +9,7 @@ use std::collections::BTreeMap;
 use std::fmt::Display;
 use itertools::Itertools;
 use std::borrow::BorrowMut;
+use arrow::datatypes::Field;
 
 #[derive(Error, Debug)]
 pub enum SchemaValidation {
@@ -154,6 +155,57 @@ impl Query {
 
     pub fn get_filter(&self, name: &str) -> Option<&Filter> {
         self.filters.iter().find(|f| f.name == name)
+    }
+}
+
+#[derive(Debug)]
+pub struct MemorySource {
+    pub schema: Schema,
+    pub rb: RecordBatch
+}
+
+impl MemorySource {
+    pub fn try_new(rb: RecordBatch) -> Option<Self> {
+        let schema = Schema::new(rb.schema()
+            .fields()
+            .iter()
+            .map(|f| {
+                let tp = VarType::from_arrow(f.data_type());
+                tp.map(|vt| Var::new(f.name().clone(), vt))
+            })
+            .collect::<Option<Vec<Var>>>()?);
+        Some(Self {
+            schema,
+            rb
+        })
+    }
+}
+
+impl Source for MemorySource {
+    fn schema(&self) -> &Schema {
+        &self.schema
+    }
+
+    fn put_into(&mut self, q: &Query, rb: &RecordBatch) -> Result<(), SourcePutError> {
+        let rbm = self.rb.borrow_mut();
+    }
+
+    fn retrieve(&self, q: &Query) -> Result<RecordBatch, StoreRetrieveError> {
+        use StoreRetrieveError::NotFound;
+        let (pos, f) = self.rb.schema().fields().iter()
+            .find_position(|f| f.name().as_ref() == q.select.as_ref())
+            .ok_or_else(|| NotFound(q.select.clone()))?;
+        let variable = self.rb.column(pos);
+        Ok(RecordBatch::try_new(
+            Arc::new(datatypes::Schema::new(vec![
+                Field::new(f.name().as_ref(), f.data_type().clone(), false)
+            ])),
+            vec![variable.clone()]
+        ).unwrap())
+    }
+
+    fn variables(&self) -> Vec<String> {
+        self.schema.vars.iter().map(|v| v.name.clone()).collect()
     }
 }
 

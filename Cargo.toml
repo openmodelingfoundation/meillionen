@@ -3,5 +3,6 @@
 members = [
     'meillionen-mt',
     'meillionen-mt-derive',
+    'meillionen-store-netcdf',
     'simplecrop-cli',
 ]
