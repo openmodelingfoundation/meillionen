@@ -22,11 +22,11 @@ itertools = "0.9.0"
 lazy_static = "1.4"
 meillionen-mt = { path = "../meillionen-mt", version = "0.1.0" }
 meillionen-mt-derive = { path = "../meillionen-mt-derive", version = "0.1.0" }
-ndarray = "0.13"
-netcdf = "0.5.1"
-numpy = "0.11.0"
+ndarray = "0.14.0"
+netcdf = "0.5.2"
+numpy = "0.13.0"
 num-traits = "0.2"
-pyo3 = "0.11"
+pyo3 = "0.13.0"
 
 [lib]
 name = 'simplecrop_cli'

@@ -77,12 +77,12 @@ impl CDFStore {
 impl CDFStore {
     #[new]
     pub fn __init__(s: &str) -> PyResult<Self> {
-        Self::try_from(Path::new(s)).map_err(|e| exceptions::IOError::py_err(e.to_string()))
+        Self::try_from(Path::new(s)).map_err(|e| exceptions::PyIOError::new_err(e.to_string()))
     }
 
     pub fn get_f64_variable(self_: PyRef<CDFStore>, variable_name: String) -> PyResult<F64CDFVariableRef> {
         self_.get_f64(variable_name)
-            .map_err(|e| exceptions::KeyError::py_err(e.to_string()))
+            .map_err(|e| exceptions::PyKeyError::new_err(e.to_string()))
     }
 }
 

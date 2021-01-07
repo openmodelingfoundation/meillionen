@@ -1,5 +1,11 @@
 from .simplecrop_cli import CDFStore, F64CDFVariableRef, run, to_dataframe, SimpleCrop
 
+SCHEMA_GET_LOOKUP = {
+    'f64': 'get_f64_value',
+    'i64': 'get_i64_value',
+    'str': 'get_str_value'
+}
+
 
 class CDFStoreConfig:
     def __init__(self, path):
@@ -14,6 +20,9 @@ class Store:
     def __init__(self, config):
         assert config.storetype == "netcdf"
         self.store = CDFStore(config.path)
+
+    def __getitem__(self, item):
+        return VariableRef(self.store.get_f64_value(item))
 
     def get_value(self, variable_name):
         # when more than one datatype is supported this function

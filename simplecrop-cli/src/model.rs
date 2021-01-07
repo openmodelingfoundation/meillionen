@@ -400,7 +400,7 @@ impl SimpleCrop {
 
     pub fn set_value(mut self_: PyRefMut<Self>, variable_name: &str, variable: F64CDFVariableRef) -> PyResult<()> {
         if variable_name != "infiltration_water__depth" {
-            return Err(exceptions::KeyError::py_err(
+            return Err(exceptions::PyKeyError::new_err(
                 format!("{} is not a valid variable name. Only infiltration_water__depth is a valid name", variable_name)))
         }
         let variable = variable.clone();
@@ -417,7 +417,7 @@ impl SimpleCrop {
     pub fn finalize(self_: PyRef<Self>) {}
 
     pub fn update(self_: PyRef<Self>) -> PyResult<()> {
-        self_.run().map_err(|e| exceptions::IOError::py_err(e.to_string()))
+        self_.run().map_err(|e| exceptions::PyIOError::new_err(e.to_string()))
     }
 }
 

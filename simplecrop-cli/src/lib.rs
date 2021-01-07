@@ -45,7 +45,7 @@ fn run(py: Python, cli_path: String, daily_data: &PyAny) -> PyResult<()> {
         &cli_path,
     ".",
         )
-        .map_err(|e| exceptions::IOError::py_err(e.to_string()))?)
+        .map_err(|e| exceptions::PyIOError::new_err(e.to_string()))?)
 }
 
 #[pymodule]

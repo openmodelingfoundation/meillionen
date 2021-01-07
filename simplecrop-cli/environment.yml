@@ -1,5 +1,6 @@
 name: simplecrop-cli
 channels:
+  - conda-forge/label/rust_dev
   - conda-forge
   - defaults
 dependencies:
@@ -15,3 +16,4 @@ dependencies:
   - pip
   - pip:
     - jupyter-book
+  - rust
