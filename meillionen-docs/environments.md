@@ -1,6 +1,8 @@
 Interface
 ---------
 
+The planned interface for calling and executing computational models 
+
 ### List
 
 #### Python
@@ -54,8 +56,11 @@ Returns a list of model component constructors (as json) contained in the model 
 
 ```python
 import model_library
+import pyarrow.parquet as pq
 
-crop = model_library.Crop("yearly.parquet")
+yearly = pq.read_table("yearly.parquet")
+
+crop = model_library.Crop(yearly)
 ```
 
 #### Web API
@@ -159,9 +164,13 @@ Returns a reference to the serialized model state and the interface
 
 ```python
 import model_library
+import pyarrow.parquet as pq
+
+daily = pq.read_table("daily.parquet")
 
 crop = model_library.Crop("yearly.parquet")
-crop.initialize()
+crop.set_values(daily)
+crop.update()
 ```
 
 #### Web API
