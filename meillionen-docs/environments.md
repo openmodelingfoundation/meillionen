@@ -1,5 +1,23 @@
-Command Line Interface
-----------------------
+Interface
+---------
+
+### List
+
+#### Python
+
+```python
+import model_library
+
+model_library.list()
+```
+
+#### Web API
+
+```bash
+http https://localhost:3000
+```
+
+#### CLI
 
 ```bash
 model-library list
@@ -11,7 +29,7 @@ Returns a list of model component constructors (as json) contained in the model 
 {
   "models": [
     {
-      "name": "crop",
+      "name": "Crop",
       "constructor": {
         "args": [
           {
@@ -29,8 +47,27 @@ Returns a list of model component constructors (as json) contained in the model 
 }
 ```
 
+### Construct
+
+
+#### Python
+
+```python
+import model_library
+
+crop = model_library.Crop("yearly.parquet")
+```
+
+#### Web API
+
 ```bash
-model-library construct crop --config config.json
+http https://localhost:3000/ config@yearly.parquet
+```
+
+#### CLI
+
+```bash
+model-library construct crop --config yearly.parquet
 ```
 
 Returns a reference to the serialized model state and the interface
@@ -115,6 +152,25 @@ Returns a reference to the serialized model state and the interface
   }
 }
 ```
+
+### Step
+
+#### Python
+
+```python
+import model_library
+
+crop = model_library.Crop("yearly.parquet")
+crop.initialize()
+```
+
+#### Web API
+
+```bash
+http https://localhost:3000/step state=output/crop/state/1.pickle input@daily.parquet
+```
+
+#### CLI
 
 ```bash
 model-library step crop --state output/crop/state/1.pickle --input daily.parquet
