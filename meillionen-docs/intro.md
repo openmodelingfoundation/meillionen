@@ -157,6 +157,14 @@ There is no general support for checking unit compatibility and storage compatib
 
 In the near future work will focus on the development of improving Python interfaces and broadcasting. Right now you can ask for the name and size of a NetCDF store variable but indexing and slicing the variable are unavailable. Support for slices returning n-dimensional arrays with labels and dropped singleton dimensions as well as dataframes is being worked on.
 
+### Making your model easy to couple
+
+In order to make your model easy to couple with later down the road you should
+
+- Separate IO from the rest of your code (NetLogo already encourages this)
+- Have sufficient documentation that you and others can later understand and modify the model
+- Adopt standard practices for package development in your modeling and language community including package management, file structure, continuous integration
+
 Contribute
 ----------
 
@@ -189,14 +197,6 @@ How to Edit the Text
 9. You can track the status of your proposed changes here: https://github.com/openmodelingfoundation/openmodelingfoundation.github.io/pulls. You should receive email notifications when the proposed change has received additional comments or questions, been reviewed, or been merged into the main document.
 
 Be sure to follow our [contributor code of conduct](https://openmodelingfoundation.github.io/contribute/code-of-conduct/)
-
-### Making your model easy to couple
-
-In order to make your model easy to couple with later down the road you should
-
-- Separate IO from the rest of your code (NetLogo already encourages this)
-- Have sufficient documentation that you and others can later understand and modify the model
-- Adopt standard practices for package development in your modeling and language community including package management, file structure, continuous integration
 
 ### Model Interoperability Toolkit (meillionen)
 
