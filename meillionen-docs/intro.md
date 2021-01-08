@@ -190,6 +190,14 @@ How to Edit the Text
 
 Be sure to follow our [contributor code of conduct](https://openmodelingfoundation.github.io/contribute/code-of-conduct/)
 
+### Making your model easy to couple
+
+In order to make your model easy to couple with later down the road you should
+
+- Separate IO from the rest of your code (NetLogo already encourages this)
+- Have sufficient documentation that you and others can later understand and modify the model
+- Adopt standard practices for package development in your modeling and language community including package management, file structure, continuous integration
+
 ### Model Interoperability Toolkit (meillionen)
 
 The data interoperability project project is at https://github.com/openmodelingfoundation/meillionen. Clone it, make changes and contribute! Suggestions on APIs for how to query a data stores (in Rust and Python) or example models to add to the documentation are also greatly appreciated. The project is still in the very early stages so don't expect any backwards compatibility until a basic data store query interface has been finalized.
