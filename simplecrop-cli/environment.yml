@@ -16,4 +16,6 @@ dependencies:
   - pip
   - pip:
     - jupyter-book
+    - maturin
+    - nb-mermaid
   - rust

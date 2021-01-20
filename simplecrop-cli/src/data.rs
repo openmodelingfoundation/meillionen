@@ -1,15 +1,15 @@
 use meillionen_mt::{Variable, Dimension, SliceType};
 use pyo3::prelude::*;
-use std::marker::PhantomData;
+
 use ndarray::{ArrayD, Array1, Ix1, SliceInfo};
-use itertools::Itertools;
-use std::ops::{Range, Index};
+
+
 use std::convert::TryFrom;
 use std::path::Path;
-use eyre::WrapErr;
+
 use pyo3::exceptions;
 use std::sync::Arc;
-use netcdf::File;
+
 
 #[pyclass]
 #[derive(Clone)]
@@ -134,7 +134,7 @@ impl Variable for F64CDFVariableRef {
 
 #[cfg(test)]
 mod tests {
-    use crate::data::{F64CDFVariableRef, CDFStore};
+    use crate::data::{CDFStore};
     use ndarray::Array1;
     use meillionen_mt::{Variable, SliceType};
     use pyo3::pyclass::PyClassAlloc;

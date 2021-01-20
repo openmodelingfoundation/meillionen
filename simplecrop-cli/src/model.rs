@@ -7,15 +7,15 @@ use itertools::Itertools;
 use std::path::Path;
 use std::io::{Write, BufReader, BufRead, BufWriter};
 use std::io;
-use std::process::{Command, Child};
-use ndarray::{Array1, Array3};
-use std::ops::Index;
-use std::slice::SliceIndex;
+use std::process::{Command};
+use ndarray::{Array1};
+
+
 use meillionen_mt::{IntoPandas, FromPandas, Variable, SliceType, Dimension};
 use meillionen_mt_derive::{IntoPandas, FromPandas};
 use crate::data::F64CDFVariableRef;
-use std::convert::{TryFrom, TryInto};
-use std::env::var;
+
+
 use eyre::WrapErr;
 
 #[derive(Clone, Debug, Default, PartialEq, FromPandas)]
@@ -182,7 +182,7 @@ impl SoilDataSetBuilder {
         let (sdoy, srest) = vs.split_first().unwrap();
         let doy = sdoy.parse::<i32>().ok()?;
         let fs = srest.iter().map(|f| f.parse::<f32>().ok()).collect::<Option<Vec<f32>>>()?;
-        if let [srad, tmax, tmin, rain, irr, rof, inf, drn, etp, esa, epa, swc, swc_dp, swfac1, swfac2] = fs[..]
+        if let [_srad, _tmax, _tmin, _rain, _irr, rof, inf, drn, etp, esa, epa, swc, swc_dp, swfac1, swfac2] = fs[..]
         {
             self.day_of_year.push(doy);
             self.soil_daily_runoff.push(rof);
@@ -367,7 +367,7 @@ impl SimpleCropConfig {
             .map_err(|e| eyre::eyre!(e.to_string()))?;
         self.save(&dir);
         create_dir_all(&dir.as_ref().join("output"));
-        let r = Command::new(cli_path)
+        let _r = Command::new(cli_path)
             .current_dir(&dir).spawn()?;
         Ok(())
     }
@@ -406,15 +406,15 @@ impl SimpleCrop {
         let variable = variable.clone();
         self_.infiltrated_water = Some(variable.clone());
         self_.dims = variable.clone().get_dimensions();
-        let dim_positions = variable.clone().get_dimensions().into_iter().enumerate().filter(|(i, d)| d.name() != "time").collect::<Vec<(usize, Dimension)>>();
+        let dim_positions = variable.clone().get_dimensions().into_iter().enumerate().filter(|(_i, d)| d.name() != "time").collect::<Vec<(usize, Dimension)>>();
         println!("{:?}", dim_positions);
-        self_.dims_in_grid = dim_positions.clone().into_iter().map(|(p, d)| d.clone()).collect();
-        self_.dim_positions = dim_positions.clone().into_iter().map(|(p, d)| p).collect();
+        self_.dims_in_grid = dim_positions.clone().into_iter().map(|(_p, d)| d.clone()).collect();
+        self_.dim_positions = dim_positions.clone().into_iter().map(|(p, _d)| p).collect();
         Ok(())
     }
 
-    pub fn initialize(self_: PyRef<Self>) {}
-    pub fn finalize(self_: PyRef<Self>) {}
+    pub fn initialize(_self_: PyRef<Self>) {}
+    pub fn finalize(_self_: PyRef<Self>) {}
 
     pub fn update(self_: PyRef<Self>) -> PyResult<()> {
         self_.run().map_err(|e| exceptions::PyIOError::new_err(e.to_string()))
@@ -429,7 +429,7 @@ impl SimpleCrop {
     fn run(&self) -> eyre::Result<()> {
         let cli_path = Path::new(self.cli_path.as_str()).canonicalize().unwrap();
         let dir = std::env::current_dir().unwrap();
-        let mut ranges = self.dims_in_grid.iter().map(|d| 0..d.size()).collect::<Vec<_>>();
+        let ranges = self.dims_in_grid.iter().map(|d| 0..d.size()).collect::<Vec<_>>();
         let infiltrated_water_all = self.infiltrated_water.as_ref().ok_or_else(|| eyre::eyre!("infiltrated_water not set"))?;
         let mut i: i32 = 0;
         let err = ranges.into_iter().multi_cartesian_product()
@@ -474,11 +474,11 @@ fn write_surface_water() {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::{SimpleCropConfig, YearlyData, DailyData, PlantDataSetBuilder, SoilDataSetBuilder, write_surface_water};
+    use crate::model::{YearlyData, DailyData, PlantDataSetBuilder, SoilDataSetBuilder, write_surface_water};
 
-    use chrono::{DateTime, NaiveDateTime, Utc};
-    use std::fs::{read_to_string, File};
-    use std::io::{Cursor, BufWriter, BufReader, BufRead};
+    
+    use std::fs::{read_to_string};
+    use std::io::{Cursor};
     use std::str;
     use ndarray::Array1;
 

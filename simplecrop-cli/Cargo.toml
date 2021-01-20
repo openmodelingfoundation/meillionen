@@ -16,6 +16,7 @@ to_dataframe = "simplecrop_cli:to_dataframe"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = "2.33"
 chrono = ">=0.4"
 eyre = "0.6.0"
 itertools = "0.9.0"
@@ -27,6 +28,9 @@ netcdf = "0.5.2"
 numpy = "0.13.0"
 num-traits = "0.2"
 pyo3 = "0.13.0"
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
 
 [lib]
 name = 'simplecrop_cli'

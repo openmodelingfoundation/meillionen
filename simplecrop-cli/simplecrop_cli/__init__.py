@@ -1,4 +1,4 @@
-from .simplecrop_cli import CDFStore, F64CDFVariableRef, run, to_dataframe, SimpleCrop
+from .simplecrop_cli import CDFStore, F64CDFVariableRef, run, run_cli, to_dataframe, SimpleCrop
 
 SCHEMA_GET_LOOKUP = {
     'f64': 'get_f64_value',
@@ -34,3 +34,6 @@ class Store:
 class VariableRef:
     def __init__(self, variable_ref):
         self.variable_ref = variable_ref
+
+if __name__ == '__main__':
+    run_cli()
