@@ -120,12 +120,12 @@ fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
             .get_matches_from(vec![OsString::from("simplecrop")].into_iter().chain(env::args_os().dropping(2)));
         if let Some(_constructor) = matches.subcommand_matches("constructor") {
             println!("constructor")
-        } else if let Some(run) = matches.subcommand_matches("run") {
-            let cli_path = run.value_of("cli_path").unwrap();
-            let daily = run.value_of("daily").unwrap();
+        } else if let Some(run_match) = matches.subcommand_matches("run") {
+            let cli_path = run_match.value_of("cli_path").unwrap();
+            let daily = run_match.value_of("daily").unwrap();
             let pd = PyModule::import(_py, "pandas")?;
             let daily_data = pd.call("read_parquet", (), Some([("path", daily)].into_py_dict(_py)))?;
-            run(_py, cli_path.to_string(), daily_data)
+            run(_py, cli_path.to_string(), daily_data)?;
         }
         Ok(())
     }
