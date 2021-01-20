@@ -20,6 +20,7 @@ use std::ffi::{OsString};
 use std::collections::BTreeMap;
 use pyo3::exceptions::PyIOError;
 use serde_derive::{Deserialize,Serialize};
+use pyo3::types::IntoPyDict;
 
 #[pyclass]
 #[derive(Debug)]
@@ -110,17 +111,21 @@ fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
             .subcommand(SubCommand::with_name("constructor")
                 .about("arguments to pass to the simplecrop model"))
             .subcommand(SubCommand::with_name("run")
-                .arg(Arg::with_name("INPUT")
-                    .help("executable name")
-                    .required(true)
-                    .index(1)))
+                .arg(Arg::with_name("cli_path")
+                    .help("path to simplecrop cli")
+                    .required(true))
+                .arg(Arg::with_name("daily")
+                    .help("daily data dataframe")
+                    .required(true)))
             .get_matches_from(vec![OsString::from("simplecrop")].into_iter().chain(env::args_os().dropping(2)));
         if let Some(_constructor) = matches.subcommand_matches("constructor") {
             println!("constructor")
         } else if let Some(run) = matches.subcommand_matches("run") {
-            let input = run.value_of("INPUT").unwrap_or("example");
-            println!("run");
-            println!("{:?}", input)
+            let cli_path = run.value_of("cli_path").unwrap();
+            let daily = run.value_of("daily").unwrap();
+            let pd = PyModule::import(_py, "pandas")?;
+            let daily_data = pd.call("read_parquet", (), Some([("path", daily)].into_py_dict(_py)))?;
+            run(_py, cli_path.to_string(), daily_data)
         }
         Ok(())
     }
