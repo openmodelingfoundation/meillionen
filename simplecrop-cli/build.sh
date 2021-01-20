@@ -4,4 +4,4 @@ set -o nounset
 set -o pipefail
 set -o errexit
 
-docker build -t simplecrop -f Dockerfile ..
+docker build -t openmodelingfoundation/simplecrop -f Dockerfile ..
