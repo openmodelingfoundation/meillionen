@@ -72,7 +72,7 @@ impl VarType {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Var {
     name: String,
     tp: VarType
@@ -87,6 +87,7 @@ impl Var {
     }
 }
 
+#[derive(Debug)]
 pub struct Schema {
     vars: Vec<Var>
 }
@@ -188,12 +189,14 @@ impl Source for MemorySource {
 
     fn put_into(&mut self, q: &Query, rb: &RecordBatch) -> Result<(), SourcePutError> {
         let rbm = self.rb.borrow_mut();
+        Ok(())
     }
 
     fn retrieve(&self, q: &Query) -> Result<RecordBatch, StoreRetrieveError> {
         use StoreRetrieveError::NotFound;
-        let (pos, f) = self.rb.schema().fields().iter()
-            .find_position(|f| f.name().as_ref() == q.select.as_ref())
+        let schema = self.rb.schema();
+        let (pos, f) = schema.fields().iter()
+            .find_position(|f| f.name().as_str() == q.select.as_str())
             .ok_or_else(|| NotFound(q.select.clone()))?;
         let variable = self.rb.column(pos);
         Ok(RecordBatch::try_new(
