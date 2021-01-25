@@ -6,10 +6,10 @@ use clap::{App, Arg, SubCommand};
 use pyo3::prelude::*;
 use pyo3::exceptions;
 use model::{SimpleCropConfig, DailyData, YearlyData, SimpleCropDataSet};
-use numpy::{IntoPyArray};
 
 use ndarray::Array1;
 use meillionen_mt::{IntoPandas, FromPandas};
+use meillionen_mt::model::{FuncInterface};
 use meillionen_mt_derive::{IntoPandas, FromPandas};
 use crate::data::{F64CDFVariableRef, CDFStore};
 use crate::model::SimpleCrop;
@@ -19,7 +19,6 @@ use std::ffi::{OsString};
 
 use std::collections::BTreeMap;
 use pyo3::exceptions::PyIOError;
-use serde_derive::{Deserialize,Serialize};
 use pyo3::types::IntoPyDict;
 
 #[pyclass]
@@ -57,50 +56,12 @@ fn run(_py: Python, cli_path: String, daily_data: &PyAny) -> PyResult<()> {
         .map_err(|e| exceptions::PyIOError::new_err(e.to_string()))?)
 }
 
-#[derive(Serialize, Deserialize)]
-pub enum DataTypeMeta {
-    Any,
-    F64,
-    I64
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ArgumentMeta {
-    datatype: DataTypeMeta,
-    units: String
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct StoreRef(String);
-
-impl StoreRef {
-    pub fn load(&self) {
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct FunctionCall {
-    path: String,
-    pub arguments: BTreeMap<String, StoreRef>
-}
-
 #[pymodule]
 fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PySimpleCropDataSet>()?;
     m.add_class::<F64CDFVariableRef>()?;
     m.add_class::<CDFStore>()?;
     m.add_class::<SimpleCrop>()?;
-
-    #[pyfn(m, "simplecrop_run")]
-    fn simplecrop_run_py(_py: Python, s: String) -> PyResult<()> {
-        let fc: FunctionCall = serde_json::from_str(s.as_str())
-            .or(Err(PyErr::from(PyIOError::new_err("could not deserialize call"))))?;
-        let _daily = fc.arguments
-            .get("daily")
-            .or(Some(&StoreRef("daily.parquet".to_string())))
-            .ok_or(PyErr::from(PyIOError::new_err("could not open create store ref")))?;
-        Ok(())
-    }
 
     #[pyfn(m, "run_cli")]
     fn run_cli_py(_py: Python) -> PyResult<()> {

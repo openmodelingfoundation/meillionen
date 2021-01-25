@@ -1,11 +1,7 @@
-use ndarray::{Array1, ArrayD};
+use ndarray::{Array1};
 use numpy;
-use numpy::IntoPyArray;
-use std::sync::Arc;
-use pyo3::prelude::*;
-use std::path::Iter;
-use std::marker::PhantomData;
-use itertools::Itertools;
+
+pub mod model;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Dimension {

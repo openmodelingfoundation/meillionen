@@ -19,3 +19,4 @@ dependencies:
     - maturin
     - nb-mermaid
   - rust
+  - sh

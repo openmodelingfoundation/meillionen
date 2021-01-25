@@ -7,12 +7,6 @@ edition = "2018"
 [package.metadata.maturin]
 requires-dist = ['numpy', 'pandas']
 
-[package.metadata.maturin.scripts]
-CDFStore = "simplcrop_cli:CDFStore"
-CDFVariableRef = "simplecrop_cli:CDFVariableRef"
-run = "simplecrop_cli:run"
-to_dataframe = "simplecrop_cli:to_dataframe"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
