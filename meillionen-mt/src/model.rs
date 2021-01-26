@@ -7,6 +7,8 @@ use core::fmt;
 use itertools::Itertools;
 use itertools::__std_iter::FromIterator;
 use std::env;
+use serde_json;
+
 
 #[derive(Deserialize, Serialize, Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ColType {
@@ -87,21 +89,32 @@ impl FuncInterface {
             .iter().map(|(s, a)| format!("source:{}", s))
             .chain(self.sinks.iter().map(|(s,a)| format!("sink:{}", s)))
             .collect_vec();
-        let mut app = clap::App::new(self.name.as_str());
+        let mut app = clap::App::new(self.name.as_str())
+            .subcommand(clap::SubCommand::with_name("interface")
+                .about("json describing the model interface"));
+        let mut run = clap::SubCommand::with_name("run")
+            .about("run the model");
         for (name, arg) in cli_option_data.iter()
             .zip(self.sources.values().chain(self.sinks.values())) {
-            app = app.arg(clap::Arg::with_name(name.as_str())
+            run = run.arg(clap::Arg::with_name(name.as_str())
                 .long(name.as_ref())
                 .value_name(name.as_ref())
                 .help(arg.description.as_str())
                 .required(true));
         }
+        app = app.subcommand(run);
         let matches = app.get_matches_from(
             vec![OsString::from(self.name.as_str())].into_iter()
                 .chain(env::args_os().dropping(2)));
-        HashMap::from_iter(matches.args.into_iter()
+        if let Some(_) = matches.subcommand_matches("interface") {
+            serde_json::to_writer(std::io::stdout(), self).expect("failed to serialize model interface");
+            std::process::exit(0);
+        } else if let Some(subcmd) = matches.subcommand_matches("run") {
+            return HashMap::from_iter(subcmd.args.iter()
             .filter(|(k,v)| v.vals.get(0).is_some())
             .map(|(k,v)| (k.to_string(), v.vals.get(0).map(|s| s.clone().into_string().expect("UTF8 decode error")).unwrap())))
+        }
+        HashMap::new()
     }
 }
 
