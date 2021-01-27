@@ -218,7 +218,7 @@ mod tests {
         let mut d = BTreeMap::new();
         d.insert("max_temp".to_string(),ColType::F64);
         let dt = DataType::Table(TableSchema(d));
-        assert_eq!(serde_json::to_string(&dt).unwrap(), "{\"Table\":{\"max_temp\":\"F64\"}}");
+        assert_eq!(serde_json::to_string(&dt).unwrap(), r#"{"Table":{"max_temp":"F64"}}"#);
 
         let mut f = BTreeMap::new();
         f.insert(
