@@ -1,8 +1,25 @@
-use meillionen_mt::model::{FuncInterface, StoreRef};
+use meillionen_mt::model::{FuncInterface, StoreRef, FuncRequest};
 use pyo3::prelude::*;
 use serde_json;
 use pyo3::exceptions::PyIOError;
 use std::collections::HashMap;
+
+#[pyclass]
+#[derive(Debug)]
+struct PyFuncRequest {
+    inner: FuncRequest
+}
+
+#[pymethods]
+impl PyFuncRequest {
+    pub fn get_source(&self, s: &str) -> Option<PyStoreRef> {
+        PyStoreRef(self.inner.get_source(s).map(|sr| sr.clone()))
+    }
+
+    pub fn get_sink(&self, s: &str) -> Option<PyStoreRef> {
+        PyStoreRef(self.inner.get_sink(s).map(|sr| sr.clone()))
+    }
+}
 
 #[pyclass]
 #[derive(Debug)]
@@ -25,8 +42,16 @@ impl PyFuncInterface {
         })
     }
 
-    fn to_cli(&self) -> HashMap<String, String> {
-        self.inner.to_cli()
+    fn to_cli(&self) -> PyFuncRequest {
+        PyFuncRequest {
+            inner: self.inner.to_cli()
+        }
+    }
+
+    fn call_cli(&self, program_name: &str, fc: &PyFuncRequest) -> PyResult<Option<i32>> {
+        self.inner.call_cli(program_name, &fc.inner)
+            .map(|ec| ec.code())
+            .map_err(|err| PyErr::from(PyIOError::new_err(err.to_string())))
     }
 
     fn print(&self) { println!("{:?}", self) }
@@ -55,6 +80,7 @@ impl PyStoreRef {
 
 #[pymodule]
 fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyFuncRequest>()?;
     m.add_class::<PyFuncInterface>()?;
     m.add_class::<PyStoreRef>()?;
 

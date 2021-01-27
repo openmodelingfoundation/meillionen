@@ -2,12 +2,13 @@ use clap;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::rc::Rc;
-use std::ffi::OsString;
+use std::ffi::{OsString, OsStr};
 use core::fmt;
 use itertools::Itertools;
 use itertools::__std_iter::FromIterator;
 use std::env;
 use serde_json;
+use std::process::{Command, Stdio};
 
 
 #[derive(Deserialize, Serialize, Copy, Clone, Debug, PartialEq, Eq)]
@@ -45,9 +46,10 @@ pub enum DataType {
     Table(TableSchema)
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum StoreRef {
-    LocalPath(String)
+    LocalPath(String),
+    Inline(String)
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -84,7 +86,7 @@ impl FuncInterface {
 
     pub fn get_source(&self, s: &str) -> Option<Arg> { self.sources.get(s).map(|a| a.clone()) }
 
-    pub fn to_cli(&self) -> HashMap<String, String> {
+    pub fn to_cli(&self) -> FuncRequest {
         let cli_option_data= self.sources
             .iter().map(|(s, a)| format!("source:{}", s))
             .chain(self.sinks.iter().map(|(s,a)| format!("sink:{}", s)))
@@ -94,14 +96,6 @@ impl FuncInterface {
                 .about("json describing the model interface"));
         let mut run = clap::SubCommand::with_name("run")
             .about("run the model");
-        for (name, arg) in cli_option_data.iter()
-            .zip(self.sources.values().chain(self.sinks.values())) {
-            run = run.arg(clap::Arg::with_name(name.as_str())
-                .long(name.as_ref())
-                .value_name(name.as_ref())
-                .help(arg.description.as_str())
-                .required(true));
-        }
         app = app.subcommand(run);
         let matches = app.get_matches_from(
             vec![OsString::from(self.name.as_str())].into_iter()
@@ -109,12 +103,46 @@ impl FuncInterface {
         if let Some(_) = matches.subcommand_matches("interface") {
             serde_json::to_writer(std::io::stdout(), self).expect("failed to serialize model interface");
             std::process::exit(0);
-        } else if let Some(subcmd) = matches.subcommand_matches("run") {
-            return HashMap::from_iter(subcmd.args.iter()
-            .filter(|(k,v)| v.vals.get(0).is_some())
-            .map(|(k,v)| (k.to_string(), v.vals.get(0).map(|s| s.clone().into_string().expect("UTF8 decode error")).unwrap())))
+        } else if let Some(_) = matches.subcommand_matches("run") {
+            let fc: FuncCall = serde_json::from_reader(std::io::stdin()).expect("deserialize of func call failed");
+            match fc.validate(self) {
+                Err(errors) => {
+                    serde_json::to_writer(std::io::stderr(), &errors).expect("failed to write missing sinks and sources to stderr")
+                    std::process::exit(1);
+                },
+                Ok(data) => return data
+            }
+        } else {
+            std::process::exit(1);
         }
-        HashMap::new()
+    }
+
+    pub fn call_cli(&self, program_path: &str, fc: &FuncRequest) -> std::io::Result<std::process::ExitStatus> {
+        let mut cmd = Command::new(program_path)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn().expect(format!("could not spawn process {}", program_path).as_str());
+
+        let stdin = cmd.stdin.expect("could not open stdin");
+        serde_json::to_writer(stdin, fc).expect("could not write request to stdin");
+
+        cmd.wait()
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct FuncRequest {
+    sinks: HashMap<String, StoreRef>,
+    sources: HashMap<String, StoreRef>
+}
+
+impl FuncRequest {
+    pub fn get_source(&self, s: &str) -> Option<&StoreRef> {
+        self.sources.get(s)
+    }
+
+    pub fn get_sink(&self, s: &str) -> Option<&StoreRef> {
+        self.sinks.get(s)
     }
 }
 
@@ -138,6 +166,38 @@ impl FuncCall {
 
     pub fn add_sink(&mut self, name: &str, s: StoreRef) {
         self.sinks.insert(name.to_string(), s);
+    }
+
+    pub fn get_source(&self, s: &str) -> Option<&StoreRef> {
+        self.sources.get(s)
+    }
+
+    pub fn get_sink(&self, s: &str) -> Option<&StoreRef> {
+        self.sinks.get(s)
+    }
+
+    pub fn validate(&self, fi: &FuncInterface) -> Result<FuncRequest, HashMap<String, Vec<String>>> {
+        let sinks = &fi.sinks;
+        let sources = &fi.sources;
+        let missing_sinks = self.sources.keys()
+            .filter(|s| !sinks.contains_key(s.as_ref()))
+            .map(|s| s.to_string()).collect_vec();
+        let missing_sources = self.sinks.keys()
+            .filter(|s| !sources.contains_key(s.as_ref()))
+            .map(|s| s.to_string()).collect_vec();
+        if missing_sinks.len() == 0 && missing_sources.len() == 0 {
+            let mut hm = HashMap::new();
+            hm.insert("sinks".to_string(), missing_sinks);
+            hm.insert("sources".to_string(), missing_sources);
+            Err(hm)
+        } else {
+            Ok(FuncRequest {
+                sinks: self.sinks.iter()
+                    .filter(|(k,v)| sinks.contains_key(k)).collect(),
+                sources: self.sources.iter()
+                    .filter(|(k, v)| sources.contains_key(k)).collect()
+            });
+        }
     }
 }
 
