@@ -218,7 +218,7 @@ mod tests {
         let mut d = BTreeMap::new();
         d.insert("max_temp".to_string(),ColType::F64);
         let dt = DataType::Table(TableSchema(d));
-        assert_eq!(serde_json::to_string(&dt).unwrap(), "{\"DataFrame\":{\"max_temp\":\"F64\"}}");
+        assert_eq!(serde_json::to_string(&dt).unwrap(), "{\"Table\":{\"max_temp\":\"F64\"}}");
 
         let mut f = BTreeMap::new();
         f.insert(
@@ -234,6 +234,6 @@ mod tests {
         };
         assert_eq!(
         serde_json::to_string(&fi).unwrap(),
-        "{\"daily\":{\"description\":\"daily data\",\"datatype\":{\"DataFrame\":{\"max_temp\":\"F64\"}}}}")
+        r#"{"name":"simplecrop","sources":{"daily":{"description":"daily data","datatype":{"Table":{"max_temp":"F64"}}}},"sinks":{}}"#)
     }
 }
