@@ -43,7 +43,8 @@ impl TableSchema {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum DataType {
-    Table(TableSchema)
+    Table(TableSchema),
+    Other
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -107,7 +108,7 @@ impl FuncInterface {
             let fc: FuncCall = serde_json::from_reader(std::io::stdin()).expect("deserialize of func call failed");
             match fc.validate(self) {
                 Err(errors) => {
-                    serde_json::to_writer(std::io::stderr(), &errors).expect("failed to write missing sinks and sources to stderr")
+                    serde_json::to_writer(std::io::stderr(), &errors).expect("failed to write missing sinks and sources to stderr");
                     std::process::exit(1);
                 },
                 Ok(data) => return data
@@ -123,14 +124,14 @@ impl FuncInterface {
             .stdout(Stdio::piped())
             .spawn().expect(format!("could not spawn process {}", program_path).as_str());
 
-        let stdin = cmd.stdin.expect("could not open stdin");
+        let stdin = cmd.stdin.take().expect("could not open stdin");
         serde_json::to_writer(stdin, fc).expect("could not write request to stdin");
 
         cmd.wait()
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct FuncRequest {
     sinks: HashMap<String, StoreRef>,
     sources: HashMap<String, StoreRef>
@@ -180,10 +181,10 @@ impl FuncCall {
         let sinks = &fi.sinks;
         let sources = &fi.sources;
         let missing_sinks = self.sources.keys()
-            .filter(|s| !sinks.contains_key(s.as_ref()))
+            .filter(|s| !sinks.contains_key(s.as_str()))
             .map(|s| s.to_string()).collect_vec();
         let missing_sources = self.sinks.keys()
-            .filter(|s| !sources.contains_key(s.as_ref()))
+            .filter(|s| !sources.contains_key(s.as_str()))
             .map(|s| s.to_string()).collect_vec();
         if missing_sinks.len() == 0 && missing_sources.len() == 0 {
             let mut hm = HashMap::new();
@@ -193,10 +194,13 @@ impl FuncCall {
         } else {
             Ok(FuncRequest {
                 sinks: self.sinks.iter()
-                    .filter(|(k,v)| sinks.contains_key(k)).collect(),
+                    .filter(|(k,v)| sinks.contains_key(k.as_str()))
+                    .map(|(k,v)| (k.to_string(), v.clone())).collect(),
                 sources: self.sources.iter()
-                    .filter(|(k, v)| sources.contains_key(k)).collect()
-            });
+                    .filter(|(k, v)| sources.contains_key(k.as_str()))
+                    .map(|(k, v)| (k.to_string(), v.clone()))
+                    .collect()
+            })
         }
     }
 }
@@ -223,7 +227,11 @@ mod tests {
                 description: "daily data".to_string(),
                 datatype: dt,
             });
-        let fi = FuncInterface("simplecrop".to_string(), f);
+        let fi = FuncInterface {
+            name: "simplecrop".to_string(),
+            sinks: BTreeMap::new(),
+            sources: f
+        };
         assert_eq!(
         serde_json::to_string(&fi).unwrap(),
         "{\"daily\":{\"description\":\"daily data\",\"datatype\":{\"DataFrame\":{\"max_temp\":\"F64\"}}}}")

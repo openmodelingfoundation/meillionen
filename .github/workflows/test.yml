@@ -20,6 +20,10 @@ jobs:
       - name: Set Rust Version to Unstable
         uses: actions-rs/toolchain@v1
         with:
+          override: true
           toolchain: nightly
       - name: Test Workspace
-        run: cargo test +nightly --all --manifest-path simplecrop-cli/Cargo.toml --no-default-features --features static
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all --manifest-path simplecrop-cli/Cargo.toml --no-default-features --features static

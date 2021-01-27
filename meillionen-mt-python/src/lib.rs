@@ -13,11 +13,11 @@ struct PyFuncRequest {
 #[pymethods]
 impl PyFuncRequest {
     pub fn get_source(&self, s: &str) -> Option<PyStoreRef> {
-        PyStoreRef(self.inner.get_source(s).map(|sr| sr.clone()))
+        self.inner.get_source(s).map(|sr| PyStoreRef { inner: sr.clone() })
     }
 
     pub fn get_sink(&self, s: &str) -> Option<PyStoreRef> {
-        PyStoreRef(self.inner.get_sink(s).map(|sr| sr.clone()))
+        self.inner.get_sink(s).map(|sr| PyStoreRef { inner: sr.clone() })
     }
 }
 
