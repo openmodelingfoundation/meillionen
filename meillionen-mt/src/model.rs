@@ -138,6 +138,13 @@ pub struct FuncRequest {
 }
 
 impl FuncRequest {
+    pub fn new() -> Self {
+        Self {
+            sinks: HashMap::new(),
+            sources: HashMap::new()
+        }
+    }
+
     pub fn get_source(&self, s: &str) -> Option<&StoreRef> {
         self.sources.get(s)
     }
@@ -145,6 +152,11 @@ impl FuncRequest {
     pub fn get_sink(&self, s: &str) -> Option<&StoreRef> {
         self.sinks.get(s)
     }
+
+    pub fn set_source(&mut self, s: &str, sr: &StoreRef) { self.sources.insert(s.to_string(), sr.clone()); }
+
+    pub fn set_sink(&mut self, s: &str, si: &StoreRef) { self.sinks.insert(s.to_string(), si.clone()); }
+
 }
 
 #[derive(Debug, Deserialize, Serialize)]

@@ -1,10 +1,42 @@
 #!/usr/bin/env python3
 
-import netCDF4
 import numpy as np
 from landlab import RasterModelGrid
 from landlab.components.overland_flow import OverlandFlow
-import simplecrop_cli as sc
+from meillionen import FuncInterface
+
+
+interface = FuncInterface.from_json('''{
+    "name": "overlandflow",
+    "sources": {
+        "weather": {
+            "description": "Daily weather data for a year",
+            "datatype": {
+                "Table": {
+                    "rainfall__depth": "F64"
+                }
+            } 
+        },
+        "topography": {
+            "description": "Elevation model. Each cell is a sq m",
+            "datatype": {
+                "Table": {
+                    "elevation": "F64"
+                }
+            }
+        }
+    },
+    "sinks": {
+        "surface_water": {
+            "description": "Surface water depth at each point in grid for each day in year",
+            "datatype": {
+                "Table": {
+                    "surface_water__depth": "F64"
+                }
+            }
+        }
+    }
+}''')
 
 
 class Overland:
@@ -22,18 +54,11 @@ class Overland:
     def get_value(self, name):
         if name != 'surface_water__depth':
             raise KeyError('"surface_water__depth" is the only valid getter')
-        if self.store is None:
-            self.store = sc.CDFStore('overland.nc')
         return self.store.get_f64_variable('surface_water__depth')
 
     def initialize(self):
         # this example uses the python netcdf library to create a store for other components to consume
         # more complete versions of meillionen have a unified API for saving data to a store
-        outfile = netCDF4.Dataset('overland.nc', 'w')
-        xs, ys = self.shape_used
-        outfile.createDimension('x', len(xs))
-        outfile.createDimension('y', len(ys))
-        self.time_dimension = outfile.createDimension('time', 365)
         self.surface_water__depth = outfile.createVariable('surface_water__depth', 'f8', ('x', 'y', 'time'))
         self.output = outfile
 
@@ -79,24 +104,26 @@ class Overland:
                 grid = np.zeros((xsize, ysize))
                 self.surface_water__depth[:, :, ind] = grid
 
+
 if __name__ == '__main__':
-    import argparse
-    import pandas as pd
-
-    parser = argparse.ArgumentParser(description='Overland Flow')
-    parser.add_argument('path', type=str, help='daily weather data for a year')
-
-    args = parser.parse_args()
-
-    weather = pd.read_fwf(args.path)
-
-    # find the days that have positive precipitation
-
-    rainfall = weather['rain'][weather['rain'] > 0]
-    rainfall = rainfall[rainfall.index.isin(range(0, 365))]
-
-    overland = Overland()
-    overland.initialize()
-    overland.set_value('rainfall__depth', rainfall)
-    overland.update()
-    overland.finalize()
+    args = interface.to_cli()
+    # import argparse
+    # import pandas as pd
+    #
+    # parser = argparse.ArgumentParser(description='Overland Flow')
+    # parser.add_argument('path', type=str, help='daily weather data for a year')
+    #
+    # args = parser.parse_args()
+    #
+    # weather = pd.read_fwf(args.path)
+    #
+    # # find the days that have positive precipitation
+    #
+    # rainfall = weather['rain'][weather['rain'] > 0]
+    # rainfall = rainfall[rainfall.index.isin(range(0, 365))]
+    #
+    # overland = Overland()
+    # overland.initialize()
+    # overland.set_value('rainfall__depth', rainfall)
+    # overland.update()
+    # overland.finalize()

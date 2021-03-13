@@ -1,10 +1,10 @@
-from meillionen import PyFuncInterface
+from meillionen import FuncInterface
 from .simplecrop_cli import run
 
 import pandas as pd
 
 
-interface = PyFuncInterface.from_json('''{
+interface = FuncInterface.from_json('''{
     "name": "simplecrop",
     "sources": {
         "daily": {

@@ -2,6 +2,7 @@ use ndarray::{Array1};
 use numpy;
 
 pub mod model;
+pub mod extension_columns;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Dimension {

@@ -1,4 +1,4 @@
-from .meillionen import PyFuncInterface, PyStoreRef
+from .meillionen import FuncInterface, StoreRef, FuncRequest
 import pandas as pd
 import sh
 from typing import Any, AnyStr, Dict
@@ -11,7 +11,7 @@ class ModelBuilderCLI:
 
     def _get_interface(self):
         interface_data = sh.Command(self.path)
-        return PyFuncInterface.from_json(interface_data)
+        return FuncInterface.from_json(interface_data)
 
     def build(self, stores: Dict[AnyStr, Any]):
         pass

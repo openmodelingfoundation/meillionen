@@ -1,3 +1,3 @@
 [submodule "simplecrop"]
-	path = examples/simplecrop-cli/simplecrop
+	path = examples/crop-pipeline/simplecrop/simplecrop
 	url = https://github.com/openmodelingfoundation/SimpleCrop.git
