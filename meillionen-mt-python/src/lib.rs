@@ -1,11 +1,58 @@
 use meillionen_mt::model;
 use pyo3::prelude::*;
 use serde_json;
-use pyo3::exceptions::{PyIOError, PyTypeError, PyValueError};
+use pyo3::exceptions::{PyIOError, PyTypeError, PyValueError, PyKeyError};
 use std::collections::HashMap;
 use meillionen_mt::extension_columns as ext_cols;
 use std::borrow::Borrow;
 use std::sync::Arc;
+use pyo3::PySequenceProtocol;
+use pyo3::types::PyDict;
+use std::convert::{TryFrom, TryInto};
+use std::num::TryFromIntError;
+
+#[pyclass]
+#[derive(Debug)]
+struct DimMeta {
+    inner: Arc<ext_cols::DimMeta>
+}
+
+impl DimMeta {
+    fn new(inner: Arc<ext_cols::DimMeta>) -> Self {
+        Self {
+            inner
+        }
+    }
+}
+
+#[pymethods]
+impl DimMeta {
+    #[new]
+    fn init(name: String, size: usize, description: Option<String>) -> Self {
+        Self {
+            inner: Arc::new(ext_cols::DimMeta {
+                name,
+                size,
+                description
+            })
+        }
+    }
+
+    #[getter]
+    fn name(&self) -> &str {
+        self.inner.name.as_ref()
+    }
+
+    #[getter]
+    fn size(&self) -> usize {
+        self.inner.size
+    }
+
+    #[getter]
+    fn description(&self) -> Option<&String> {
+        self.inner.description.as_ref()
+    }
+}
 
 #[pyclass]
 #[derive(Debug)]
@@ -21,6 +68,21 @@ impl TensorStackMeta {
     }
 }
 
+#[pyproto]
+impl PySequenceProtocol for TensorStackMeta {
+    fn __len__(&self) -> usize {
+        self.inner.dimensions().len()
+    }
+
+    fn __getitem__(&self, idx: isize) -> PyResult<DimMeta> {
+        let idx: usize = TryFrom::try_from(idx)
+            .map_err(|e| PyErr::from(PyValueError::new_err(format!("{} is out of bounds", idx))))?;
+        let dim_meta = self.inner.dimensions().get(idx)
+            .ok_or(PyErr::from(PyKeyError::new_err(format!("{} is out of bounds", idx))))?;
+        Ok(DimMeta::new(dim_meta.clone()))
+    }
+}
+
 #[pyclass]
 #[derive(Debug)]
 struct TableMeta {
@@ -29,11 +91,23 @@ struct TableMeta {
 
 #[pymethods]
 impl TableMeta {
+    #[new]
+    pub fn new() -> Self {
+        Self {
+            inner: ext_cols::TableMeta::TensorStackMeta(Arc::new(ext_cols::TensorStackMeta::new(vec![])))
+        }
+    }
+
     #[staticmethod]
     pub fn from_json(s: &str) -> PyResult<Self> {
         Ok(Self {
-            inner: serde_json::from_str(s).map_err(|e| PyErr::from(PyValueError::new_err(e.to_string())))?
+            inner: serde_json::from_str(s)
+                .map_err(|e| PyErr::from(PyValueError::new_err(e.to_string())))?
         })
+    }
+
+    pub fn to_json(&self) -> PyResult<String> {
+        serde_json::to_string(&self.inner).map_err(|e| PyErr::from(PyValueError::new_err(e.to_string())))
     }
 
     pub fn get_tensor_stack_meta(&self) -> TensorStackMeta {
@@ -137,6 +211,9 @@ fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<FuncRequest>()?;
     m.add_class::<FuncInterface>()?;
     m.add_class::<StoreRef>()?;
+    m.add_class::<TableMeta>()?;
+    m.add_class::<TensorStackMeta>()?;
+    m.add_class::<DimMeta>()?;
 
     Ok(())
 }
