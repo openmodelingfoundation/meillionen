@@ -13,7 +13,15 @@ interface = FuncInterface.from_json('''{
             "description": "Daily weather data for a year",
             "datatype": {
                 "Table": {
-                    "rainfall__depth": "F64"
+                    "fields": [
+                        {
+                            "name": "rainfall__depth",
+                            "data_type": "Float64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false                        }
+                    ],
+                    "metadata": {}
                 }
             } 
         },
@@ -21,7 +29,16 @@ interface = FuncInterface.from_json('''{
             "description": "Elevation model. Each cell is a sq m",
             "datatype": {
                 "Table": {
-                    "elevation": "F64"
+                    "fields": [
+                        {
+                            "name": "elevation",
+                            "data_type": "Float64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false
+                        }
+                    ],
+                    "metadata": {}
                 }
             }
         }
@@ -31,7 +48,16 @@ interface = FuncInterface.from_json('''{
             "description": "Surface water depth at each point in grid for each day in year",
             "datatype": {
                 "Table": {
-                    "surface_water__depth": "F64"
+                    "fields": [
+                        {
+                            "name": "surface_water__depth",
+                            "data_type": "Float64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false
+                        }
+                    ],
+                    "metadata": {}
                 }
             }
         }

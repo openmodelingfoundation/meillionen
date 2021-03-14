@@ -9,41 +9,12 @@ use itertools::__std_iter::FromIterator;
 use std::env;
 use serde_json;
 use std::process::{Command, Stdio};
+use arrow::datatypes::Schema;
 
-
-#[derive(Deserialize, Serialize, Copy, Clone, Debug, PartialEq, Eq)]
-pub enum ColType {
-    F64,
-    I64,
-    Str
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct TableSchema(BTreeMap<String, ColType>);
-
-impl TableSchema {
-    pub fn validate(&self, dfs: &TableSchema) -> Vec<String> {
-        let mut errors = vec![];
-        for (name, datatype) in self.0.iter() {
-            if let Some(ref dt) = dfs.get_coltype(name) {
-                if datatype != dt {
-                    errors.push(format!("{}: expected {:?} but got {:?}", name, datatype, dt))
-                }
-            } else {
-                errors.push(format!("{}: missing", name))
-            }
-        }
-        errors
-    }
-
-    pub fn get_coltype(&self, s: &str) -> Option<ColType> {
-        self.0.get(s).map(|ct| ct.clone())
-    }
-}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum DataType {
-    Table(TableSchema),
+    Table(Schema),
     Other
 }
 

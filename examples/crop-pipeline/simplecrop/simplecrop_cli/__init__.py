@@ -11,12 +11,51 @@ interface = FuncInterface.from_json('''{
             "description": "daily data",
             "datatype": {
                 "Table": {
-                     "irrigation": "F64",
-                     "temp_max": "F64",
-                     "temp_min": "F64",
-                     "rainfall": "F64",
-                     "photosynthetic_energy_flux": "F64",
-                     "energy_flux": "F64"
+                    "fields": [
+                        {
+                            "name": "irrigation",
+                            "data_type": "Float64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false
+                        },
+                        {
+                            "name": "temp_max",
+                            "data_type": "Float64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false
+                        },
+                        {
+                            "name": "temp_min",
+                            "data_type": "Float64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false
+                        },
+                        {
+                            "name": "rainfall",
+                            "data_type": "Float64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false
+                        },
+                        {
+                            "name": "photosynthetic_energy_flux",
+                            "data_type": "Float64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false
+                        },
+                        {
+                            "name": "energy_flux",
+                            "data_type": "Float64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false
+                        }
+                    ],
+                    "metadata": {}
                 }
             }
         }
@@ -26,8 +65,23 @@ interface = FuncInterface.from_json('''{
             "description": "crop yields",
             "datatype": {
                 "Table": {
-                    "day_of_year": "I64",
-                    "yield": "F64"
+                    "fields": [
+                        {
+                            "name": "day_of_year",
+                            "data_type": "Int64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false
+                        },
+                        {
+                            "name": "yield",
+                            "data_type": "Float64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false
+                        }
+                    ],
+                    "metadata": {}
                 }
             }
         }
