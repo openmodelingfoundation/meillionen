@@ -1,26 +1,24 @@
 #![cfg_attr(not(debug_assertions), deny(warnings))]
 
-use pyo3::prelude::*;
-use pyo3::exceptions;
-use std::fs::{File, create_dir_all};
-use itertools::Itertools;
-use std::path::Path;
-use std::io::{Write, BufReader, BufRead, BufWriter};
-use std::io;
-use std::process::{Command};
 use eyre::WrapErr;
+use itertools::Itertools;
+use std::fs::{create_dir_all, File};
+use std::io;
+use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::path::Path;
+use std::process::Command;
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct DailyData<'a>  {
+pub struct DailyData<'a> {
     // irrigation related
     pub irrigation: &'a [f32],
 
     // weather related
-    pub temp_max: &'a [f32], // tmax
-    pub temp_min: &'a [f32], // tmin
-    pub rainfall: &'a [f32], // rain
+    pub temp_max: &'a [f32],                   // tmax
+    pub temp_min: &'a [f32],                   // tmin
+    pub rainfall: &'a [f32],                   // rain
     pub photosynthetic_energy_flux: &'a [f32], // par
-    pub energy_flux: &'a [f32] // srad
+    pub energy_flux: &'a [f32],                // srad
 }
 
 impl<'a> DailyData<'a> {
@@ -38,8 +36,13 @@ impl<'a> DailyData<'a> {
         for i in 0..self.temp_max.len() {
             let row = format!(
                 "{:5}  {:>4.1}  {:>4.1}  {:>4.1}{:>6.1}              {:>4.1}\n",
-                i+1, self.energy_flux[i], self.temp_max[i], self.temp_min[i],
-                self.rainfall[i], self.photosynthetic_energy_flux[i]);
+                i + 1,
+                self.energy_flux[i],
+                self.temp_max[i],
+                self.temp_min[i],
+                self.rainfall[i],
+                self.photosynthetic_energy_flux[i]
+            );
             buf.write_all(row.as_bytes())?;
         }
         Ok(())
@@ -52,33 +55,33 @@ pub struct YearlyData {
     pub plant_leaves_max_number: f32, // lfmax
     pub plant_emp2: f32,
     pub plant_emp1: f32,
-    pub plant_density: f32, // pd
-    pub plant_nb: f32, // nb
+    pub plant_density: f32,                  // pd
+    pub plant_nb: f32,                       // nb
     pub plant_leaf_max_appearance_rate: f32, // rm
     pub plant_growth_canopy_fraction: f32,
     pub plant_min_repro_growth_temp: f32,
     pub plant_repro_phase_duration: f32,
     pub plant_leaves_number_of: f32,
     pub plant_leaf_area_index: f32,
-    pub plant_matter: f32, // w
-    pub plant_matter_root: f32, // wr
-    pub plant_matter_canopy: f32, // wc
+    pub plant_matter: f32,                // w
+    pub plant_matter_root: f32,           // wr
+    pub plant_matter_canopy: f32,         // wc
     pub plant_matter_leaves_removed: f32, // p1
-    pub plant_development_phase: f32, // fl
-    pub plant_leaf_specific_area: f32, // sla
+    pub plant_development_phase: f32,     // fl
+    pub plant_leaf_specific_area: f32,    // sla
 
     // soil config
-    pub soil_water_content_wilting_point: f32, // wpp
+    pub soil_water_content_wilting_point: f32,  // wpp
     pub soil_water_content_field_capacity: f32, // fcp
-    pub soil_water_content_saturation: f32, // stp
-    pub soil_profile_depth: f32, // dp
-    pub soil_drainage_daily_percent: f32, // drnp
-    pub soil_runoff_curve_number: f32, // cn
-    pub soil_water_storage: f32, // swc
+    pub soil_water_content_saturation: f32,     // stp
+    pub soil_profile_depth: f32,                // dp
+    pub soil_drainage_daily_percent: f32,       // drnp
+    pub soil_runoff_curve_number: f32,          // cn
+    pub soil_water_storage: f32,                // swc
 
     // simulation config
     pub day_of_planting: i32, //doyp
-    pub printout_freq: i32 // frop
+    pub printout_freq: i32,   // frop
 }
 
 impl YearlyData {
@@ -87,9 +90,24 @@ impl YearlyData {
             " {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} \
             {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} \
             {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4}\n",
-            self.plant_leaves_max_number, self.plant_emp2, self.plant_emp1, self.plant_density, self.plant_nb, self.plant_leaf_max_appearance_rate,
-            self.plant_growth_canopy_fraction, self.plant_min_repro_growth_temp, self.plant_repro_phase_duration, self.plant_leaves_number_of, self.plant_leaf_area_index, self.plant_matter,
-            self.plant_matter_root, self.plant_matter_canopy, self.plant_matter_leaves_removed, self.plant_development_phase, self.plant_leaf_specific_area);
+            self.plant_leaves_max_number,
+            self.plant_emp2,
+            self.plant_emp1,
+            self.plant_density,
+            self.plant_nb,
+            self.plant_leaf_max_appearance_rate,
+            self.plant_growth_canopy_fraction,
+            self.plant_min_repro_growth_temp,
+            self.plant_repro_phase_duration,
+            self.plant_leaves_number_of,
+            self.plant_leaf_area_index,
+            self.plant_matter,
+            self.plant_matter_root,
+            self.plant_matter_canopy,
+            self.plant_matter_leaves_removed,
+            self.plant_development_phase,
+            self.plant_leaf_specific_area
+        );
         buf.write_all(data.as_bytes())?;
         let footer: &'static str = "   Lfmax    EMP2    EMP1      PD      nb      rm      fc      tb   intot       n     lai       w      wr      wc      p1      f1    sla\n";
         buf.write_all(footer.as_bytes())?;
@@ -157,24 +175,28 @@ impl Default for YearlyData {
 #[derive(Debug, Default)]
 pub struct SoilDataSetBuilder {
     pub day_of_year: Vec<i32>,
-    pub soil_daily_runoff: Vec<f32>, // rof
-    pub soil_daily_infiltration: Vec<f32>, // int
-    pub soil_daily_drainage: Vec<f32>, // drn
-    pub soil_evapotranspiration: Vec<f32>, // etp
-    pub soil_evaporation: Vec<f32>, // esa
+    pub soil_daily_runoff: Vec<f32>,             // rof
+    pub soil_daily_infiltration: Vec<f32>,       // int
+    pub soil_daily_drainage: Vec<f32>,           // drn
+    pub soil_evapotranspiration: Vec<f32>,       // etp
+    pub soil_evaporation: Vec<f32>,              // esa
     pub plant_potential_transpiration: Vec<f32>, // epa
-    pub soil_water_storage_depth: Vec<f32>, // swc
-    pub soil_water_profile_ratio: Vec<f32>, // swc / dp
-    pub soil_water_deficit_stress: Vec<f32>, // swfac1
-    pub soil_water_excess_stress: Vec<f32> // swfac2
+    pub soil_water_storage_depth: Vec<f32>,      // swc
+    pub soil_water_profile_ratio: Vec<f32>,      // swc / dp
+    pub soil_water_deficit_stress: Vec<f32>,     // swfac1
+    pub soil_water_excess_stress: Vec<f32>,      // swfac2
 }
 
 impl SoilDataSetBuilder {
     fn deserialize(&mut self, vs: &Vec<&str>) -> Option<()> {
         let (sdoy, srest) = vs.split_first().unwrap();
         let doy = sdoy.parse::<i32>().ok()?;
-        let fs = srest.iter().map(|f| f.parse::<f32>().ok()).collect::<Option<Vec<f32>>>()?;
-        if let [_srad, _tmax, _tmin, _rain, _irr, rof, inf, drn, etp, esa, epa, swc, swc_dp, swfac1, swfac2] = fs[..]
+        let fs = srest
+            .iter()
+            .map(|f| f.parse::<f32>().ok())
+            .collect::<Option<Vec<f32>>>()?;
+        if let [_srad, _tmax, _tmin, _rain, _irr, rof, inf, drn, etp, esa, epa, swc, swc_dp, swfac1, swfac2] =
+            fs[..]
         {
             self.day_of_year.push(doy);
             self.soil_daily_runoff.push(rof);
@@ -192,7 +214,13 @@ impl SoilDataSetBuilder {
     }
 
     fn load<P: AsRef<Path>>(p: P) -> eyre::Result<Self> {
-        let f = File::open(&p).map_err(|e| eyre::eyre!("Could not open {}. {}", p.as_ref().to_string_lossy(), e.to_string()))?;
+        let f = File::open(&p).map_err(|e| {
+            eyre::eyre!(
+                "Could not open {}. {}",
+                p.as_ref().to_string_lossy(),
+                e.to_string()
+            )
+        })?;
         let rdr = BufReader::new(f);
         let mut results = SoilDataSetBuilder::default();
         for line in rdr.lines().skip(6) {
@@ -207,26 +235,26 @@ impl SoilDataSetBuilder {
 #[derive(Debug)]
 pub struct SoilDataSet {
     pub day_of_year: Vec<i32>,
-    pub soil_daily_runoff: Vec<f32>, // rof
-    pub soil_daily_infiltration: Vec<f32>, // int
-    pub soil_daily_drainage: Vec<f32>, // drn
-    pub soil_evapotranspiration: Vec<f32>, // etp
-    pub soil_evaporation: Vec<f32>, // esa
+    pub soil_daily_runoff: Vec<f32>,             // rof
+    pub soil_daily_infiltration: Vec<f32>,       // int
+    pub soil_daily_drainage: Vec<f32>,           // drn
+    pub soil_evapotranspiration: Vec<f32>,       // etp
+    pub soil_evaporation: Vec<f32>,              // esa
     pub plant_potential_transpiration: Vec<f32>, // epa
-    pub soil_water_storage_depth: Vec<f32>, // swc
-    pub soil_water_profile_ratio: Vec<f32>, // swc / dp
-    pub soil_water_deficit_stress: Vec<f32>, // swfac1
-    pub soil_water_excess_stress: Vec<f32> // swfac2
+    pub soil_water_storage_depth: Vec<f32>,      // swc
+    pub soil_water_profile_ratio: Vec<f32>,      // swc / dp
+    pub soil_water_deficit_stress: Vec<f32>,     // swfac1
+    pub soil_water_excess_stress: Vec<f32>,      // swfac2
 }
 
 #[derive(Debug, Default)]
-pub struct  PlantDataSetBuilder {
+pub struct PlantDataSetBuilder {
     day_of_year: Vec<i32>,
     plant_leaf_count: Vec<f32>,
     air_accumulated_temp: Vec<f32>,
     plant_matter: Vec<f32>,
     plant_matter_canopy: Vec<f32>,
-    plant_matter_fruit:  Vec<f32>,
+    plant_matter_fruit: Vec<f32>,
     plant_matter_root: Vec<f32>,
     plant_leaf_area_index: Vec<f32>,
 }
@@ -235,7 +263,10 @@ impl PlantDataSetBuilder {
     fn deserialize(&mut self, vs: &Vec<&str>) -> Option<()> {
         let (sdoy, srest) = vs.split_first().unwrap();
         let doy = sdoy.parse::<i32>().ok()?;
-        let fs = srest.iter().map(|f| f.parse::<f32>().ok()).collect::<Option<Vec<f32>>>()?;
+        let fs = srest
+            .iter()
+            .map(|f| f.parse::<f32>().ok())
+            .collect::<Option<Vec<f32>>>()?;
         if let [n, intc, w, wc, wr, wf, lai] = fs[..] {
             self.day_of_year.push(doy);
             self.plant_leaf_count.push(n);
@@ -250,9 +281,17 @@ impl PlantDataSetBuilder {
     }
 
     fn load<P: AsRef<Path>>(p: P) -> eyre::Result<Self> {
-        println!("Current Directory: {}", std::env::current_dir().unwrap().display());
-        let f = File::open(&p)
-            .map_err(|e| eyre::eyre!("Could not open {}. {}", p.as_ref().to_string_lossy(), e.to_string()))?;
+        println!(
+            "Current Directory: {}",
+            std::env::current_dir().unwrap().display()
+        );
+        let f = File::open(&p).map_err(|e| {
+            eyre::eyre!(
+                "Could not open {}. {}",
+                p.as_ref().to_string_lossy(),
+                e.to_string()
+            )
+        })?;
         let rdr = BufReader::new(f);
         let mut results = PlantDataSetBuilder::default();
         for line in rdr.lines().skip(9) {
@@ -271,7 +310,7 @@ pub struct PlantDataSet {
     air_accumulated_temp: Vec<f32>,
     plant_matter: Vec<f32>,
     plant_matter_canopy: Vec<f32>,
-    plant_matter_fruit:  Vec<f32>,
+    plant_matter_fruit: Vec<f32>,
     plant_matter_root: Vec<f32>,
     plant_leaf_area_index: Vec<f32>,
 }
@@ -279,7 +318,7 @@ pub struct PlantDataSet {
 #[derive(Debug)]
 pub struct SimpleCropDataSet {
     pub plant: PlantDataSet,
-    pub soil: SoilDataSet
+    pub soil: SoilDataSet,
 }
 
 impl SimpleCropDataSet {
@@ -288,83 +327,89 @@ impl SimpleCropDataSet {
         create_dir_all(&op)?;
         let plant = PlantDataSetBuilder::load(&op.join("plant.out"))?;
         let plant = PlantDataSet {
-            day_of_year: From::from(plant.day_of_year),
-            plant_leaf_count: From::from(plant.plant_leaf_count),
-            air_accumulated_temp: From::from(plant.air_accumulated_temp),
-            plant_matter: From::from(plant.plant_matter),
-            plant_matter_canopy: From::from(plant.plant_matter_canopy),
-            plant_matter_fruit: From::from(plant.plant_matter_fruit),
-            plant_matter_root: From::from(plant.plant_matter_root),
-            plant_leaf_area_index: From::from(plant.plant_leaf_area_index),
+            day_of_year: plant.day_of_year,
+            plant_leaf_count: plant.plant_leaf_count,
+            air_accumulated_temp: plant.air_accumulated_temp,
+            plant_matter: plant.plant_matter,
+            plant_matter_canopy: plant.plant_matter_canopy,
+            plant_matter_fruit: plant.plant_matter_fruit,
+            plant_matter_root: plant.plant_matter_root,
+            plant_leaf_area_index: plant.plant_leaf_area_index,
         };
         let soil = SoilDataSetBuilder::load(&op.join("soil.out"))?;
         let soil = SoilDataSet {
-            day_of_year: From::from(soil.day_of_year),
-            soil_daily_runoff: From::from(soil.soil_daily_runoff),
-            soil_daily_infiltration: From::from(soil.soil_daily_infiltration),
-            soil_daily_drainage: From::from(soil.soil_daily_drainage),
-            soil_evapotranspiration: From::from(soil.soil_evapotranspiration),
-            soil_evaporation: From::from(soil.soil_evaporation),
-            plant_potential_transpiration: From::from(soil.plant_potential_transpiration),
-            soil_water_storage_depth: From::from(soil.soil_water_storage_depth),
-            soil_water_profile_ratio: From::from(soil.soil_water_profile_ratio),
-            soil_water_deficit_stress: From::from(soil.soil_water_deficit_stress),
-            soil_water_excess_stress: From::from(soil.soil_water_excess_stress)
+            day_of_year: soil.day_of_year,
+            soil_daily_runoff: soil.soil_daily_runoff,
+            soil_daily_infiltration: soil.soil_daily_infiltration,
+            soil_daily_drainage: soil.soil_daily_drainage,
+            soil_evapotranspiration: soil.soil_evapotranspiration,
+            soil_evaporation: soil.soil_evaporation,
+            plant_potential_transpiration: soil.plant_potential_transpiration,
+            soil_water_storage_depth: soil.soil_water_storage_depth,
+            soil_water_profile_ratio: soil.soil_water_profile_ratio,
+            soil_water_deficit_stress: soil.soil_water_deficit_stress,
+            soil_water_excess_stress: soil.soil_water_excess_stress,
         };
-        Ok(Self {
-            plant,
-            soil
-        })
+        Ok(Self { plant, soil })
     }
 }
 
 pub struct SimpleCropConfig<'a> {
     pub daily: DailyData<'a>,
-    pub yearly: YearlyData
+    pub yearly: YearlyData,
 }
 
 impl<'a> SimpleCropConfig<'a> {
     fn save<P: AsRef<Path>>(&self, dir: P) -> eyre::Result<()> {
         let dp = dir.as_ref().join("data");
         create_dir_all(&dp)?;
-        let write_f = |path: &str| File::create(&dp.join(path)).map(|f| BufWriter::new(f)).unwrap();
+        let write_f = |path: &str| File::create(&dp.join(path)).map(BufWriter::new).unwrap();
 
         let mut weather_buf = write_f("weather.inp");
-        self.daily.save_weather(&mut weather_buf).wrap_err("weather save failed")?;
+        self.daily
+            .save_weather(&mut weather_buf)
+            .wrap_err("weather save failed")?;
 
         let mut irrigation_buf = write_f("irrig.inp");
-        self.daily.save_irrigation(&mut irrigation_buf).wrap_err("irrigation save failed")?;
+        self.daily
+            .save_irrigation(&mut irrigation_buf)
+            .wrap_err("irrigation save failed")?;
 
         let mut plant_buf = write_f("plant.inp");
-        self.yearly.save_plant_config(&mut plant_buf).wrap_err("plant save failed")?;
+        self.yearly
+            .save_plant_config(&mut plant_buf)
+            .wrap_err("plant save failed")?;
 
         let mut soil_buf = write_f("soil.inp");
-        self.yearly.save_soil_config(&mut soil_buf).wrap_err("soil save failed")?;
+        self.yearly
+            .save_soil_config(&mut soil_buf)
+            .wrap_err("soil save failed")?;
 
         let mut simctrl_buf = write_f("simctrl.inp");
-        self.yearly.save_simulation_config(&mut simctrl_buf).wrap_err("simctrl save failed")?;
+        self.yearly
+            .save_simulation_config(&mut simctrl_buf)
+            .wrap_err("simctrl save failed")?;
         Ok(())
     }
 
     pub fn run(&self, cli_path: impl AsRef<Path>, dir: impl AsRef<Path>) -> eyre::Result<()> {
         let cli_path = cli_path
-            .as_ref().canonicalize()
+            .as_ref()
+            .canonicalize()
             .map_err(|e| eyre::eyre!(e.to_string()))?;
         self.save(&dir);
         create_dir_all(&dir.as_ref().join("output"));
-        let _r = Command::new(cli_path)
-            .current_dir(&dir).spawn()?;
+        let _r = Command::new(cli_path).current_dir(&dir).spawn()?;
         Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::model::{YearlyData, DailyData, PlantDataSetBuilder, SoilDataSetBuilder, write_surface_water};
-    use std::fs::{read_to_string};
-    use std::io::{Cursor};
+    use crate::model::{DailyData, PlantDataSetBuilder, SoilDataSetBuilder, YearlyData};
+    use std::fs::read_to_string;
+    use std::io::Cursor;
     use std::str;
-
 
     #[test]
     fn write_yearly_data() {
@@ -393,19 +438,22 @@ mod tests {
             temp_max: &[20.0f32],
             temp_min: &[4.4f32],
             rainfall: &[23.9],
-            photosynthetic_energy_flux: &[10.7f32]
+            photosynthetic_energy_flux: &[10.7f32],
         };
 
         let mut cur = Cursor::new(Vec::new());
         w.save_weather(&mut cur);
         assert_eq!(
             str::from_utf8(cur.get_ref()).unwrap(),
-            "    1   5.1  20.0   4.4  23.9              10.7\n");
+            "    1   5.1  20.0   4.4  23.9              10.7\n"
+        );
 
         let mut cur = Cursor::new(Vec::new());
         w.save_irrigation(&mut cur).unwrap();
         assert_eq!(
-            "    1  0.0\n    2  1.0\n", str::from_utf8(cur.get_ref()).unwrap());
+            "    1  0.0\n    2  1.0\n",
+            str::from_utf8(cur.get_ref()).unwrap()
+        );
     }
 
     #[test]

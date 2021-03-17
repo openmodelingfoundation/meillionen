@@ -1,30 +1,20 @@
 mod model;
 
-use arrow::ffi::ArrowArray;
-use clap::{App, Arg, SubCommand};
-use pyo3::prelude::*;
+use model::{DailyData, SimpleCropConfig, SimpleCropDataSet, YearlyData};
 use pyo3::exceptions;
-use model::{SimpleCropConfig, DailyData, YearlyData, SimpleCropDataSet};
+use pyo3::prelude::*;
 
-use meillionen_mt::model::{FuncInterface};
-use std::env;
-use itertools::Itertools;
-use std::ffi::{OsString};
-
-use std::collections::BTreeMap;
-use pyo3::exceptions::PyIOError;
-use pyo3::types::IntoPyDict;
-use arrow::array::{make_array_from_raw, Float64Array};
+use arrow::datatypes::{DataType, Field, Schema};
 use arrow::ipc::reader::StreamReader;
-use arrow::record_batch::RecordBatchReader;
 use arrow::record_batch::RecordBatch;
-use arrow::datatypes::{Schema, Field, DataType};
-use arrow::datatypes as dt;
-use arrow::datatypes::DataType::Float32;
+use arrow::record_batch::RecordBatchReader;
+use pyo3::exceptions::PyIOError;
 
 #[pyclass]
 #[derive(Debug)]
-pub struct PySimpleCropDataSet { inner: SimpleCropDataSet }
+pub struct PySimpleCropDataSet {
+    inner: SimpleCropDataSet,
+}
 
 #[pymethods]
 impl PySimpleCropDataSet {
@@ -40,7 +30,7 @@ fn run(cli_path: String, dir: String, daily_stream: StreamReader<&[u8]>) -> PyRe
         Field::new("temp_min", DataType::Float32, false),
         Field::new("rainfall", DataType::Float32, false),
         Field::new("photosynthetic_energy_flux", DataType::Float32, false),
-        Field::new("energy_flux", DataType::Float32, false)
+        Field::new("energy_flux", DataType::Float32, false),
     ]);
 
     // 365 days of weather
@@ -48,15 +38,20 @@ fn run(cli_path: String, dir: String, daily_stream: StreamReader<&[u8]>) -> PyRe
     for b in daily_stream.into_iter() {
         match b {
             Ok(batch) => batches.push(batch),
-            Err(e) => return Err(PyErr::from(PyIOError::new_err(e.to_string())))
+            Err(e) => return Err(PyIOError::new_err(e.to_string())),
         }
     }
 
     if &schema == batches[0].schema().as_ref() {
-        return Err(PyErr::from(PyIOError::new_err("schema mismatch")));
+        return Err(PyIOError::new_err("schema mismatch"));
     }
 
-    let extract_col = |col_ind: usize| batches[0].column(col_ind).as_any().downcast_ref::<arrow::array::Float32Array>();
+    let extract_col = |col_ind: usize| {
+        batches[0]
+            .column(col_ind)
+            .as_any()
+            .downcast_ref::<arrow::array::Float32Array>()
+    };
 
     let _irrigation = extract_col(0).unwrap();
     let irrigation = _irrigation.values();
@@ -82,21 +77,16 @@ fn run(cli_path: String, dir: String, daily_stream: StreamReader<&[u8]>) -> PyRe
         temp_min,
         rainfall,
         photosynthetic_energy_flux,
-        energy_flux
+        energy_flux,
     };
 
     let yearly = YearlyData::default();
 
-    let config = SimpleCropConfig {
-        daily,
-        yearly
-    };
+    let config = SimpleCropConfig { daily, yearly };
 
-    Ok(config.run(
-        &cli_path,
-        &dir,
-        )
-        .map_err(|e| exceptions::PyIOError::new_err(e.to_string()))?)
+    config
+        .run(&cli_path, &dir)
+        .map_err(|e| exceptions::PyIOError::new_err(e.to_string()))
 }
 
 #[pymodule]
@@ -105,7 +95,7 @@ fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
     #[text_signature = "(cli_path, daily_stream_ref, /)"]
     fn run_py(_py: Python, cli_path: String, dir: String, daily_stream_ref: &[u8]) -> PyResult<()> {
         let daily_stream = StreamReader::try_new(daily_stream_ref)
-            .map_err(|e| PyErr::from(PyIOError::new_err(e.to_string())))?;
+            .map_err(|e| PyIOError::new_err(e.to_string()))?;
         run(cli_path, dir, daily_stream)
     }
 

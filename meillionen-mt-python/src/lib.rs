@@ -1,27 +1,24 @@
 use meillionen_mt::model;
 use pyo3::prelude::*;
-use serde_json;
-use pyo3::exceptions::{PyIOError, PyTypeError, PyValueError, PyKeyError};
-use std::collections::HashMap;
+
+use pyo3::exceptions::{PyIOError, PyKeyError, PyValueError};
+
 use meillionen_mt::extension_columns as ext_cols;
-use std::borrow::Borrow;
-use std::sync::Arc;
+
 use pyo3::PySequenceProtocol;
-use pyo3::types::PyDict;
-use std::convert::{TryFrom, TryInto};
-use std::num::TryFromIntError;
+use std::sync::Arc;
+
+use std::convert::TryFrom;
 
 #[pyclass]
 #[derive(Debug)]
 struct DimMeta {
-    inner: Arc<ext_cols::DimMeta>
+    inner: Arc<ext_cols::DimMeta>,
 }
 
 impl DimMeta {
     fn new(inner: Arc<ext_cols::DimMeta>) -> Self {
-        Self {
-            inner
-        }
+        Self { inner }
     }
 }
 
@@ -33,8 +30,8 @@ impl DimMeta {
             inner: Arc::new(ext_cols::DimMeta {
                 name,
                 size,
-                description
-            })
+                description,
+            }),
         }
     }
 
@@ -57,14 +54,12 @@ impl DimMeta {
 #[pyclass]
 #[derive(Debug)]
 struct TensorStackMeta {
-    inner: Arc<ext_cols::TensorStackMeta>
+    inner: Arc<ext_cols::TensorStackMeta>,
 }
 
 impl TensorStackMeta {
     fn new(inner: Arc<ext_cols::TensorStackMeta>) -> Self {
-        Self {
-            inner
-        }
+        Self { inner }
     }
 }
 
@@ -76,9 +71,12 @@ impl PySequenceProtocol for TensorStackMeta {
 
     fn __getitem__(&self, idx: isize) -> PyResult<DimMeta> {
         let idx: usize = TryFrom::try_from(idx)
-            .map_err(|e| PyErr::from(PyValueError::new_err(format!("{} is out of bounds", idx))))?;
-        let dim_meta = self.inner.dimensions().get(idx)
-            .ok_or(PyErr::from(PyKeyError::new_err(format!("{} is out of bounds", idx))))?;
+            .map_err(|_e| PyValueError::new_err(format!("{} is out of bounds", idx)))?;
+        let dim_meta = self
+            .inner
+            .dimensions()
+            .get(idx)
+            .ok_or(PyKeyError::new_err(format!("{} is out of bounds", idx)))?;
         Ok(DimMeta::new(dim_meta.clone()))
     }
 }
@@ -86,7 +84,7 @@ impl PySequenceProtocol for TensorStackMeta {
 #[pyclass]
 #[derive(Debug)]
 struct TableMeta {
-    inner: ext_cols::TableMeta
+    inner: ext_cols::TableMeta,
 }
 
 #[pymethods]
@@ -94,20 +92,21 @@ impl TableMeta {
     #[new]
     pub fn new() -> Self {
         Self {
-            inner: ext_cols::TableMeta::TensorStackMeta(Arc::new(ext_cols::TensorStackMeta::new(vec![])))
+            inner: ext_cols::TableMeta::TensorStackMeta(Arc::new(ext_cols::TensorStackMeta::new(
+                vec![],
+            ))),
         }
     }
 
     #[staticmethod]
     pub fn from_json(s: &str) -> PyResult<Self> {
         Ok(Self {
-            inner: serde_json::from_str(s)
-                .map_err(|e| PyErr::from(PyValueError::new_err(e.to_string())))?
+            inner: serde_json::from_str(s).map_err(|e| PyValueError::new_err(e.to_string()))?,
         })
     }
 
     pub fn to_json(&self) -> PyResult<String> {
-        serde_json::to_string(&self.inner).map_err(|e| PyErr::from(PyValueError::new_err(e.to_string())))
+        serde_json::to_string(&self.inner).map_err(|e| PyValueError::new_err(e.to_string()))
     }
 
     pub fn get_tensor_stack_meta(&self) -> TensorStackMeta {
@@ -120,7 +119,7 @@ impl TableMeta {
 #[pyclass]
 #[derive(Debug)]
 struct FuncRequest {
-    inner: model::FuncRequest
+    inner: model::FuncRequest,
 }
 
 #[pymethods]
@@ -128,7 +127,7 @@ impl FuncRequest {
     #[new]
     pub fn new() -> Self {
         Self {
-            inner: model::FuncRequest::new()
+            inner: model::FuncRequest::new(),
         }
     }
 
@@ -141,66 +140,76 @@ impl FuncRequest {
     }
 
     pub fn get_sink(&self, s: &str) -> Option<StoreRef> {
-        self.inner.get_sink(s).map(|sr| StoreRef { inner: sr.clone() })
+        self.inner
+            .get_sink(s)
+            .map(|sr| StoreRef { inner: sr.clone() })
     }
 
     pub fn get_source(&self, s: &str) -> Option<StoreRef> {
-        self.inner.get_source(s).map(|sr| StoreRef { inner: sr.clone() })
+        self.inner
+            .get_source(s)
+            .map(|sr| StoreRef { inner: sr.clone() })
     }
 }
 
 #[pyclass]
 #[derive(Debug)]
-struct FuncInterface { inner: model::FuncInterface }
+struct FuncInterface {
+    inner: model::FuncInterface,
+}
 
 #[pymethods]
 impl FuncInterface {
     #[new]
     fn new(s: &str) -> Self {
         Self {
-            inner: model::FuncInterface::new(s)
+            inner: model::FuncInterface::new(s),
         }
     }
 
     #[staticmethod]
     fn from_json(s: &str) -> PyResult<Self> {
         Ok(Self {
-            inner: serde_json::from_str(s).map_err(|e|
-                PyErr::from(PyIOError::new_err(e.to_string())))?
+            inner: serde_json::from_str(s).map_err(|e| PyIOError::new_err(e.to_string()))?,
         })
     }
 
     fn to_cli(&self) -> FuncRequest {
         FuncRequest {
-            inner: self.inner.to_cli()
+            inner: self.inner.to_cli(),
         }
     }
 
     fn call_cli(&self, program_name: &str, fc: &FuncRequest) -> PyResult<Option<i32>> {
-        self.inner.call_cli(program_name, &fc.inner)
+        self.inner
+            .call_cli(program_name, &fc.inner)
             .map(|ec| ec.code())
-            .map_err(|err| PyErr::from(PyIOError::new_err(err.to_string())))
+            .map_err(|err| PyIOError::new_err(err.to_string()))
     }
 
-    fn print(&self) { println!("{:?}", self) }
+    fn print(&self) {
+        println!("{:?}", self)
+    }
 }
 
 #[pyclass]
 #[derive(Debug)]
-struct StoreRef { inner: model::StoreRef }
+struct StoreRef {
+    inner: model::StoreRef,
+}
 
 #[pymethods]
 impl StoreRef {
     #[staticmethod]
     fn new_local_path(s: &str) -> Self {
         Self {
-            inner: model::StoreRef::SimplePath(s.to_string())
+            inner: model::StoreRef::SimplePath(s.to_string()),
         }
     }
 
     fn extract_local_path(&self) -> Option<String> {
         if let model::StoreRef::SimplePath(path) = &self.inner {
-            return Some(path.to_string())
+            return Some(path.to_string());
         }
         None
     }
