@@ -11,11 +11,9 @@ arrow = "3.0.0"
 clap = "2.33"
 eyre = "0.6.5"
 itertools = "0.10.0"
-ndarray = "0.14.0"
-numpy = "0.13.0"
-pyo3 = "0.13.2"
 serde = { version = "1.0", features = ["rc"] }
 serde_derive = "1.0"
 serde_json = "1.0"
+typetag = "0.1.7"
 
 [features]

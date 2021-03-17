@@ -11,16 +11,35 @@ use serde_json;
 use std::process::{Command, Stdio};
 use arrow::datatypes::Schema;
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TensorSchema {
+    dimensions: Vec<String>
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum DataType {
+    Tensor(TensorSchema),
     Table(Schema),
     Other
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct DimSlice {
+    variable: String,
+    range: (usize, usize)
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NetCDF {
+    path: String,
+    variable_path: String,
+    slices: Option<Vec<DimSlice>>
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum StoreRef {
-    LocalPath(String),
+    NetCDF(NetCDF),
+    SimplePath(String),
     Inline(String)
 }
 

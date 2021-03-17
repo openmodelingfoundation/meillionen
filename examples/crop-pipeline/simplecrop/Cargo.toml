@@ -10,16 +10,13 @@ requires-dist = ['numpy', 'pandas']
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+arrow = "3.0.0"
 clap = "2.33"
 chrono = ">=0.4"
 eyre = "0.6.0"
 itertools = "0.9.0"
 lazy_static = "1.4"
 meillionen-mt = { path = "../../../meillionen-mt", version = "0.1.0" }
-meillionen-mt-derive = { path = "../simplecrop-derive", version = "0.1.0" }
-ndarray = "0.14.0"
-netcdf = "0.5.2"
-numpy = "0.13.0"
 num-traits = "0.2"
 pyo3 = "0.13.0"
 serde = "1.0"
@@ -31,5 +28,4 @@ name = 'simplecrop_cli'
 crate-type = ['cdylib', 'rlib']
 
 [features]
-default = ["pyo3/extension-module", "netcdf/static"]
-static = ["netcdf/static"]
+default = ["pyo3/extension-module"]

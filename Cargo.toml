@@ -5,5 +5,4 @@ members = [
     'meillionen-mt-python',
     'meillionen-mt-r/src/rust',
     'examples/crop-pipeline/simplecrop',
-    'examples/crop-pipeline/simplecrop-derive',
 ]

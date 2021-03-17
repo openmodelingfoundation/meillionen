@@ -194,12 +194,12 @@ impl StoreRef {
     #[staticmethod]
     fn new_local_path(s: &str) -> Self {
         Self {
-            inner: model::StoreRef::LocalPath(s.to_string())
+            inner: model::StoreRef::SimplePath(s.to_string())
         }
     }
 
     fn extract_local_path(&self) -> Option<String> {
-        if let model::StoreRef::LocalPath(path) = &self.inner {
+        if let model::StoreRef::SimplePath(path) = &self.inner {
             return Some(path.to_string())
         }
         None
