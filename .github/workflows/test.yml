@@ -7,7 +7,7 @@ on:
     - 'notebooks/**' 
 
 jobs:
-  test-rust:
+  test-packages:
     name: Test Rust Packages
     runs-on: ubuntu-latest
     steps:
@@ -26,11 +26,6 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-  test-python:
-    name: Test Python Packages
-    runs-on: ubuntu-latest
-    needs: [test-rust]
-    steps:
       - name: Install Python Dependencies Into VirtualEnv
         run: python3 -m venv .venv \
           && . .venv/bin/activate \
