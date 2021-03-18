@@ -31,4 +31,4 @@ jobs:
           && . .venv/bin/activate \
           && python -m pip install -r requirements/base.txt
       - name: Test Python Meillionen Wrapper
-        run: maturin develop && pytest
+        run: . .venv/bin/activate && maturin develop && pytest
