@@ -1,4 +1,8 @@
 landlab
+maturin
+netCDF4
 numpy
 pandas
 pyarrow
+pytest
+xarray

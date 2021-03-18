@@ -17,6 +17,3 @@ serde_json = "1.0"
 [lib]
 name = 'meillionen'
 crate-type = ['cdylib', 'rlib']
-
-[features]
-default = ["pyo3/extension-module"]

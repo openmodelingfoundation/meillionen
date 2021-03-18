@@ -15,8 +15,8 @@ def test_netcdf_source_handler():
         'path': 'data/swd.nc',
         'variable': 'surface_water__depth'
     }
-    swd = source_handler.handle(data=netcdf_data, schema=netcdf_schema)
-    assert swd[:,0,0].equals(xr.DataArray(np.array([1,1], dtype=np.float32), dims=('x',)))
-    assert swd.sel(y=1,day=0).equals(xr.DataArray(np.array([2,2], dtype=np.float32), dims=('x',)))
+    swd = source_handler.handle(metadata=netcdf_data, schema=netcdf_schema)
+    assert swd[:,0,0].equals(xr.DataArray(np.array([0,0], dtype=np.float32), dims=('x',)))
+    assert swd.sel(y=1,day=0).equals(xr.DataArray(np.array([1,1], dtype=np.float32), dims=('x',)))
 
 
