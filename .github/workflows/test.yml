@@ -13,12 +13,12 @@ jobs:
     steps:
       - name: Install System Dependencies
         run: sudo apt-get install -y gfortran python3
-      - name: Install maturin
-        run: python3 -m pip install -r requirements/base.txt
       - name: Checkout Repository
         uses: actions/checkout@v2
         with:
           submodules: 'true'
+      - name: Install maturin
+        run: python3 -m pip install -r requirements/base.txt
       - name: Set Rust Version to Unstable
         uses: actions-rs/toolchain@v1
         with:
