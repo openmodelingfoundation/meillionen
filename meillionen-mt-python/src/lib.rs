@@ -215,6 +215,16 @@ impl StoreRef {
     }
 }
 
+#[pyfunction]
+fn get_dataframe_formats() -> Vec<&'static str> {
+    vec!["Parquet"]
+}
+
+#[pyfunction]
+fn get_tensor_formats() -> Vec<&'static str> {
+    vec!["NetCDF"]
+}
+
 #[pymodule]
 fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<FuncRequest>()?;
@@ -223,6 +233,7 @@ fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<TableMeta>()?;
     m.add_class::<TensorStackMeta>()?;
     m.add_class::<DimMeta>()?;
+    m.add_function(pyo3::wrap_pyfunction!(get_tensor_formats, m)?)?;
 
     Ok(())
 }

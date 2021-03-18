@@ -12,7 +12,9 @@ use std::process::{Command, Stdio};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TensorSchema {
+    label: String,
     dimensions: Vec<String>,
+    data_type: arrow::datatypes::DataType
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -31,15 +33,15 @@ pub struct DimSlice {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NetCDF {
     path: String,
-    variable_path: String,
+    variable: String,
     slices: Option<Vec<DimSlice>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(tag = "type")]
 pub enum StoreRef {
     NetCDF(NetCDF),
     SimplePath(String),
-    Inline(String),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
