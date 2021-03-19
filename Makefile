@@ -1,5 +1,7 @@
+PYTHON_PATH=.venv/bin/python
+
 .PHONY: build
 build:
-	cd meillionen-mt-python && maturin build
-	cd examples/crop-pipeline/simplecrop && maturin build -i $$(which python)
-	.venv/bin/python -m pip install --no-deps --force-reinstall -r requirements/wheels.txt
+	. .venv/bin/activate && maturin build -i $$(which python) --manifest-path meillionen-mt-python/Cargo.toml --cargo-extra-args='--features "pyo3/extension-module"'
+	. .venv/bin/activate && maturin build -i $$(which python) --manifest-path examples/crop-pipeline/simplecrop/Cargo.toml --cargo-extra-args='--features "pyo3/extension-module"'
+	$(PYTHON_PATH) -m pip install --no-deps --force-reinstall -r requirements/wheels.txt
