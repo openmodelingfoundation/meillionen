@@ -1,15 +1,19 @@
-mod model;
+use std::convert::TryInto;
+use std::io::Cursor;
 
-use model::{DailyData, SimpleCropConfig, YearlyData};
-use pyo3::exceptions;
-use pyo3::prelude::*;
-
-use arrow::datatypes::{DataType, Field, Schema, Float32Type};
+use arrow::array::Float32Array;
+use arrow::datatypes::{DataType, Field, Float32Type, Schema};
 use arrow::ipc::reader::StreamReader;
 use arrow::record_batch::RecordBatch;
 use arrow::record_batch::RecordBatchReader;
-use pyo3::exceptions::{PyIOError, PyKeyError};
-use arrow::array::Float32Array;
+use pyo3::exceptions;
+use pyo3::exceptions::{PyIOError, PyKeyError, PyValueError};
+use pyo3::prelude::*;
+use pyo3::types::{PyByteArray, PyBytes};
+
+use model::{DailyData, SimpleCropConfig, YearlyData};
+
+mod model;
 
 fn get_column<'a>(batch: &'a RecordBatch, name: &str) -> eyre::Result<&'a [f32]> {
     let schema = batch.schema();
@@ -24,30 +28,12 @@ fn get_column<'a>(batch: &'a RecordBatch, name: &str) -> eyre::Result<&'a [f32]>
         .map(|a| a.values())
 }
 
-fn run(cli_path: String, dir: String, daily_stream: StreamReader<&[u8]>) -> PyResult<()> {
-    let schema = Schema::new(vec![
-        Field::new("irrigation", DataType::Float32, false),
-        Field::new("temp_max", DataType::Float32, false),
-        Field::new("temp_min", DataType::Float32, false),
-        Field::new("rainfall", DataType::Float32, false),
-        Field::new("photosynthetic_energy_flux", DataType::Float32, false),
-        Field::new("energy_flux", DataType::Float32, false),
-    ]);
-
-    // 365 days of weather
-    let mut batches: Vec<RecordBatch> = vec![];
-    for b in daily_stream.into_iter() {
-        match b {
-            Ok(batch) => batches.push(batch),
-            Err(e) => return Err(PyIOError::new_err(e.to_string())),
-        }
-    }
-
+fn run_record_batch(cli_path: String, dir: String, batch: &RecordBatch) -> eyre::Result<(RecordBatch, RecordBatch)> {
     let get_col = |name: &str| {
-        get_column(&batches[0], name).map_err(|e| PyKeyError::new_err(e.to_string()))
+        get_column(&batch, name).map_err(|e| PyKeyError::new_err(e.to_string()))
     };
 
-    let irrigation =  get_col("irrigation")?;
+    let irrigation = get_col("irrigation")?;
     let temp_max = get_col("temp_max")?;
     let temp_min = get_col("temp_min")?;
     let rainfall = get_col("rainfall")?;
@@ -69,17 +55,44 @@ fn run(cli_path: String, dir: String, daily_stream: StreamReader<&[u8]>) -> PyRe
 
     config
         .run(&cli_path, &dir)
-        .map_err(|e| exceptions::PyIOError::new_err(e.to_string()))
+}
+
+fn run(cli_path: String, dir: String, daily_stream: StreamReader<&[u8]>) -> eyre::Result<(RecordBatch, RecordBatch)> {
+    // 365 days of weather
+    let mut batches: Vec<RecordBatch> = vec![];
+    for b in daily_stream.into_iter() {
+        match b {
+            Ok(batch) => batches.push(batch),
+            Err(e) => return Err(eyre::eyre!(e)),
+        }
+    }
+    if batches.len() > 1 {
+        return Err(eyre::eyre!("should only send send one record batch"));
+    }
+
+    run_record_batch(cli_path, dir, &batches[0])
 }
 
 #[pymodule]
 fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m, "run")]
     #[text_signature = "(cli_path, dir, daily_stream_ref, /)"]
-    fn run_py(_py: Python, cli_path: String, dir: String, daily_stream_ref: &[u8]) -> PyResult<()> {
+    fn run_py<'a>(_py: Python<'a>, cli_path: String, dir: String, daily_stream_ref: &[u8]) -> PyResult<(&'a PyBytes, &'a PyBytes)> {
         let daily_stream = StreamReader::try_new(daily_stream_ref)
             .map_err(|e| PyIOError::new_err(e.to_string()))?;
-        run(cli_path, dir, daily_stream)
+        let (plant, soil) = run(cli_path, dir, daily_stream)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        let to_pybytes = |rb: RecordBatch| -> PyResult<&PyBytes> {
+            let mut sink = Vec::<u8>::new();
+            {
+                let mut writer = arrow::ipc::writer::StreamWriter::try_new(
+                    &mut sink, rb.schema().as_ref())
+                    .map_err(|e| PyIOError::new_err(e.to_string()))?;
+                writer.write(&rb);
+            }
+            Ok(PyBytes::new(_py, sink.as_ref()))
+        };
+        Ok((to_pybytes(plant)?, to_pybytes(soil)?))
     }
 
     Ok(())

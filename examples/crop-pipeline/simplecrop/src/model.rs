@@ -1,17 +1,19 @@
 #![cfg_attr(not(debug_assertions), deny(warnings))]
 
-use eyre::WrapErr;
-use itertools::Itertools;
 use std::fs::{create_dir_all, File};
 use std::io;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use arrow::record_batch::RecordBatch;
-use arrow::datatypes::{Schema, Field};
-use meillionen_mt::model::DataType;
 use std::sync::Arc;
-use arrow::array::{Float32Array, ArrayRef, Int64Array, Int32Array};
+
+use arrow::array::{ArrayRef, Float32Array, Int32Array, Int64Array};
+use arrow::datatypes::{Field, Schema};
+use arrow::record_batch::RecordBatch;
+use eyre::WrapErr;
+use itertools::Itertools;
+
+use meillionen_mt::model::DataType;
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DailyData<'a> {
@@ -201,7 +203,7 @@ impl SoilDataSetBuilder {
             .map(|f| f.parse::<f32>().ok())
             .collect::<Option<Vec<f32>>>()?;
         if let [_srad, _tmax, _tmin, _rain, _irr, rof, inf, drn, etp, esa, epa, swc, swc_dp, swfac1, swfac2] =
-            fs[..]
+        fs[..]
         {
             self.day_of_year.push(doy);
             self.soil_daily_runoff.push(rof);
@@ -235,21 +237,6 @@ impl SoilDataSetBuilder {
         }
         Ok(results)
     }
-}
-
-#[derive(Debug)]
-pub struct SoilDataSet {
-    pub day_of_year: Vec<i32>,
-    pub soil_daily_runoff: Vec<f32>,             // rof
-    pub soil_daily_infiltration: Vec<f32>,       // int
-    pub soil_daily_drainage: Vec<f32>,           // drn
-    pub soil_evapotranspiration: Vec<f32>,       // etp
-    pub soil_evaporation: Vec<f32>,              // esa
-    pub plant_potential_transpiration: Vec<f32>, // epa
-    pub soil_water_storage_depth: Vec<f32>,      // swc
-    pub soil_water_profile_ratio: Vec<f32>,      // swc / dp
-    pub soil_water_deficit_stress: Vec<f32>,     // swfac1
-    pub soil_water_excess_stress: Vec<f32>,      // swfac2
 }
 
 #[derive(Debug, Default)]
@@ -308,54 +295,61 @@ impl PlantDataSetBuilder {
     }
 }
 
-#[derive(Debug)]
-pub struct PlantDataSet {
-    day_of_year: Vec<i32>,
-    plant_leaf_count: Vec<f32>,
-    air_accumulated_temp: Vec<f32>,
-    plant_matter: Vec<f32>,
-    plant_matter_canopy: Vec<f32>,
-    plant_matter_fruit: Vec<f32>,
-    plant_matter_root: Vec<f32>,
-    plant_leaf_area_index: Vec<f32>,
-}
-
-fn import_output_data<P: AsRef<Path>>(dir: P) -> eyre::Result<RecordBatch> {
+fn load_output_data<P: AsRef<Path>>(dir: P) -> eyre::Result<(RecordBatch, RecordBatch)> {
     let po = PlantDataSetBuilder::load(
         &dir.as_ref().join("output/plant.out"))?;
     let so = SoilDataSetBuilder::load(
         &dir.as_ref().join("output/soil.out"))?;
     use arrow::datatypes::DataType::*;
-    let name_col_pairs: Vec<(Field, ArrayRef)> = vec![
-        ("air_accumulated_temp", po.air_accumulated_temp),
-        ("plant_leaf_area_index", po.plant_leaf_area_index),
-        ("plant_leaf_count", po.plant_leaf_count),
-        ("plant_matter", po.plant_matter),
-        ("plant_matter_canopy", po.plant_matter_canopy),
-        ("plant_matter_fruit", po.plant_matter_fruit),
-        ("plant_matter_root", po.plant_matter_root),
-        ("plant_potential_transpiration", so.plant_potential_transpiration),
-        ("soil_daily_drainage", so.soil_daily_drainage),
-        ("soil_daily_infiltration", so.soil_daily_infiltration),
-        ("soil_daily_runoff", so.soil_daily_runoff),
-        ("soil_evaporation", so.soil_evaporation),
-        ("soil_evapotranspiration", so.soil_evapotranspiration),
-        ("soil_water_deficit_stress", so.soil_water_deficit_stress),
-        ("soil_water_excess_stress", so.soil_water_excess_stress),
-        ("soil_water_profile_ratio", so.soil_water_profile_ratio),
-        ("soil_water_storage_depth", so.soil_water_storage_depth),
-    ]
-        .into_iter()
-        .map(|(name, col)| -> (Field, ArrayRef) {
-            (Field::new(name, Float32, false), Arc::new(Float32Array::from(col)))
-        })
-        .chain({
-            let day: ArrayRef = Arc::new(Int32Array::from(po.day_of_year));
-            vec![(Field::new("day", Int32, false), day)]
-        })
-        .collect();
-    let s = arrow::array::StructArray::from(name_col_pairs);
-    Ok(RecordBatch::from(&s))
+    let soil = {
+        let (fields, cols): (Vec<Field>, Vec<ArrayRef>) = vec![
+            ("soil_daily_drainage", so.soil_daily_drainage),
+            ("soil_daily_infiltration", so.soil_daily_infiltration),
+            ("soil_daily_runoff", so.soil_daily_runoff),
+            ("soil_evaporation", so.soil_evaporation),
+            ("soil_evapotranspiration", so.soil_evapotranspiration),
+            ("soil_water_deficit_stress", so.soil_water_deficit_stress),
+            ("soil_water_excess_stress", so.soil_water_excess_stress),
+            ("soil_water_profile_ratio", so.soil_water_profile_ratio),
+            ("soil_water_storage_depth", so.soil_water_storage_depth),
+            ("plant_potential_transpiration", so.plant_potential_transpiration),
+        ]
+            .into_iter()
+            .map(|(name, col)| -> (Field, ArrayRef) {
+                (Field::new(name, Float32, false), Arc::new(Float32Array::from(col)))
+            })
+            .chain({
+                let day: ArrayRef = Arc::new(Int32Array::from(so.day_of_year));
+                vec![(Field::new("day", Int32, false), day)]
+            })
+            .unzip();
+
+        let schema_ref = Arc::new(Schema::new(fields));
+        RecordBatch::try_new(schema_ref, cols).map_err(eyre::Report::msg)
+    }?;
+    let plant = {
+        let (fields, cols): (Vec<Field>, Vec<ArrayRef>) = vec![
+            ("air_accumulated_temp", po.air_accumulated_temp),
+            ("plant_leaf_area_index", po.plant_leaf_area_index),
+            ("plant_leaf_count", po.plant_leaf_count),
+            ("plant_matter", po.plant_matter),
+            ("plant_matter_canopy", po.plant_matter_canopy),
+            ("plant_matter_fruit", po.plant_matter_fruit),
+            ("plant_matter_root", po.plant_matter_root),
+        ]
+            .into_iter()
+            .map(|(name, col)| -> (Field, ArrayRef) {
+                (Field::new(name, Float32, false), Arc::new(Float32Array::from(col)))
+            })
+            .chain({
+                let day: ArrayRef = Arc::new(Int32Array::from(po.day_of_year));
+                vec![(Field::new("day", Int32, false), day)]
+            })
+            .unzip();
+        let schema_ref = Arc::new(Schema::new(fields));
+        RecordBatch::try_new(schema_ref, cols).map_err(eyre::Report::msg)
+    }?;
+    Ok((plant, soil))
 }
 
 pub struct SimpleCropConfig<'a> {
@@ -396,24 +390,25 @@ impl<'a> SimpleCropConfig<'a> {
         Ok(())
     }
 
-    pub fn run(&self, cli_path: impl AsRef<Path>, dir: impl AsRef<Path>) -> eyre::Result<()> {
+    pub fn run(&self, cli_path: impl AsRef<Path>, dir: impl AsRef<Path>) -> eyre::Result<(RecordBatch, RecordBatch)> {
         let cli_path = cli_path
             .as_ref()
             .canonicalize()
-            .map_err(|e| eyre::eyre!(e.to_string()))?;
+            .map_err(eyre::Report::msg)?;
         self.save(&dir);
         create_dir_all(&dir.as_ref().join("output"));
-        let _r = Command::new(cli_path).current_dir(&dir).spawn()?;
-        Ok(())
+        let _r = Command::new(cli_path).current_dir(&dir).spawn()?.wait()?;
+        load_output_data(&dir)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::model::{DailyData, PlantDataSetBuilder, SoilDataSetBuilder, YearlyData};
     use std::fs::read_to_string;
     use std::io::Cursor;
     use std::str;
+
+    use crate::model::{DailyData, PlantDataSetBuilder, SoilDataSetBuilder, YearlyData};
 
     #[test]
     fn write_yearly_data() {
