@@ -1,26 +1,27 @@
 mod model;
 
-use model::{DailyData, SimpleCropConfig, SimpleCropDataSet, YearlyData};
+use model::{DailyData, SimpleCropConfig, YearlyData};
 use pyo3::exceptions;
 use pyo3::prelude::*;
 
-use arrow::datatypes::{DataType, Field, Schema};
+use arrow::datatypes::{DataType, Field, Schema, Float32Type};
 use arrow::ipc::reader::StreamReader;
 use arrow::record_batch::RecordBatch;
 use arrow::record_batch::RecordBatchReader;
-use pyo3::exceptions::PyIOError;
+use pyo3::exceptions::{PyIOError, PyKeyError};
+use arrow::array::Float32Array;
 
-#[pyclass]
-#[derive(Debug)]
-pub struct PySimpleCropDataSet {
-    inner: SimpleCropDataSet,
-}
-
-#[pymethods]
-impl PySimpleCropDataSet {
-    fn print(&self, _py: Python) {
-        print!("{:?}", self.inner)
-    }
+fn get_column<'a>(batch: &'a RecordBatch, name: &str) -> eyre::Result<&'a [f32]> {
+    let schema = batch.schema();
+    let col_ind = schema.index_of(name)
+        .map_err(|e| eyre::eyre!(e))?;
+    let col = batch.column(col_ind);
+    use arrow::datatypes::DataType::Float32;
+    col
+        .as_any()
+        .downcast_ref::<Float32Array>()
+        .ok_or(eyre::eyre!("column {} type mismatch: expected {:?} got {:?}", name, col.data_type(), Float32))
+        .map(|a| a.values())
 }
 
 fn run(cli_path: String, dir: String, daily_stream: StreamReader<&[u8]>) -> PyResult<()> {
@@ -42,34 +43,16 @@ fn run(cli_path: String, dir: String, daily_stream: StreamReader<&[u8]>) -> PyRe
         }
     }
 
-    if &schema == batches[0].schema().as_ref() {
-        return Err(PyIOError::new_err("schema mismatch"));
-    }
-
-    let extract_col = |col_ind: usize| {
-        batches[0]
-            .column(col_ind)
-            .as_any()
-            .downcast_ref::<arrow::array::Float32Array>()
+    let get_col = |name: &str| {
+        get_column(&batches[0], name).map_err(|e| PyKeyError::new_err(e.to_string()))
     };
 
-    let _irrigation = extract_col(0).unwrap();
-    let irrigation = _irrigation.values();
-
-    let _temp_max = extract_col(1).unwrap();
-    let temp_max = _temp_max.values();
-
-    let _temp_min = extract_col(2).unwrap();
-    let temp_min = _temp_min.values();
-
-    let _rainfall = extract_col(3).unwrap();
-    let rainfall = _rainfall.values();
-
-    let _photosynthetic_energy_flux = extract_col(4).unwrap();
-    let photosynthetic_energy_flux = _photosynthetic_energy_flux.values();
-
-    let _energy_flux = extract_col(5).unwrap();
-    let energy_flux = _energy_flux.values();
+    let irrigation =  get_col("irrigation")?;
+    let temp_max = get_col("temp_max")?;
+    let temp_min = get_col("temp_min")?;
+    let rainfall = get_col("rainfall")?;
+    let photosynthetic_energy_flux = get_col("photosynthetic_energy_flux")?;
+    let energy_flux = get_col("energy_flux")?;
 
     let daily = DailyData {
         irrigation,
@@ -92,7 +75,7 @@ fn run(cli_path: String, dir: String, daily_stream: StreamReader<&[u8]>) -> PyRe
 #[pymodule]
 fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m, "run")]
-    #[text_signature = "(cli_path, daily_stream_ref, /)"]
+    #[text_signature = "(cli_path, dir, daily_stream_ref, /)"]
     fn run_py(_py: Python, cli_path: String, dir: String, daily_stream_ref: &[u8]) -> PyResult<()> {
         let daily_stream = StreamReader::try_new(daily_stream_ref)
             .map_err(|e| PyIOError::new_err(e.to_string()))?;

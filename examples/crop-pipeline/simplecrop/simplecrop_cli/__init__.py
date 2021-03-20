@@ -1,6 +1,6 @@
 from meillionen import FuncInterface
 from .simplecrop_cli import run
-
+from io import BytesIO
 import pandas as pd
 
 
@@ -12,6 +12,13 @@ interface = FuncInterface.from_json('''{
             "datatype": {
                 "Table": {
                     "fields": [
+                        {
+                            "name": "day",
+                            "data_type": "Float64",
+                            "nullable": false,
+                            "dict_id": 0,
+                            "dict_is_ordered": false
+                        },
                         {
                             "name": "irrigation",
                             "data_type": "Float64",
@@ -67,7 +74,7 @@ interface = FuncInterface.from_json('''{
                 "Table": {
                     "fields": [
                         {
-                            "name": "day_of_year",
+                            "name": "day",
                             "data_type": "Int64",
                             "nullable": false,
                             "dict_id": 0,
@@ -93,7 +100,9 @@ def run_cli(cli_path):
     args = interface.to_cli()
     daily_path = args.get_source('daily')
     daily = pd.read_parquet(daily_path)
-    run(cli_path, daily)
+    daily_ref = BytesIO()
+    daily.to_feather(daily_ref)
+    run(cli_path, daily_ref.getvalue())
     yield_path = args.get_sink('yield')
     yields = pd.read_csv('output/plant.out', names=[
         'day_of_year',

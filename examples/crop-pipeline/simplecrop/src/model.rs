@@ -5,8 +5,13 @@ use itertools::Itertools;
 use std::fs::{create_dir_all, File};
 use std::io;
 use std::io::{BufRead, BufReader, BufWriter, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
+use arrow::record_batch::RecordBatch;
+use arrow::datatypes::{Schema, Field};
+use meillionen_mt::model::DataType;
+use std::sync::Arc;
+use arrow::array::{Float32Array, ArrayRef, Int64Array, Int32Array};
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DailyData<'a> {
@@ -315,43 +320,42 @@ pub struct PlantDataSet {
     plant_leaf_area_index: Vec<f32>,
 }
 
-#[derive(Debug)]
-pub struct SimpleCropDataSet {
-    pub plant: PlantDataSet,
-    pub soil: SoilDataSet,
-}
-
-impl SimpleCropDataSet {
-    pub fn load<P: AsRef<Path>>(p: P) -> eyre::Result<Self> {
-        let op = p.as_ref().join("output");
-        create_dir_all(&op)?;
-        let plant = PlantDataSetBuilder::load(&op.join("plant.out"))?;
-        let plant = PlantDataSet {
-            day_of_year: plant.day_of_year,
-            plant_leaf_count: plant.plant_leaf_count,
-            air_accumulated_temp: plant.air_accumulated_temp,
-            plant_matter: plant.plant_matter,
-            plant_matter_canopy: plant.plant_matter_canopy,
-            plant_matter_fruit: plant.plant_matter_fruit,
-            plant_matter_root: plant.plant_matter_root,
-            plant_leaf_area_index: plant.plant_leaf_area_index,
-        };
-        let soil = SoilDataSetBuilder::load(&op.join("soil.out"))?;
-        let soil = SoilDataSet {
-            day_of_year: soil.day_of_year,
-            soil_daily_runoff: soil.soil_daily_runoff,
-            soil_daily_infiltration: soil.soil_daily_infiltration,
-            soil_daily_drainage: soil.soil_daily_drainage,
-            soil_evapotranspiration: soil.soil_evapotranspiration,
-            soil_evaporation: soil.soil_evaporation,
-            plant_potential_transpiration: soil.plant_potential_transpiration,
-            soil_water_storage_depth: soil.soil_water_storage_depth,
-            soil_water_profile_ratio: soil.soil_water_profile_ratio,
-            soil_water_deficit_stress: soil.soil_water_deficit_stress,
-            soil_water_excess_stress: soil.soil_water_excess_stress,
-        };
-        Ok(Self { plant, soil })
-    }
+fn import_output_data<P: AsRef<Path>>(dir: P) -> eyre::Result<RecordBatch> {
+    let po = PlantDataSetBuilder::load(
+        &dir.as_ref().join("output/plant.out"))?;
+    let so = SoilDataSetBuilder::load(
+        &dir.as_ref().join("output/soil.out"))?;
+    use arrow::datatypes::DataType::*;
+    let name_col_pairs: Vec<(Field, ArrayRef)> = vec![
+        ("air_accumulated_temp", po.air_accumulated_temp),
+        ("plant_leaf_area_index", po.plant_leaf_area_index),
+        ("plant_leaf_count", po.plant_leaf_count),
+        ("plant_matter", po.plant_matter),
+        ("plant_matter_canopy", po.plant_matter_canopy),
+        ("plant_matter_fruit", po.plant_matter_fruit),
+        ("plant_matter_root", po.plant_matter_root),
+        ("plant_potential_transpiration", so.plant_potential_transpiration),
+        ("soil_daily_drainage", so.soil_daily_drainage),
+        ("soil_daily_infiltration", so.soil_daily_infiltration),
+        ("soil_daily_runoff", so.soil_daily_runoff),
+        ("soil_evaporation", so.soil_evaporation),
+        ("soil_evapotranspiration", so.soil_evapotranspiration),
+        ("soil_water_deficit_stress", so.soil_water_deficit_stress),
+        ("soil_water_excess_stress", so.soil_water_excess_stress),
+        ("soil_water_profile_ratio", so.soil_water_profile_ratio),
+        ("soil_water_storage_depth", so.soil_water_storage_depth),
+    ]
+        .into_iter()
+        .map(|(name, col)| -> (Field, ArrayRef) {
+            (Field::new(name, Float32, false), Arc::new(Float32Array::from(col)))
+        })
+        .chain({
+            let day: ArrayRef = Arc::new(Int32Array::from(po.day_of_year));
+            vec![(Field::new("day", Int32, false), day)]
+        })
+        .collect();
+    let s = arrow::array::StructArray::from(name_col_pairs);
+    Ok(RecordBatch::from(&s))
 }
 
 pub struct SimpleCropConfig<'a> {
