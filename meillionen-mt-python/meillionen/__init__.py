@@ -1,6 +1,6 @@
 from typing import Callable, Type, Any
 
-from .meillionen import FuncInterface, StoreRef, FuncRequest, get_tensor_formats
+from .meillionen import FuncInterface, FuncRequest, NetCDFResource
 import netCDF4
 import xarray as xr
 import pyarrow.parquet as pq

@@ -1,14 +1,142 @@
-use meillionen_mt::model;
-use pyo3::prelude::*;
-
-use pyo3::exceptions::{PyIOError, PyKeyError, PyValueError};
-
-use meillionen_mt::extension_columns as ext_cols;
-
-use pyo3::PySequenceProtocol;
+use std::convert::TryFrom;
 use std::sync::Arc;
 
-use std::convert::TryFrom;
+use pyo3::exceptions::{PyIOError, PyKeyError, PyValueError};
+use pyo3::prelude::*;
+use pyo3::PySequenceProtocol;
+
+use meillionen_mt::{arg, extension_columns as ext_cols};
+use meillionen_mt::arg::req;
+use meillionen_mt::model;
+use pyo3::types::PyDict;
+use pythonize::{depythonize, pythonize};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+fn to_dict<T>(data: &T) -> PyResult<PyObject>
+    where T: Serialize {
+    pythonize(
+        Python::acquire_gil().python(),
+        &data
+    ).map_err(|e| PyValueError::new_err(e.to_string()))
+}
+
+fn from_dict<'de, T>(data: &'de PyAny) -> PyResult<T>
+    where T: Deserialize<'de> {
+    depythonize(data).map_err(|e| PyValueError::new_err(e.to_string()))
+}
+
+#[pyclass]
+#[derive(Debug)]
+struct NetCDFResource {
+    inner: Arc<req::NetCDFResource>,
+}
+
+#[pymethods]
+impl NetCDFResource {
+    #[staticmethod]
+    pub fn from_dict(data: &PyAny) -> PyResult<Self> {
+        Ok(Self {
+            inner: Arc::new(from_dict(data)?)
+        })
+    }
+
+    #[getter]
+    fn get_path(&self) -> &str {
+        self.inner.path.as_str()
+    }
+
+    #[getter]
+    fn get_variable(&self) -> &str {
+        self.inner.variable.as_str()
+    }
+
+    #[getter]
+    fn get_slices(&self) -> HashMap<String, (usize, usize)> {
+        self.inner.slices.clone()
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+struct FeatherResource {
+    inner: Arc<req::FeatherResource>
+}
+
+#[pymethods]
+impl FeatherResource {
+    #[staticmethod]
+    fn from_dict(data: &PyAny) -> PyResult<Self> {
+        Ok(Self {
+            inner: Arc::new(from_dict(data)?)
+        })
+    }
+
+    #[getter]
+    fn get_path(&self) -> &str {
+        self.inner.path.as_ref()
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+struct ArgResource {
+    inner: Arc<arg::ArgResource>
+}
+
+#[pymethods]
+impl ArgResource {
+    #[staticmethod]
+    fn from_dict(data: &PyAny) -> PyResult<Self> {
+        Ok(Self {
+            inner: Arc::new(from_dict(data)?)
+        })
+    }
+
+    fn to_dict(&self) -> PyResult<PyObject> {
+        to_dict(&self.inner)
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+struct TensorValidator {
+    inner: Arc<arg::validation::TensorValidator>
+}
+
+#[pymethods]
+impl TensorValidator {
+    #[staticmethod]
+    fn from_dict(data: &PyAny) -> PyResult<Self> {
+        Ok(Self {
+            inner: Arc::new(from_dict(data)?)
+        })
+    }
+
+    fn to_dict(&self) -> PyResult<PyObject> {
+        to_dict(&self.inner)
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+struct ArgValidatorType {
+    inner: Arc<arg::ArgValidatorType>
+}
+
+#[pymethods]
+impl ArgValidatorType {
+    #[staticmethod]
+    fn from_dict(data: &PyAny) -> PyResult<Self> {
+        Ok(Self {
+            inner: Arc::new(from_dict(data)?)
+        })
+    }
+
+    fn to_dict(&self) -> PyResult<PyObject> {
+        to_dict(&self.inner)
+    }
+}
 
 #[pyclass]
 #[derive(Debug)]
@@ -51,70 +179,6 @@ impl DimMeta {
     }
 }
 
-#[pyclass]
-#[derive(Debug)]
-struct TensorStackMeta {
-    inner: Arc<ext_cols::TensorStackMeta>,
-}
-
-impl TensorStackMeta {
-    fn new(inner: Arc<ext_cols::TensorStackMeta>) -> Self {
-        Self { inner }
-    }
-}
-
-#[pyproto]
-impl PySequenceProtocol for TensorStackMeta {
-    fn __len__(&self) -> usize {
-        self.inner.dimensions().len()
-    }
-
-    fn __getitem__(&self, idx: isize) -> PyResult<DimMeta> {
-        let idx: usize = TryFrom::try_from(idx)
-            .map_err(|_e| PyValueError::new_err(format!("{} is out of bounds", idx)))?;
-        let dim_meta = self
-            .inner
-            .dimensions()
-            .get(idx)
-            .ok_or(PyKeyError::new_err(format!("{} is out of bounds", idx)))?;
-        Ok(DimMeta::new(dim_meta.clone()))
-    }
-}
-
-#[pyclass]
-#[derive(Debug)]
-struct TableMeta {
-    inner: ext_cols::TableMeta,
-}
-
-#[pymethods]
-impl TableMeta {
-    #[new]
-    pub fn new() -> Self {
-        Self {
-            inner: ext_cols::TableMeta::TensorStackMeta(Arc::new(ext_cols::TensorStackMeta::new(
-                vec![],
-            ))),
-        }
-    }
-
-    #[staticmethod]
-    pub fn from_json(s: &str) -> PyResult<Self> {
-        Ok(Self {
-            inner: serde_json::from_str(s).map_err(|e| PyValueError::new_err(e.to_string()))?,
-        })
-    }
-
-    pub fn to_json(&self) -> PyResult<String> {
-        serde_json::to_string(&self.inner).map_err(|e| PyValueError::new_err(e.to_string()))
-    }
-
-    pub fn get_tensor_stack_meta(&self) -> TensorStackMeta {
-        match &self.inner {
-            ext_cols::TableMeta::TensorStackMeta(ref tm) => TensorStackMeta::new(tm.clone()),
-        }
-    }
-}
 
 #[pyclass]
 #[derive(Debug)]
@@ -131,31 +195,35 @@ impl FuncRequest {
         }
     }
 
-    pub fn set_sink(&mut self, s: &str, si: &StoreRef) {
-        self.inner.set_sink(s, &si.inner)
+    pub fn set_sink(&mut self, s: &str, si: &ArgResource) {
+        self.inner.set_sink(s, si.inner.clone())
     }
 
-    pub fn set_source(&mut self, s: &str, sr: &StoreRef) {
-        self.inner.set_source(s, &sr.inner)
+    pub fn set_source(&mut self, s: &str, sr: &ArgResource) {
+        self.inner.set_source(s, sr.inner.clone())
     }
 
-    pub fn get_sink(&self, s: &str) -> Option<StoreRef> {
+    pub fn get_sink(&self, s: &str) -> Option<ArgResource> {
         self.inner
             .get_sink(s)
-            .map(|sr| StoreRef { inner: sr.clone() })
+            .map(|sr| ArgResource { inner: sr.clone() })
     }
 
-    pub fn get_source(&self, s: &str) -> Option<StoreRef> {
+    pub fn get_source(&self, s: &str) -> Option<ArgResource> {
         self.inner
             .get_source(s)
-            .map(|sr| StoreRef { inner: sr.clone() })
+            .map(|sr| ArgResource { inner: sr.clone() })
+    }
+
+    pub fn to_dict(&self) -> PyResult<PyObject> {
+        to_dict(&self.inner)
     }
 }
 
 #[pyclass]
 #[derive(Debug)]
 struct FuncInterface {
-    inner: model::FuncInterface,
+    inner: Arc<model::FuncInterface>,
 }
 
 #[pymethods]
@@ -163,7 +231,7 @@ impl FuncInterface {
     #[new]
     fn new(s: &str) -> Self {
         Self {
-            inner: model::FuncInterface::new(s),
+            inner: Arc::new(model::FuncInterface::new(s)),
         }
     }
 
@@ -172,6 +240,17 @@ impl FuncInterface {
         Ok(Self {
             inner: serde_json::from_str(s).map_err(|e| PyIOError::new_err(e.to_string()))?,
         })
+    }
+
+    #[staticmethod]
+    fn from_dict(data: &PyAny) -> PyResult<Self> {
+        Ok(Self {
+            inner: Arc::new(from_dict(data)?)
+        })
+    }
+
+    fn to_dict(&self) -> PyResult<PyObject> {
+        to_dict(&self.inner)
     }
 
     fn to_cli(&self) -> FuncRequest {
@@ -186,54 +265,17 @@ impl FuncInterface {
             .map(|ec| ec.code())
             .map_err(|err| PyIOError::new_err(err.to_string()))
     }
-
-    fn print(&self) {
-        println!("{:?}", self)
-    }
-}
-
-#[pyclass]
-#[derive(Debug)]
-struct StoreRef {
-    inner: model::StoreRef,
-}
-
-#[pymethods]
-impl StoreRef {
-    #[staticmethod]
-    fn new_local_path(s: &str) -> Self {
-        Self {
-            inner: model::StoreRef::SimplePath(s.to_string()),
-        }
-    }
-
-    fn extract_local_path(&self) -> Option<String> {
-        if let model::StoreRef::SimplePath(path) = &self.inner {
-            return Some(path.to_string());
-        }
-        None
-    }
-}
-
-#[pyfunction]
-fn get_dataframe_formats() -> Vec<&'static str> {
-    vec!["Parquet"]
-}
-
-#[pyfunction]
-fn get_tensor_formats() -> Vec<&'static str> {
-    vec!["NetCDF"]
 }
 
 #[pymodule]
 fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<NetCDFResource>()?;
+    m.add_class::<FeatherResource>()?;
+    m.add_class::<ArgResource>()?;
+    m.add_class::<ArgValidatorType>()?;
     m.add_class::<FuncRequest>()?;
     m.add_class::<FuncInterface>()?;
-    m.add_class::<StoreRef>()?;
-    m.add_class::<TableMeta>()?;
-    m.add_class::<TensorStackMeta>()?;
     m.add_class::<DimMeta>()?;
-    m.add_function(pyo3::wrap_pyfunction!(get_tensor_formats, m)?)?;
 
     Ok(())
 }

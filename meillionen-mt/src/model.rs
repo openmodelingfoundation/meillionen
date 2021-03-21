@@ -1,60 +1,28 @@
-use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
-
-use std::ffi::OsString;
-
-use itertools::Itertools;
-
 use std::env;
-
-use arrow::datatypes::Schema;
+use std::ffi::OsString;
 use std::process::{Command, Stdio};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct TensorSchema {
-    label: String,
-    dimensions: Vec<String>,
-    data_type: arrow::datatypes::DataType
-}
+use arrow::datatypes::Schema;
+use itertools::Itertools;
+use serde_derive::{Deserialize, Serialize};
+
+use crate::arg::ArgResource;
+use crate::arg::req::NetCDFResource;
+use crate::arg::ArgValidatorType;
+use std::sync::Arc;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum DataType {
-    Tensor(TensorSchema),
-    Table(Schema),
-    Other,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct DimSlice {
-    variable: String,
-    range: (usize, usize),
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct NetCDF {
-    path: String,
-    variable: String,
-    slices: Option<Vec<DimSlice>>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(tag = "type")]
-pub enum StoreRef {
-    NetCDF(NetCDF),
-    SimplePath(String),
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Arg {
+pub struct ArgDescription {
     description: String,
-    datatype: DataType,
+    data_type: Arc<ArgValidatorType>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FuncInterface {
     name: String,
-    sources: BTreeMap<String, Arg>,
-    sinks: BTreeMap<String, Arg>,
+    sources: BTreeMap<String, Arc<ArgDescription>>,
+    sinks: BTreeMap<String, Arc<ArgDescription>>,
 }
 
 impl FuncInterface {
@@ -66,19 +34,19 @@ impl FuncInterface {
         }
     }
 
-    pub fn add_source(&mut self, s: String, arg: &Arg) {
+    pub fn add_source(&mut self, s: String, arg: Arc<ArgDescription>) {
         self.sources.insert(s, arg.clone());
     }
 
-    pub fn add_sink(&mut self, s: String, arg: &Arg) {
+    pub fn add_sink(&mut self, s: String, arg: Arc<ArgDescription>) {
         self.sinks.insert(s, arg.clone());
     }
 
-    pub fn get_sink(&self, s: &str) -> Option<Arg> {
+    pub fn get_sink(&self, s: &str) -> Option<Arc<ArgDescription>> {
         self.sinks.get(s).cloned()
     }
 
-    pub fn get_source(&self, s: &str) -> Option<Arg> {
+    pub fn get_source(&self, s: &str) -> Option<Arc<ArgDescription>> {
         self.sources.get(s).cloned()
     }
 
@@ -139,8 +107,8 @@ impl FuncInterface {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FuncRequest {
-    sinks: HashMap<String, StoreRef>,
-    sources: HashMap<String, StoreRef>,
+    sinks: HashMap<String, Arc<ArgResource>>,
+    sources: HashMap<String, Arc<ArgResource>>,
 }
 
 impl FuncRequest {
@@ -151,27 +119,27 @@ impl FuncRequest {
         }
     }
 
-    pub fn get_source(&self, s: &str) -> Option<&StoreRef> {
-        self.sources.get(s)
+    pub fn get_source(&self, s: &str) -> Option<Arc<ArgResource>> {
+        self.sources.get(s).cloned()
     }
 
-    pub fn get_sink(&self, s: &str) -> Option<&StoreRef> {
-        self.sinks.get(s)
+    pub fn get_sink(&self, s: &str) -> Option<Arc<ArgResource>> {
+        self.sinks.get(s).cloned()
     }
 
-    pub fn set_source(&mut self, s: &str, sr: &StoreRef) {
+    pub fn set_source(&mut self, s: &str, sr: Arc<ArgResource>) {
         self.sources.insert(s.to_string(), sr.clone());
     }
 
-    pub fn set_sink(&mut self, s: &str, si: &StoreRef) {
+    pub fn set_sink(&mut self, s: &str, si: Arc<ArgResource>) {
         self.sinks.insert(s.to_string(), si.clone());
     }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FuncCall {
-    sources: BTreeMap<String, StoreRef>,
-    sinks: BTreeMap<String, StoreRef>,
+    sources: BTreeMap<String, Arc<ArgResource>>,
+    sinks: BTreeMap<String, Arc<ArgResource>>,
 }
 
 impl FuncCall {
@@ -182,20 +150,20 @@ impl FuncCall {
         }
     }
 
-    pub fn add_source(&mut self, name: &str, s: StoreRef) {
+    pub fn add_source(&mut self, name: &str, s: Arc<ArgResource>) {
         self.sources.insert(name.to_string(), s);
     }
 
-    pub fn add_sink(&mut self, name: &str, s: StoreRef) {
+    pub fn add_sink(&mut self, name: &str, s: Arc<ArgResource>) {
         self.sinks.insert(name.to_string(), s);
     }
 
-    pub fn get_source(&self, s: &str) -> Option<&StoreRef> {
-        self.sources.get(s)
+    pub fn get_source(&self, s: &str) -> Option<Arc<ArgResource>> {
+        self.sources.get(s).cloned()
     }
 
-    pub fn get_sink(&self, s: &str) -> Option<&StoreRef> {
-        self.sinks.get(s)
+    pub fn get_sink(&self, s: &str) -> Option<Arc<ArgResource>> {
+        self.sinks.get(s).cloned()
     }
 
     pub fn validate(
