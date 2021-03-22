@@ -3,12 +3,12 @@ use std::env;
 use std::ffi::OsString;
 use std::process::{Command, Stdio};
 
-use arrow::datatypes::Schema;
+
 use itertools::Itertools;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::arg::ArgResource;
-use crate::arg::req::NetCDFResource;
+
 use crate::arg::ArgValidatorType;
 use std::sync::Arc;
 
@@ -44,11 +44,11 @@ impl FuncInterface {
     }
 
     pub fn set_source(&mut self, s: String, arg: Arc<ArgDescription>) {
-        self.sources.insert(s, arg.clone());
+        self.sources.insert(s, arg);
     }
 
     pub fn set_sink(&mut self, s: String, arg: Arc<ArgDescription>) {
-        self.sinks.insert(s, arg.clone());
+        self.sinks.insert(s, arg);
     }
 
     pub fn get_sink(&self, s: &str) -> Option<Arc<ArgDescription>> {
@@ -137,11 +137,11 @@ impl FuncRequest {
     }
 
     pub fn set_source(&mut self, s: &str, sr: Arc<ArgResource>) {
-        self.sources.insert(s.to_string(), sr.clone());
+        self.sources.insert(s.to_string(), sr);
     }
 
     pub fn set_sink(&mut self, s: &str, si: Arc<ArgResource>) {
-        self.sinks.insert(s.to_string(), si.clone());
+        self.sinks.insert(s.to_string(), si);
     }
 }
 

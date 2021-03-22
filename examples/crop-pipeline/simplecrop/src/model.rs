@@ -3,12 +3,12 @@
 use std::fs::{create_dir_all, File};
 use std::io;
 use std::io::{BufRead, BufReader, BufWriter, Write};
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use std::process::Command;
 use std::sync::Arc;
 
-use arrow::array::{ArrayRef, Float32Array, Int32Array, Int64Array, PrimitiveArray};
-use arrow::datatypes::{ArrowPrimitiveType, DataType, Field, Schema};
+use arrow::array::{ArrayRef, Float32Array, Int32Array, PrimitiveArray};
+use arrow::datatypes::{ArrowPrimitiveType, Field, Schema};
 use arrow::record_batch::RecordBatch;
 use eyre::WrapErr;
 use itertools::Itertools;
@@ -316,9 +316,9 @@ pub fn get_func_interface() -> Arc<FuncInterface> {
     let mut fi = FuncInterface::new("simplecrop");
 
     let (daily_key, daily_source) = DailyData::arg_description();
-    fi.set_source(daily_key.to_string(), daily_source);
+    fi.set_source(daily_key, daily_source);
     let (yearly_key, yearly_source) = YearlyData::arg_description();
-    fi.set_source(yearly_key.to_string(), yearly_source);
+    fi.set_source(yearly_key, yearly_source);
 
     let (soil_key, soil_sink) = SoilDataSet::arg_description();
     fi.set_sink(soil_key, soil_sink);

@@ -1,15 +1,15 @@
-use std::convert::TryInto;
-use std::io::Cursor;
+
+
 
 use arrow::array::Float32Array;
-use arrow::datatypes::{DataType, Field, Float32Type, Schema};
+
 use arrow::ipc::reader::StreamReader;
 use arrow::record_batch::RecordBatch;
 use arrow::record_batch::RecordBatchReader;
-use pyo3::exceptions;
+
 use pyo3::exceptions::{PyIOError, PyKeyError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::{PyByteArray, PyBytes};
+use pyo3::types::{PyBytes};
 
 use model::{DailyData, SimpleCropConfig, YearlyData};
 use crate::model::get_func_interface;

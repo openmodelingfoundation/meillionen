@@ -1,7 +1,7 @@
 use std::sync::Arc;
-use arrow::datatypes::{Schema, Field};
+use arrow::datatypes::{Field};
 use serde_derive::{Serialize, Deserialize};
-use serde_json::{Value as JsonValue};
+
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TensorValidator {

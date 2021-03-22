@@ -1,6 +1,6 @@
-use arrow::datatypes::{Schema, DataType};
+use arrow::datatypes::{DataType};
 use serde_derive::{Deserialize, Serialize};
-use std::convert::TryFrom;
+
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
