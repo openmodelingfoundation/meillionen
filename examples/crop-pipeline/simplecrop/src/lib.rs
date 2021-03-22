@@ -12,6 +12,7 @@ use pyo3::prelude::*;
 use pyo3::types::{PyByteArray, PyBytes};
 
 use model::{DailyData, SimpleCropConfig, YearlyData};
+use crate::model::get_func_interface;
 
 mod model;
 
@@ -93,6 +94,14 @@ fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
             Ok(PyBytes::new(_py, sink.as_ref()))
         };
         Ok((to_pybytes(plant)?, to_pybytes(soil)?))
+    }
+
+    #[pyfn(m, "get_func_interface")]
+    fn get_func_interface_py<'a>(_py: Python<'a>) -> PyResult<&PyAny> {
+        let s = serde_json::to_string(get_func_interface().as_ref())
+            .map_err(|e| PyValueError::new_err(format!("{:#?}", e)))?;
+        let json = _py.import("json")?;
+        json.call("loads", (s,), None)
     }
 
     Ok(())

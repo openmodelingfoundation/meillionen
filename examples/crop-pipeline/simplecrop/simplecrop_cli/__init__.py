@@ -1,101 +1,10 @@
-from meillionen import FuncInterface
-from .simplecrop_cli import run
+from meillionen import PyFuncInterface
+from .simplecrop_cli import run, get_func_interface
 from io import BytesIO
 import pyarrow as pa
 import pandas as pd
 
-
-interface = FuncInterface.from_json('''{
-    "name": "simplecrop",
-    "sources": {
-        "daily": {
-            "description": "daily data",
-            "datatype": {
-                "Table": {
-                    "fields": [
-                        {
-                            "name": "day",
-                            "data_type": "Float64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false
-                        },
-                        {
-                            "name": "irrigation",
-                            "data_type": "Float64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false
-                        },
-                        {
-                            "name": "temp_max",
-                            "data_type": "Float64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false
-                        },
-                        {
-                            "name": "temp_min",
-                            "data_type": "Float64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false
-                        },
-                        {
-                            "name": "rainfall",
-                            "data_type": "Float64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false
-                        },
-                        {
-                            "name": "photosynthetic_energy_flux",
-                            "data_type": "Float64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false
-                        },
-                        {
-                            "name": "energy_flux",
-                            "data_type": "Float64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false
-                        }
-                    ],
-                    "metadata": {}
-                }
-            }
-        }
-    },
-    "sinks": {
-        "crop_yields": {
-            "description": "crop yields",
-            "datatype": {
-                "Table": {
-                    "fields": [
-                        {
-                            "name": "day",
-                            "data_type": "Int64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false
-                        },
-                        {
-                            "name": "yield",
-                            "data_type": "Float64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false
-                        }
-                    ],
-                    "metadata": {}
-                }
-            }
-        }
-    }
-}''')
-
+interface = get_func_interface()
 
 def to_table(ipc_message: bytes) -> pd.DataFrame:
     stream = BytesIO(ipc_message)

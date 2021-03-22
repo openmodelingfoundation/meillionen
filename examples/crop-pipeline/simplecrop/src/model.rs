@@ -7,13 +7,30 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
 
-use arrow::array::{ArrayRef, Float32Array, Int32Array, Int64Array};
-use arrow::datatypes::{Field, Schema};
+use arrow::array::{ArrayRef, Float32Array, Int32Array, Int64Array, PrimitiveArray};
+use arrow::datatypes::{ArrowPrimitiveType, DataType, Field, Schema};
 use arrow::record_batch::RecordBatch;
 use eyre::WrapErr;
 use itertools::Itertools;
 
-use meillionen_mt::model::DataType;
+use meillionen_mt::arg::validation::DataFrameValidator;
+use meillionen_mt::model::{ArgDescription, FuncInterface};
+use meillionen_mt::arg::ArgValidatorType;
+
+macro_rules! make_field_vec {
+    ($(($name: ident, $dt: ident)), *) => {
+        vec![
+            $(Field::new(stringify!($name), $dt, false)), *
+        ]
+    }
+}
+
+fn make_arg_description(name: String, description: String, fields: Vec<Field>) -> (String, Arc<ArgDescription>) {
+    let schema = Arc::new(Schema::new(fields));
+    let dataframe_validator = Arc::new(DataFrameValidator(schema));
+    let arg_validator = Arc::new(ArgValidatorType::DataFrame(dataframe_validator));
+    (name, Arc::new(ArgDescription::new(description, arg_validator)))
+}
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DailyData<'a> {
@@ -29,6 +46,9 @@ pub struct DailyData<'a> {
 }
 
 impl<'a> DailyData<'a> {
+    const NAME: &'static str = "daily";
+    const DESCRIPTION: &'static str = "Daily inputs that influence crop yield";
+
     pub fn save_irrigation<W: Write>(&self, buf: &mut W) -> io::Result<()> {
         let mut i = 1;
         for obs in self.irrigation.iter() {
@@ -53,6 +73,23 @@ impl<'a> DailyData<'a> {
             buf.write_all(row.as_bytes())?;
         }
         Ok(())
+    }
+
+    pub fn arg_description() -> (String, Arc<ArgDescription>) {
+        use arrow::datatypes::DataType::*;
+        let fields =make_field_vec![
+            (irrigation, Float32),
+            (temp_max, Float32),
+            (temp_min, Float32),
+            (rainfall, Float32),
+            (photosynthetic_energy_flux, Float32),
+            (energy_flux, Float32)
+        ];
+        make_arg_description(
+            Self::NAME.to_string(),
+            Self::DESCRIPTION.to_string(),
+            fields
+        )
     }
 }
 
@@ -92,6 +129,102 @@ pub struct YearlyData {
 }
 
 impl YearlyData {
+    const NAME: &'static str = "yearly";
+    const DESCRIPTION: &'static str = "Yearly parameters influencing crop growth";
+
+    fn value<T: ArrowPrimitiveType>(rb: &RecordBatch, name: &str, i: usize) -> eyre::Result<T::Native> {
+        let col_ind = rb.schema().index_of(&name)?;
+        let col = rb.column(col_ind);
+        col
+            .as_any()
+            .downcast_ref::<PrimitiveArray<T>>()
+            .map(|a| a.value(i))
+            .ok_or(eyre::Report::msg(
+                format!("column type mismatch. expected {:#?} got {:#?}",
+                        T::DATA_TYPE,
+                        rb.column(col_ind).data_type())))
+    }
+
+    pub fn arg_description() -> (String, Arc<ArgDescription>) {
+        use arrow::datatypes::DataType::*;
+        let fields = make_field_vec![
+            (plant_leaves_max_number, Float32),
+            (plant_emp2, Float32),
+            (plant_emp1, Float32),
+            (plant_density, Float32),
+            (plant_nb, Float32),
+            (plant_leaf_max_appearance_rate, Float32),
+            (plant_growth_canopy_fraction, Float32),
+            (plant_min_repro_growth_temp, Float32),
+            (plant_repro_phase_duration, Float32),
+            (plant_leaves_number_of, Float32),
+            (plant_leaf_area_index, Float32),
+            (plant_matter, Float32),
+            (plant_matter_root, Float32),
+            (plant_matter_canopy, Float32),
+            (plant_matter_leaves_removed, Float32),
+            (plant_development_phase, Float32),
+            (plant_leaf_specific_area, Float32),
+
+            (soil_water_content_wilting_point, Float32),
+            (soil_water_content_field_capacity, Float32),
+            (soil_water_content_saturation, Float32),
+            (soil_profile_depth, Float32),
+            (soil_drainage_daily_percent, Float32),
+            (soil_runoff_curve_number, Float32),
+            (soil_water_storage, Float32),
+
+            (day_of_planting, Int32),
+            (printout_freq, Int32)
+        ];
+        make_arg_description(
+            Self::NAME.to_string(),
+            Self::DESCRIPTION.to_string(),
+            fields
+        )
+    }
+
+    pub fn from_recordbatch_row(rb: &RecordBatch, i: usize) -> eyre::Result<Self> {
+        use arrow::datatypes::*;
+        macro_rules! make_inst_rb {
+            ($(($field: ident, $ty: ty)), *) => {
+                Self {
+                    $($field: Self::value::<$ty>(&rb, stringify!($field), i)?),*
+                }
+            }
+        }
+        Ok(make_inst_rb![
+            (plant_leaves_max_number, Float32Type),
+            (plant_emp2, Float32Type),
+            (plant_emp1, Float32Type),
+            (plant_density, Float32Type),
+            (plant_nb, Float32Type),
+            (plant_leaf_max_appearance_rate, Float32Type),
+            (plant_growth_canopy_fraction, Float32Type),
+            (plant_min_repro_growth_temp, Float32Type),
+            (plant_repro_phase_duration, Float32Type),
+            (plant_leaves_number_of, Float32Type),
+            (plant_leaf_area_index, Float32Type),
+            (plant_matter, Float32Type),
+            (plant_matter_root, Float32Type),
+            (plant_matter_canopy, Float32Type),
+            (plant_matter_leaves_removed, Float32Type),
+            (plant_development_phase, Float32Type),
+            (plant_leaf_specific_area, Float32Type),
+
+            (soil_water_content_wilting_point, Float32Type),
+            (soil_water_content_field_capacity, Float32Type),
+            (soil_water_content_saturation, Float32Type),
+            (soil_profile_depth, Float32Type),
+            (soil_drainage_daily_percent, Float32Type),
+            (soil_runoff_curve_number, Float32Type),
+            (soil_water_storage, Float32Type),
+
+            (day_of_planting, Int32Type),
+            (printout_freq, Int32Type)
+        ])
+    }
+
     pub fn save_plant_config<W: Write>(&self, buf: &mut W) -> io::Result<()> {
         let data = format!(
             " {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} {:>7.4} \
@@ -179,8 +312,24 @@ impl Default for YearlyData {
     }
 }
 
+pub fn get_func_interface() -> Arc<FuncInterface> {
+    let mut fi = FuncInterface::new("simplecrop");
+
+    let (daily_key, daily_source) = DailyData::arg_description();
+    fi.set_source(daily_key.to_string(), daily_source);
+    let (yearly_key, yearly_source) = YearlyData::arg_description();
+    fi.set_source(yearly_key.to_string(), yearly_source);
+
+    let (soil_key, soil_sink) = SoilDataSet::arg_description();
+    fi.set_sink(soil_key, soil_sink);
+    let (plant_key, plant_sink) = PlantDataSet::arg_description();
+    fi.set_sink(plant_key, plant_sink);
+
+    Arc::new(fi)
+}
+
 #[derive(Debug, Default)]
-pub struct SoilDataSetBuilder {
+pub struct SoilDataSet {
     pub day_of_year: Vec<i32>,
     pub soil_daily_runoff: Vec<f32>,             // rof
     pub soil_daily_infiltration: Vec<f32>,       // int
@@ -194,7 +343,10 @@ pub struct SoilDataSetBuilder {
     pub soil_water_excess_stress: Vec<f32>,      // swfac2
 }
 
-impl SoilDataSetBuilder {
+impl SoilDataSet {
+    const NAME: &'static str = "soil";
+    const DESCRIPTION: &'static str = "Daily soil characteristics";
+
     fn deserialize(&mut self, vs: &Vec<&str>) -> Option<()> {
         let (sdoy, srest) = vs.split_first().unwrap();
         let doy = sdoy.parse::<i32>().ok()?;
@@ -229,7 +381,7 @@ impl SoilDataSetBuilder {
             )
         })?;
         let rdr = BufReader::new(f);
-        let mut results = SoilDataSetBuilder::default();
+        let mut results = SoilDataSet::default();
         for line in rdr.lines().skip(6) {
             let record = line?;
             let data: Vec<&str> = record.split_whitespace().collect();
@@ -237,10 +389,32 @@ impl SoilDataSetBuilder {
         }
         Ok(results)
     }
+
+    pub fn arg_description() -> (String, Arc<ArgDescription>) {
+        use arrow::datatypes::DataType::*;
+        let fields = make_field_vec![
+            (day_of_year, Int32),
+            (soil_daily_runoff, Float32),
+            (soil_daily_infiltration, Float32),
+            (soil_daily_drainage, Float32),
+            (soil_evapotranspiration, Float32),
+            (soil_evaporation, Float32),
+            (plant_potential_transpiration, Float32),
+            (soil_water_storage_depth, Float32),
+            (soil_water_profile_ratio, Float32),
+            (soil_water_deficit_stress, Float32),
+            (soil_water_excess_stress, Float32)
+        ];
+        make_arg_description(
+            Self::NAME.to_string(),
+            Self::DESCRIPTION.to_string(),
+            fields
+        )
+    }
 }
 
 #[derive(Debug, Default)]
-pub struct PlantDataSetBuilder {
+pub struct PlantDataSet {
     day_of_year: Vec<i32>,
     plant_leaf_count: Vec<f32>,
     air_accumulated_temp: Vec<f32>,
@@ -251,7 +425,10 @@ pub struct PlantDataSetBuilder {
     plant_leaf_area_index: Vec<f32>,
 }
 
-impl PlantDataSetBuilder {
+impl PlantDataSet {
+    const NAME: &'static str = "plant";
+    const DESCRIPTION: &'static str = "Daily plant characteristic results";
+
     fn deserialize(&mut self, vs: &Vec<&str>) -> Option<()> {
         let (sdoy, srest) = vs.split_first().unwrap();
         let doy = sdoy.parse::<i32>().ok()?;
@@ -285,7 +462,7 @@ impl PlantDataSetBuilder {
             )
         })?;
         let rdr = BufReader::new(f);
-        let mut results = PlantDataSetBuilder::default();
+        let mut results = PlantDataSet::default();
         for line in rdr.lines().skip(9) {
             let record = line.unwrap();
             let data: Vec<&str> = record.split_whitespace().collect();
@@ -293,12 +470,30 @@ impl PlantDataSetBuilder {
         }
         Ok(results)
     }
+
+    pub fn arg_description() -> (String, Arc<ArgDescription>) {
+        use arrow::datatypes::DataType::*;
+        let fields = make_field_vec![
+            (day_of_year, Int32),
+            (air_accumulated_temp, Float32),
+            (plant_matter, Float32),
+            (plant_matter_canopy, Float32),
+            (plant_matter_fruit, Float32),
+            (plant_matter_root, Float32),
+            (plant_leaf_area_index, Float32)
+        ];
+        make_arg_description(
+            Self::NAME.to_string(),
+            Self::DESCRIPTION.to_string(),
+            fields
+        )
+    }
 }
 
 fn load_output_data<P: AsRef<Path>>(dir: P) -> eyre::Result<(RecordBatch, RecordBatch)> {
-    let po = PlantDataSetBuilder::load(
+    let po = PlantDataSet::load(
         &dir.as_ref().join("output/plant.out"))?;
-    let so = SoilDataSetBuilder::load(
+    let so = SoilDataSet::load(
         &dir.as_ref().join("output/soil.out"))?;
     use arrow::datatypes::DataType::*;
     let soil = {
@@ -408,7 +603,7 @@ mod tests {
     use std::io::Cursor;
     use std::str;
 
-    use crate::model::{DailyData, PlantDataSetBuilder, SoilDataSetBuilder, YearlyData};
+    use crate::model::{DailyData, PlantDataSet, SoilDataSet, YearlyData};
 
     #[test]
     fn write_yearly_data() {
@@ -457,7 +652,7 @@ mod tests {
 
     #[test]
     fn read_plant_t() {
-        let data = PlantDataSetBuilder::load("simplecrop/output/plant.out").unwrap();
+        let data = PlantDataSet::load("simplecrop/output/plant.out").unwrap();
         assert_eq!(data.plant_leaf_count[0], 2.0);
         assert_eq!(data.air_accumulated_temp[0], 0.0);
         assert_eq!(data.plant_matter[0], 0.3);
@@ -468,7 +663,7 @@ mod tests {
 
     #[test]
     fn read_soil_t() {
-        let data = SoilDataSetBuilder::load("simplecrop/output/soil.out").unwrap();
+        let data = SoilDataSet::load("simplecrop/output/soil.out").unwrap();
         assert_eq!(data.soil_daily_runoff[0], 0.0f32);
         assert_eq!(data.soil_daily_infiltration[0], 0.0f32);
         assert_eq!(data.soil_daily_drainage[0], 1.86f32);

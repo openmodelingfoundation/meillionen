@@ -18,6 +18,15 @@ pub struct ArgDescription {
     data_type: Arc<ArgValidatorType>,
 }
 
+impl ArgDescription {
+    pub fn new(description: String, data_type: Arc<ArgValidatorType>) -> Self {
+        Self {
+            description,
+            data_type
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FuncInterface {
     name: String,
@@ -34,11 +43,11 @@ impl FuncInterface {
         }
     }
 
-    pub fn add_source(&mut self, s: String, arg: Arc<ArgDescription>) {
+    pub fn set_source(&mut self, s: String, arg: Arc<ArgDescription>) {
         self.sources.insert(s, arg.clone());
     }
 
-    pub fn add_sink(&mut self, s: String, arg: Arc<ArgDescription>) {
+    pub fn set_sink(&mut self, s: String, arg: Arc<ArgDescription>) {
         self.sinks.insert(s, arg.clone());
     }
 

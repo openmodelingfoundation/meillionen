@@ -222,14 +222,22 @@ impl FuncRequest {
 
 #[pyclass]
 #[derive(Debug)]
-struct FuncInterface {
+pub struct PyFuncInterface {
     inner: Arc<model::FuncInterface>,
 }
 
+impl PyFuncInterface {
+    pub fn new(inner: Arc<model::FuncInterface>) -> Self {
+        Self {
+            inner
+        }
+    }
+}
+
 #[pymethods]
-impl FuncInterface {
+impl PyFuncInterface {
     #[new]
-    fn new(s: &str) -> Self {
+    fn __init__(s: &str) -> Self {
         Self {
             inner: Arc::new(model::FuncInterface::new(s)),
         }
@@ -274,7 +282,7 @@ fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ArgResource>()?;
     m.add_class::<ArgValidatorType>()?;
     m.add_class::<FuncRequest>()?;
-    m.add_class::<FuncInterface>()?;
+    m.add_class::<PyFuncInterface>()?;
     m.add_class::<DimMeta>()?;
 
     Ok(())

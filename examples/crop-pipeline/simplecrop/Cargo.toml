@@ -11,17 +11,12 @@ requires-dist = ['numpy', 'pandas', 'pyarrow', 'xarray']
 
 [dependencies]
 arrow = "3.0.0"
-clap = "2.33"
-chrono = ">=0.4"
 eyre = "0.6.5"
 itertools = "0.10.0"
-lazy_static = "1.4"
 meillionen-mt = { path = "../../../meillionen-mt", version = "0.1.0" }
-num-traits = "0.2"
-pyo3 = "0.13.0"
+pyo3 = "0.13.2"
 serde = "1.0"
-serde_derive = "1.0"
-serde_json = "1.0"
+serde_json = "1.0.64"
 
 [lib]
 name = 'simplecrop_cli'
