@@ -13,7 +13,7 @@ use arrow::record_batch::RecordBatch;
 use eyre::WrapErr;
 use itertools::Itertools;
 
-use meillionen_mt::arg::validation::DataFrameValidator;
+use meillionen_mt::arg::validation::{DataFrameValidator, Columns};
 use meillionen_mt::model::{ArgDescription, FuncInterface};
 use meillionen_mt::arg::ArgValidatorType;
 
@@ -26,7 +26,7 @@ macro_rules! make_field_vec {
 }
 
 fn make_arg_description(name: String, description: String, fields: Vec<Field>) -> (String, Arc<ArgDescription>) {
-    let schema = Arc::new(Schema::new(fields));
+    let schema = Arc::new(Columns::new(fields));
     let dataframe_validator = Arc::new(DataFrameValidator(schema));
     let arg_validator = Arc::new(ArgValidatorType::DataFrame(dataframe_validator));
     (name, Arc::new(ArgDescription::new(description, arg_validator)))

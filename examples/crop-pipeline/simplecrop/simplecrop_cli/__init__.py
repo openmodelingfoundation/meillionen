@@ -6,6 +6,7 @@ import pandas as pd
 
 interface = get_func_interface()
 
+
 def to_table(ipc_message: bytes) -> pd.DataFrame:
     stream = BytesIO(ipc_message)
     return pa.ipc.open_stream(stream).read_pandas()

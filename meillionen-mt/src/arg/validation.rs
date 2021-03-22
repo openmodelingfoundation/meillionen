@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use arrow::datatypes::Schema;
+use arrow::datatypes::{Schema, Field};
 use serde_derive::{Serialize, Deserialize};
 use serde_json::{Value as JsonValue};
 
@@ -10,7 +10,20 @@ pub struct TensorValidator {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct DataFrameValidator(pub Arc<Schema>);
+pub struct Columns {
+    fields: Vec<Field>
+}
+
+impl Columns {
+    pub fn new(fields: Vec<Field>) -> Self {
+        Self {
+            fields
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct DataFrameValidator(pub Arc<Columns>);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
