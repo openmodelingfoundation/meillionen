@@ -2,15 +2,13 @@ use std::collections::{BTreeMap, HashMap};
 use std::env;
 use std::ffi::OsString;
 use std::process::{Command, Stdio};
-
+use std::sync::Arc;
 
 use itertools::Itertools;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::arg::ArgResource;
-
 use crate::arg::ArgValidatorType;
-use std::sync::Arc;
+use crate::arg::req::{SinkResource, SourceResource};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ArgDescription {
@@ -116,8 +114,8 @@ impl FuncInterface {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FuncRequest {
-    sinks: HashMap<String, Arc<ArgResource>>,
-    sources: HashMap<String, Arc<ArgResource>>,
+    sinks: HashMap<String, Arc<SinkResource>>,
+    sources: HashMap<String, Arc<SourceResource>>,
 }
 
 impl FuncRequest {
@@ -128,27 +126,27 @@ impl FuncRequest {
         }
     }
 
-    pub fn get_source(&self, s: &str) -> Option<Arc<ArgResource>> {
+    pub fn get_source(&self, s: &str) -> Option<Arc<SourceResource>> {
         self.sources.get(s).cloned()
     }
 
-    pub fn get_sink(&self, s: &str) -> Option<Arc<ArgResource>> {
+    pub fn get_sink(&self, s: &str) -> Option<Arc<SinkResource>> {
         self.sinks.get(s).cloned()
     }
 
-    pub fn set_source(&mut self, s: &str, sr: Arc<ArgResource>) {
+    pub fn set_source(&mut self, s: &str, sr: Arc<SourceResource>) {
         self.sources.insert(s.to_string(), sr);
     }
 
-    pub fn set_sink(&mut self, s: &str, si: Arc<ArgResource>) {
+    pub fn set_sink(&mut self, s: &str, si: Arc<SinkResource>) {
         self.sinks.insert(s.to_string(), si);
     }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FuncCall {
-    sources: BTreeMap<String, Arc<ArgResource>>,
-    sinks: BTreeMap<String, Arc<ArgResource>>,
+    sources: BTreeMap<String, Arc<SourceResource>>,
+    sinks: BTreeMap<String, Arc<SinkResource>>,
 }
 
 impl FuncCall {
@@ -159,19 +157,19 @@ impl FuncCall {
         }
     }
 
-    pub fn add_source(&mut self, name: &str, s: Arc<ArgResource>) {
+    pub fn add_source(&mut self, name: &str, s: Arc<SourceResource>) {
         self.sources.insert(name.to_string(), s);
     }
 
-    pub fn add_sink(&mut self, name: &str, s: Arc<ArgResource>) {
+    pub fn add_sink(&mut self, name: &str, s: Arc<SinkResource>) {
         self.sinks.insert(name.to_string(), s);
     }
 
-    pub fn get_source(&self, s: &str) -> Option<Arc<ArgResource>> {
+    pub fn get_source(&self, s: &str) -> Option<Arc<SourceResource>> {
         self.sources.get(s).cloned()
     }
 
-    pub fn get_sink(&self, s: &str) -> Option<Arc<ArgResource>> {
+    pub fn get_sink(&self, s: &str) -> Option<Arc<SinkResource>> {
         self.sinks.get(s).cloned()
     }
 
