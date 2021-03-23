@@ -1,17 +1,14 @@
-use std::convert::TryFrom;
+use std::collections::HashMap;
 use std::sync::Arc;
 
-use pyo3::exceptions::{PyIOError, PyKeyError, PyValueError};
+use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::PySequenceProtocol;
+use pythonize::{depythonize, pythonize};
+use serde::{Deserialize, Serialize};
 
 use meillionen_mt::{arg, extension_columns as ext_cols};
 use meillionen_mt::arg::req;
 use meillionen_mt::model;
-use pyo3::types::PyDict;
-use pythonize::{depythonize, pythonize};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 fn to_dict<T>(data: &T) -> PyResult<PyObject>
     where T: Serialize {
@@ -80,12 +77,12 @@ impl FeatherResource {
 
 #[pyclass]
 #[derive(Debug)]
-struct ArgResource {
-    inner: Arc<arg::ArgResource>
+struct Resource {
+    inner: Arc<req::Resource>
 }
 
 #[pymethods]
-impl ArgResource {
+impl Resource {
     #[staticmethod]
     fn from_dict(data: &PyAny) -> PyResult<Self> {
         Ok(Self {
@@ -195,24 +192,24 @@ impl FuncRequest {
         }
     }
 
-    pub fn set_sink(&mut self, s: &str, si: &ArgResource) {
+    pub fn set_sink(&mut self, s: &str, si: &Resource) {
         self.inner.set_sink(s, si.inner.clone())
     }
 
-    pub fn set_source(&mut self, s: &str, sr: &ArgResource) {
+    pub fn set_source(&mut self, s: &str, sr: &Resource) {
         self.inner.set_source(s, sr.inner.clone())
     }
 
-    pub fn get_sink(&self, s: &str) -> Option<ArgResource> {
+    pub fn get_sink(&self, s: &str) -> Option<Resource> {
         self.inner
             .get_sink(s)
-            .map(|sr| ArgResource { inner: sr.clone() })
+            .map(|sr| Resource { inner: sr })
     }
 
-    pub fn get_source(&self, s: &str) -> Option<ArgResource> {
+    pub fn get_source(&self, s: &str) -> Option<Resource> {
         self.inner
             .get_source(s)
-            .map(|sr| ArgResource { inner: sr.clone() })
+            .map(|sr| Resource { inner: sr })
     }
 
     pub fn to_dict(&self) -> PyResult<PyObject> {
@@ -279,7 +276,7 @@ impl PyFuncInterface {
 fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<NetCDFResource>()?;
     m.add_class::<FeatherResource>()?;
-    m.add_class::<ArgResource>()?;
+    m.add_class::<Resource>()?;
     m.add_class::<ArgValidatorType>()?;
     m.add_class::<FuncRequest>()?;
     m.add_class::<PyFuncInterface>()?;
