@@ -12,13 +12,19 @@ def to_table(ipc_message: bytes) -> pd.DataFrame:
     return pa.ipc.open_stream(stream).read_pandas()
 
 
-def run_df(cli_path, dir, daily: pd.DataFrame):
+def to_ipc(df: pd.DataFrame) -> pd.DataFrame:
     sink = pa.BufferOutputStream()
-    batch = pa.RecordBatch.from_pandas(daily)
+    batch = pa.RecordBatch.from_pandas(df)
     writer = pa.ipc.new_stream(sink, batch.schema)
     writer.write_batch(batch)
-    daily_ipc = sink.getvalue().to_pybytes()
-    plant_ref, soil_ref = run(cli_path, dir, daily_ipc)
+    return sink.getvalue().to_pybytes()
+
+
+def simplecrop_mock_ipc_run(cli_path, dir, daily: pd.DataFrame, yearly: pd.DataFrame):
+    """Run the simplecrop model as if you were sending and receiving ipc messages"""
+    daily_ipc = to_ipc(daily)
+    yearly_ipc = to_ipc(yearly)
+    plant_ref, soil_ref = run(cli_path, dir, daily_ipc, yearly_ipc)
     return to_table(plant_ref), to_table(soil_ref)
 
 
@@ -26,7 +32,7 @@ def run_cli(cli_path):
     args = interface.to_cli()
     daily_path = args.get_source('daily')
     daily = pd.read_feather(daily_path)
-    plant, soil = run_df(cli_path, 'ex', daily)
+    plant, soil = simplecrop_mock_ipc_run(cli_path, 'ex', daily)
 
     plant_path = args.get_sink('plant')
     plant.to_feather(plant_path)

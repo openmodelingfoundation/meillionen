@@ -4,4 +4,4 @@ from simplecrop_cli import run_cli
 
 
 if __name__ == '__main__':
-    run_cli('simplecrop/target/cli/simplecrop')
+    run_cli('../target/simplecrop/simplecrop', 'ex', )
