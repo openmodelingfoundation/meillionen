@@ -8,7 +8,7 @@ use std::fmt::Debug;
 #[typetag::serde(tag="type")]
 pub trait Sink: Debug + Send + Sync {}
 
-#[typetag::serde(tag="tag")]
+#[typetag::serde(tag="type")]
 pub trait Source: Debug + Send + Sync {}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

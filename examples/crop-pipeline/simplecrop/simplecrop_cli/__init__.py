@@ -1,4 +1,4 @@
-from meillionen import PyFuncInterface
+from meillionen.io import PandasLoader, PandasSaver
 from .simplecrop_cli import run, get_func_interface
 from io import BytesIO
 import pyarrow as pa
@@ -30,12 +30,8 @@ def simplecrop_mock_ipc_run(cli_path, dir, daily: pd.DataFrame, yearly: pd.DataF
 
 def run_cli(cli_path):
     args = interface.to_cli()
-    daily_path = args.get_source('daily')
-    daily = pd.read_feather(daily_path)
-    plant, soil = simplecrop_mock_ipc_run(cli_path, 'ex', daily)
-
-    plant_path = args.get_sink('plant')
-    plant.to_feather(plant_path)
-
-    soil_path = args.get_sink('soil')
-    soil.to_feather(soil_path)
+    daily: pd.DataFrame = PandasLoader.load(args.get_source('daily'))
+    yearly: pd.DataFrame = PandasLoader.load(args.get_source('yearly'))
+    plant, soil = simplecrop_mock_ipc_run(cli_path, 'ex', daily, yearly)
+    PandasSaver.save(args.get_sink('plant'), plant)
+    PandasSaver.save(args.get_sink('soil'), plant)
