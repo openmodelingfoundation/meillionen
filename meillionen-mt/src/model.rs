@@ -133,7 +133,7 @@ impl FuncInterface {
             .filter(|s| !sinks.contains_key(s.as_str()))
             .map(|s| s.to_string())
             .collect_vec();
-        if missing_sinks.len() > 0 {
+        if !missing_sinks.is_empty() {
             return Some(FuncRequestSchemaError::MissingSinks(missing_sinks))
         }
         let missing_sources = fr
@@ -142,7 +142,7 @@ impl FuncInterface {
             .filter(|s| !sources.contains_key(s.as_str()))
             .map(|s| s.to_string())
             .collect_vec();
-        if missing_sources.len() > 0 {
+        if !missing_sources.is_empty() {
             return Some(FuncRequestSchemaError::MissingSources(missing_sources))
         }
         None
@@ -174,7 +174,7 @@ impl FuncInterface {
         let stdin = cmd.stdin.take().expect("could not open stdin");
         serde_json::to_writer(stdin, fc).expect("could not write request to stdin");
 
-        cmd.wait().map_err(|e| FuncCallError::IO(e))
+        cmd.wait().map_err(FuncCallError::IO)
     }
 }
 
