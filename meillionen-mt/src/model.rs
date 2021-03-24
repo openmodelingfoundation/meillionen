@@ -128,7 +128,7 @@ impl FuncInterface {
         let sinks = &self.sinks;
         let sources = &self.sources;
         let missing_sinks = fr
-            .sources
+            .sinks
             .keys()
             .filter(|s| !sinks.contains_key(s.as_str()))
             .map(|s| s.to_string())
@@ -137,7 +137,7 @@ impl FuncInterface {
             return Some(FuncRequestSchemaError::MissingSinks(missing_sinks))
         }
         let missing_sources = fr
-            .sinks
+            .sources
             .keys()
             .filter(|s| !sources.contains_key(s.as_str()))
             .map(|s| s.to_string())
@@ -165,6 +165,7 @@ impl FuncInterface {
         fc: &FuncRequest,
     ) -> Result<std::process::ExitStatus, FuncCallError> {
         let mut cmd = Command::new(program_path)
+            .arg("run")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()

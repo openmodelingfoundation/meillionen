@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import xarray as xr
 
@@ -11,7 +13,7 @@ class XArrayLoader:
     @staticmethod
     def load(source_resource):
         source = source_resource.to_dict()
-        _PANDAS_LOADER[source['type']](source)
+        return _XARRAY_LOADER[source['type']](source)
 
 
 _XARRAY_LOADER = {
@@ -35,7 +37,7 @@ class PandasLoader:
     @staticmethod
     def load(source_resource):
         source = source_resource.to_dict()
-        _PANDAS_LOADER[source['type']](source)
+        return _PANDAS_LOADER[source['type']](source)
 
 
 _PANDAS_LOADER = {

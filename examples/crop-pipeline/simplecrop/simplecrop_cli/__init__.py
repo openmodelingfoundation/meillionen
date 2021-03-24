@@ -1,10 +1,11 @@
 from meillionen.io import PandasLoader, PandasSaver
+from meillionen.meillionen import FuncInterface
 from .simplecrop_cli import run, get_func_interface
 from io import BytesIO
 import pyarrow as pa
 import pandas as pd
 
-interface = get_func_interface()
+interface = FuncInterface.from_dict(get_func_interface())
 
 
 def to_table(ipc_message: bytes) -> pd.DataFrame:
