@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use pyo3::exceptions::{PyIOError, PyValueError};
@@ -25,75 +25,64 @@ fn from_dict<'de, T>(data: &'de PyAny) -> PyResult<T>
 
 #[pyclass]
 #[derive(Debug)]
-struct NetCDFResource {
-    inner: Arc<req::NetCDFResource>,
+struct SourceResource {
+    inner: req::SourceResource
 }
 
 #[pymethods]
-impl NetCDFResource {
-    #[staticmethod]
-    pub fn from_dict(data: &PyAny) -> PyResult<Self> {
-        Ok(Self {
-            inner: Arc::new(from_dict(data)?)
-        })
-    }
-
-    #[getter]
-    fn get_path(&self) -> &str {
-        self.inner.path.as_str()
-    }
-
-    #[getter]
-    fn get_variable(&self) -> &str {
-        self.inner.variable.as_str()
-    }
-
-    #[getter]
-    fn get_slices(&self) -> HashMap<String, (usize, usize)> {
-        self.inner.slices.clone()
-    }
-}
-
-#[pyclass]
-#[derive(Debug)]
-struct FeatherResource {
-    inner: Arc<req::FeatherResource>
-}
-
-#[pymethods]
-impl FeatherResource {
-    #[staticmethod]
-    fn from_dict(data: &PyAny) -> PyResult<Self> {
-        Ok(Self {
-            inner: Arc::new(from_dict(data)?)
-        })
-    }
-
-    #[getter]
-    fn get_path(&self) -> &str {
-        self.inner.path.as_ref()
-    }
-}
-
-#[pyclass]
-#[derive(Debug)]
-struct Resource {
-    inner: Arc<req::Resource>
-}
-
-#[pymethods]
-impl Resource {
-    #[staticmethod]
-    fn from_dict(data: &PyAny) -> PyResult<Self> {
-        Ok(Self {
-            inner: Arc::new(from_dict(data)?)
-        })
-    }
-
+impl SourceResource {
     fn to_dict(&self) -> PyResult<PyObject> {
         to_dict(&self.inner)
     }
 }
+
+#[pyfunction]
+fn netcdf_source(data: &PyAny) -> PyResult<SourceResource> {
+    Ok(SourceResource {
+        inner: from_dict(data)?
+    })
+}
+
+#[pyfunction]
+fn feather_source(path: String) -> SourceResource {
+    SourceResource {
+        inner: Arc::new(req::FeatherResource {
+            path
+        })
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+struct SinkResource {
+    inner: req::SinkResource
+}
+
+#[pymethods]
+impl SinkResource {
+    fn to_dict(&self) -> PyResult<PyObject> {
+        to_dict(&self.inner)
+    }
+}
+
+#[pyfunction]
+fn netcdf_sink(data: &PyAny) -> PyResult<SinkResource> {
+    Ok(SinkResource {
+        inner: from_dict(data)?
+    })
+}
+
+#[pyfunction]
+fn feather_sink(path: String) -> SinkResource {
+    SinkResource {
+        inner: Arc::new(req::FeatherResource {
+            path
+        })
+    }
+}
+
+type SinkResourceMap = BTreeMap<String, SinkResource>;
+type SourceResourceMap = BTreeMap<String, SourceResource>;
 
 #[pyclass]
 #[derive(Debug)]
@@ -192,24 +181,24 @@ impl FuncRequest {
         }
     }
 
-    pub fn set_sink(&mut self, s: &str, si: &Resource) {
-        self.inner.set_sink(s, si.inner.clone())
+    pub fn set_sink(&mut self, s: &str, si: &SinkResource) {
+        self.inner.set_sink(s, &si.inner)
     }
 
-    pub fn set_source(&mut self, s: &str, sr: &Resource) {
-        self.inner.set_source(s, sr.inner.clone())
+    pub fn set_source(&mut self, s: &str, sr: &SourceResource) {
+        self.inner.set_source(s, &sr.inner)
     }
 
-    pub fn get_sink(&self, s: &str) -> Option<Resource> {
+    pub fn get_sink(&self, s: &str) -> Option<SinkResource> {
         self.inner
             .get_sink(s)
-            .map(|sr| Resource { inner: sr })
+            .map(|sr| SinkResource { inner: sr })
     }
 
-    pub fn get_source(&self, s: &str) -> Option<Resource> {
+    pub fn get_source(&self, s: &str) -> Option<SourceResource> {
         self.inner
             .get_source(s)
-            .map(|sr| Resource { inner: sr })
+            .map(|sr| SourceResource { inner: sr })
     }
 
     pub fn to_dict(&self) -> PyResult<PyObject> {
@@ -219,11 +208,11 @@ impl FuncRequest {
 
 #[pyclass]
 #[derive(Debug)]
-pub struct PyFuncInterface {
+pub struct FuncInterface {
     inner: Arc<model::FuncInterface>,
 }
 
-impl PyFuncInterface {
+impl FuncInterface {
     pub fn new(inner: Arc<model::FuncInterface>) -> Self {
         Self {
             inner
@@ -232,7 +221,7 @@ impl PyFuncInterface {
 }
 
 #[pymethods]
-impl PyFuncInterface {
+impl FuncInterface {
     #[new]
     fn __init__(s: &str) -> Self {
         Self {
@@ -274,12 +263,16 @@ impl PyFuncInterface {
 
 #[pymodule]
 fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<NetCDFResource>()?;
-    m.add_class::<FeatherResource>()?;
-    m.add_class::<Resource>()?;
+    m.add_function(pyo3::wrap_pyfunction!(netcdf_sink, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(feather_sink, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(netcdf_source, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(feather_source, m)?)?;
+
+    m.add_class::<SinkResource>()?;
+    m.add_class::<SourceResource>()?;
     m.add_class::<ArgValidatorType>()?;
     m.add_class::<FuncRequest>()?;
-    m.add_class::<PyFuncInterface>()?;
+    m.add_class::<FuncInterface>()?;
     m.add_class::<DimMeta>()?;
 
     Ok(())

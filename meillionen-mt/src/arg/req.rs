@@ -1,7 +1,15 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, BTreeMap};
 
 use arrow::datatypes::DataType;
 use serde_derive::{Deserialize, Serialize};
+use std::sync::Arc;
+use std::fmt::Debug;
+
+#[typetag::serde(tag="type")]
+pub trait Sink: Debug + Send + Sync {}
+
+#[typetag::serde(tag="tag")]
+pub trait Source: Debug + Send + Sync {}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NetCDFResource {
@@ -11,20 +19,27 @@ pub struct NetCDFResource {
     pub slices: HashMap<String, (usize, usize)>,
 }
 
+#[typetag::serde]
+impl Sink for NetCDFResource {}
+
+#[typetag::serde]
+impl Source for NetCDFResource {}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct FeatherResource {
     pub path: String
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(tag = "type")]
-pub enum Resource {
-    NetCDF(NetCDFResource),
-    Feather(FeatherResource)
-}
+#[typetag::serde]
+impl Sink for FeatherResource {}
+
+#[typetag::serde]
+impl Source for FeatherResource {}
 
 // right now source and sink types are the same
 // but that will change when the request handling
 // is more established
-pub type SinkResource = Resource;
-pub type SourceResource = Resource;
+pub type SinkResource = Arc<dyn Sink>;
+pub type SourceResource = Arc<dyn Source>;
+pub type SinkResourceMap = BTreeMap<String, SinkResource>;
+pub type SourceResourceMap = BTreeMap<String, SourceResource>;

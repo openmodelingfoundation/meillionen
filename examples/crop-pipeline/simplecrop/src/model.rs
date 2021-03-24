@@ -14,7 +14,7 @@ use eyre::WrapErr;
 use itertools::Itertools;
 
 use meillionen_mt::arg::validation::{DataFrameValidator, Columns};
-use meillionen_mt::model::{ArgDescription, FuncInterface};
+use meillionen_mt::model::{ResourceSchema, FuncInterface};
 use meillionen_mt::arg::ArgValidatorType;
 
 macro_rules! make_field_vec {
@@ -25,11 +25,11 @@ macro_rules! make_field_vec {
     }
 }
 
-fn make_arg_description(name: String, description: String, fields: Vec<Field>) -> (String, Arc<ArgDescription>) {
+fn make_arg_description(name: String, description: String, fields: Vec<Field>) -> (String, Arc<ResourceSchema>) {
     let schema = Arc::new(Columns::new(fields));
     let dataframe_validator = Arc::new(DataFrameValidator(schema));
     let arg_validator = Arc::new(ArgValidatorType::DataFrame(dataframe_validator));
-    (name, Arc::new(ArgDescription::new(description, arg_validator)))
+    (name, Arc::new(ResourceSchema::new(description, arg_validator)))
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -75,7 +75,7 @@ impl<'a> DailyData<'a> {
         Ok(())
     }
 
-    pub fn arg_description() -> (String, Arc<ArgDescription>) {
+    pub fn arg_description() -> (String, Arc<ResourceSchema>) {
         use arrow::datatypes::DataType::*;
         let fields =make_field_vec![
             (irrigation, Float32),
@@ -145,7 +145,7 @@ impl YearlyData {
                         rb.column(col_ind).data_type())))
     }
 
-    pub fn arg_description() -> (String, Arc<ArgDescription>) {
+    pub fn arg_description() -> (String, Arc<ResourceSchema>) {
         use arrow::datatypes::DataType::*;
         let fields = make_field_vec![
             (plant_leaves_max_number, Float32),
@@ -390,7 +390,7 @@ impl SoilDataSet {
         Ok(results)
     }
 
-    pub fn arg_description() -> (String, Arc<ArgDescription>) {
+    pub fn arg_description() -> (String, Arc<ResourceSchema>) {
         use arrow::datatypes::DataType::*;
         let fields = make_field_vec![
             (day_of_year, Int32),
@@ -471,7 +471,7 @@ impl PlantDataSet {
         Ok(results)
     }
 
-    pub fn arg_description() -> (String, Arc<ArgDescription>) {
+    pub fn arg_description() -> (String, Arc<ResourceSchema>) {
         use arrow::datatypes::DataType::*;
         let fields = make_field_vec![
             (day_of_year, Int32),

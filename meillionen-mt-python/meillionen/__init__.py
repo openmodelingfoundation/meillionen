@@ -1,6 +1,6 @@
 from typing import Callable, Type, Any
 
-from .meillionen import PyFuncInterface, FuncRequest, NetCDFResource
+from .meillionen import FuncInterface, FuncRequest
 import netCDF4
 import xarray as xr
 import pyarrow.parquet as pq

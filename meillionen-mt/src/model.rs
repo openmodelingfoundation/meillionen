@@ -1,22 +1,49 @@
-use std::collections::{BTreeMap, HashMap};
-use std::env;
+use std::collections::BTreeMap;
+use std::{env, fmt};
 use std::ffi::OsString;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 
+use thiserror::Error;
 use itertools::Itertools;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::arg::ArgValidatorType;
-use crate::arg::req::{SinkResource, SourceResource};
+use crate::arg::req::{SourceResource, SinkResourceMap, SourceResourceMap, SinkResource};
+use std::fmt::Formatter;
+
+#[derive(Debug, Error, Deserialize, Serialize)]
+pub enum FuncRequestSchemaError {
+    #[error("missing sinks {0:?}")]
+    MissingSinks(Vec<String>),
+    #[error("missing sources {0:?}")]
+    MissingSources(Vec<String>)
+}
+
+#[derive(Debug, Error)]
+pub enum FuncCallError {
+    Schema(FuncRequestSchemaError),
+    IO(std::io::Error)
+}
+
+impl fmt::Display for FuncCallError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        use FuncCallError::*;
+        match &self {
+            Schema(ref schema) => write!(f, "{:?}", schema),
+            IO(ref io) => io.fmt(f)
+        }
+    }
+
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ArgDescription {
+pub struct ResourceSchema {
     description: String,
     data_type: Arc<ArgValidatorType>,
 }
 
-impl ArgDescription {
+impl ResourceSchema {
     pub fn new(description: String, data_type: Arc<ArgValidatorType>) -> Self {
         Self {
             description,
@@ -28,8 +55,8 @@ impl ArgDescription {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FuncInterface {
     name: String,
-    sources: BTreeMap<String, Arc<ArgDescription>>,
-    sinks: BTreeMap<String, Arc<ArgDescription>>,
+    sources: BTreeMap<String, Arc<ResourceSchema>>,
+    sinks: BTreeMap<String, Arc<ResourceSchema>>,
 }
 
 impl FuncInterface {
@@ -41,19 +68,19 @@ impl FuncInterface {
         }
     }
 
-    pub fn set_source(&mut self, s: String, arg: Arc<ArgDescription>) {
+    pub fn set_source(&mut self, s: String, arg: Arc<ResourceSchema>) {
         self.sources.insert(s, arg);
     }
 
-    pub fn set_sink(&mut self, s: String, arg: Arc<ArgDescription>) {
+    pub fn set_sink(&mut self, s: String, arg: Arc<ResourceSchema>) {
         self.sinks.insert(s, arg);
     }
 
-    pub fn get_sink(&self, s: &str) -> Option<Arc<ArgDescription>> {
+    pub fn get_sink(&self, s: &str) -> Option<Arc<ResourceSchema>> {
         self.sinks.get(s).cloned()
     }
 
-    pub fn get_source(&self, s: &str) -> Option<Arc<ArgDescription>> {
+    pub fn get_source(&self, s: &str) -> Option<Arc<ResourceSchema>> {
         self.sources.get(s).cloned()
     }
 
@@ -79,18 +106,56 @@ impl FuncInterface {
                 .expect("failed to serialize model interface");
             std::process::exit(0);
         } else if matches.subcommand_matches("run").is_some() {
-            let fc: FuncCall =
+            let fr: FuncRequest =
                 serde_json::from_reader(std::io::stdin()).expect("deserialize of func call failed");
-            match fc.validate(self) {
-                Err(errors) => {
+            match self.validate(&fr) {
+                Some(errors) => {
                     serde_json::to_writer(std::io::stderr(), &errors)
                         .expect("failed to write missing sinks and sources to stderr");
                     std::process::exit(1);
                 }
-                Ok(data) => data,
+                None => fr,
             }
         } else {
             std::process::exit(1);
+        }
+    }
+
+    fn validate(
+        &self,
+        fr: &FuncRequest
+    ) -> Option<FuncRequestSchemaError> {
+        let sinks = &self.sinks;
+        let sources = &self.sources;
+        let missing_sinks = fr
+            .sources
+            .keys()
+            .filter(|s| !sinks.contains_key(s.as_str()))
+            .map(|s| s.to_string())
+            .collect_vec();
+        if missing_sinks.len() > 0 {
+            return Some(FuncRequestSchemaError::MissingSinks(missing_sinks))
+        }
+        let missing_sources = fr
+            .sinks
+            .keys()
+            .filter(|s| !sources.contains_key(s.as_str()))
+            .map(|s| s.to_string())
+            .collect_vec();
+        if missing_sources.len() > 0 {
+            return Some(FuncRequestSchemaError::MissingSources(missing_sources))
+        }
+        None
+    }
+
+    pub fn build_request(&self, sinks: SinkResourceMap, sources: SourceResourceMap) -> Result<FuncRequest, FuncRequestSchemaError> {
+        let fr = FuncRequest {
+            sinks,
+            sources
+        };
+        match self.validate(&fr) {
+            Some(errors) => Err(errors),
+            None => Ok(fr)
         }
     }
 
@@ -98,7 +163,7 @@ impl FuncInterface {
         &self,
         program_path: &str,
         fc: &FuncRequest,
-    ) -> std::io::Result<std::process::ExitStatus> {
+    ) -> Result<std::process::ExitStatus, FuncCallError> {
         let mut cmd = Command::new(program_path)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -108,142 +173,37 @@ impl FuncInterface {
         let stdin = cmd.stdin.take().expect("could not open stdin");
         serde_json::to_writer(stdin, fc).expect("could not write request to stdin");
 
-        cmd.wait()
+        cmd.wait().map_err(|e| FuncCallError::IO(e))
     }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FuncRequest {
-    sinks: HashMap<String, Arc<SinkResource>>,
-    sources: HashMap<String, Arc<SourceResource>>,
+    sinks: SinkResourceMap,
+    sources: SourceResourceMap,
 }
 
 impl FuncRequest {
     pub fn new() -> Self {
         Self {
-            sinks: HashMap::new(),
-            sources: HashMap::new(),
+            sinks: SinkResourceMap::new(),
+            sources: SourceResourceMap::new(),
         }
     }
 
-    pub fn get_source(&self, s: &str) -> Option<Arc<SourceResource>> {
+    pub fn get_source(&self, s: &str) -> Option<SourceResource> {
         self.sources.get(s).cloned()
     }
 
-    pub fn get_sink(&self, s: &str) -> Option<Arc<SinkResource>> {
+    pub fn get_sink(&self, s: &str) -> Option<SinkResource> {
         self.sinks.get(s).cloned()
     }
 
-    pub fn set_source(&mut self, s: &str, sr: Arc<SourceResource>) {
-        self.sources.insert(s.to_string(), sr);
+    pub fn set_source(&mut self, s: &str, sr: &SourceResource) {
+        self.sources.insert(s.to_string(), sr.clone());
     }
 
-    pub fn set_sink(&mut self, s: &str, si: Arc<SinkResource>) {
-        self.sinks.insert(s.to_string(), si);
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct FuncCall {
-    sources: BTreeMap<String, Arc<SourceResource>>,
-    sinks: BTreeMap<String, Arc<SinkResource>>,
-}
-
-impl FuncCall {
-    pub fn new() -> Self {
-        Self {
-            sources: BTreeMap::new(),
-            sinks: BTreeMap::new(),
-        }
-    }
-
-    pub fn add_source(&mut self, name: &str, s: Arc<SourceResource>) {
-        self.sources.insert(name.to_string(), s);
-    }
-
-    pub fn add_sink(&mut self, name: &str, s: Arc<SinkResource>) {
-        self.sinks.insert(name.to_string(), s);
-    }
-
-    pub fn get_source(&self, s: &str) -> Option<Arc<SourceResource>> {
-        self.sources.get(s).cloned()
-    }
-
-    pub fn get_sink(&self, s: &str) -> Option<Arc<SinkResource>> {
-        self.sinks.get(s).cloned()
-    }
-
-    pub fn validate(
-        &self,
-        fi: &FuncInterface,
-    ) -> Result<FuncRequest, HashMap<String, Vec<String>>> {
-        let sinks = &fi.sinks;
-        let sources = &fi.sources;
-        let missing_sinks = self
-            .sources
-            .keys()
-            .filter(|s| !sinks.contains_key(s.as_str()))
-            .map(|s| s.to_string())
-            .collect_vec();
-        let missing_sources = self
-            .sinks
-            .keys()
-            .filter(|s| !sources.contains_key(s.as_str()))
-            .map(|s| s.to_string())
-            .collect_vec();
-        if missing_sinks.is_empty() && missing_sources.is_empty() {
-            let mut hm = HashMap::new();
-            hm.insert("sinks".to_string(), missing_sinks);
-            hm.insert("sources".to_string(), missing_sources);
-            Err(hm)
-        } else {
-            Ok(FuncRequest {
-                sinks: self
-                    .sinks
-                    .iter()
-                    .filter(|(k, _v)| sinks.contains_key(k.as_str()))
-                    .map(|(k, v)| (k.to_string(), v.clone()))
-                    .collect(),
-                sources: self
-                    .sources
-                    .iter()
-                    .filter(|(k, _v)| sources.contains_key(k.as_str()))
-                    .map(|(k, v)| (k.to_string(), v.clone()))
-                    .collect(),
-            })
-        }
+    pub fn set_sink(&mut self, s: &str, si: &SinkResource) {
+        self.sinks.insert(s.to_string(), si.clone());
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use serde_json;
-//     use super::*;
-//
-//     #[test]
-//     fn datatype_serialize() {
-//         let dt = DataType::Other;
-//         assert_eq!(serde_json::to_string(&dt).unwrap(), "\"Other\"");
-//
-//         let mut d = BTreeMap::new();
-//         d.insert("max_temp".to_string(),ColType::F64);
-//         let dt = DataType::Table(TableSchema(d));
-//         assert_eq!(serde_json::to_string(&dt).unwrap(), r#"{"Table":{"max_temp":"F64"}}"#);
-//
-//         let mut f = BTreeMap::new();
-//         f.insert(
-//             "daily".to_string(),
-//             Arg {
-//                 description: "daily data".to_string(),
-//                 datatype: dt,
-//             });
-//         let fi = FuncInterface {
-//             name: "simplecrop".to_string(),
-//             sinks: BTreeMap::new(),
-//             sources: f
-//         };
-//         assert_eq!(
-//         serde_json::to_string(&fi).unwrap(),
-//         r#"{"name":"simplecrop","sources":{"daily":{"description":"daily data","datatype":{"Table":{"max_temp":"F64"}}}},"sinks":{}}"#)
-//     }
-// }
