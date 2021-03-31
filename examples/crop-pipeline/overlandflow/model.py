@@ -1,155 +1,101 @@
 #!/usr/bin/env python3
+from typing import Any, Dict
 
-import numpy as np
 from landlab import RasterModelGrid
 from landlab.components.overland_flow import OverlandFlow
-from meillionen import FuncInterface
+from landlab.components import SoilInfiltrationGreenAmpt
+from meillionen.meillionen import FuncInterface
+import numpy as np
+import pandas as pd
+import xarray as xr
 
+from meillionen.io import LandLabLoader, PandasLoader, NetCDF4Saver
 
-interface = FuncInterface.from_json('''{
+interface = FuncInterface.from_dict({
     "name": "overlandflow",
     "sources": {
         "weather": {
             "description": "Daily weather data for a year",
-            "datatype": {
-                "Table": {
-                    "fields": [
-                        {
-                            "name": "rainfall__depth",
-                            "data_type": "Float64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false                        }
-                    ],
-                    "metadata": {}
-                }
-            } 
+            "data_type": {
+                "type": "DataFrame",
+                "fields": [
+                    {
+                        "name": "rainfall__depth",
+                        "data_type": "Float64",
+                        "nullable": False,
+                        "dict_id": 0,
+                        "dict_is_ordered": False
+                    }
+                ]
+            }
         },
-        "topography": {
+        "elevation": {
             "description": "Elevation model. Each cell is a sq m",
-            "datatype": {
-                "Table": {
-                    "fields": [
-                        {
-                            "name": "elevation",
-                            "data_type": "Float64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false
-                        }
-                    ],
-                    "metadata": {}
-                }
+            "data_type": {
+                "type": "Tensor",
+                "label": "Elevation",
+                "dimensions": ["x", "y"],
+                "data_type": "Float64"
             }
         }
     },
     "sinks": {
-        "surface_water": {
+        "soil_water_infiltration__depth": {
             "description": "Surface water depth at each point in grid for each day in year",
-            "datatype": {
-                "Table": {
-                    "fields": [
-                        {
-                            "name": "surface_water__depth",
-                            "data_type": "Float64",
-                            "nullable": false,
-                            "dict_id": 0,
-                            "dict_is_ordered": false
-                        }
-                    ],
-                    "metadata": {}
-                }
+            "data_type": {
+                "type": "Tensor",
+                "label": "Surface Water Infiltration Depth",
+                "dimensions": ["x", "y", "time"],
+                "data_type": "Float64"
             }
         }
     }
-}''')
+})
 
 
-class Overland:
-    def __init__(self):
-        self.shape = (20, 20)
-        self.shape_used = (range(2, self.shape[0] - 2), range(2, self.shape[1] - 2))
-        self.input = {}
-        self.store = None
+def run_day(mg, precipitation: float, duration=1800):
+    """
+    :param dem: model grid
+    :param precipitation: rainfall in m/hr
+    :param duration: seconds of rainfall
+    :return:
+    """
+    elapsed_time = 0.0
+    swd = mg.add_zeros('surface_water__depth', at='node', clobber=True)
+    swd += precipitation
+    swid = mg.add_zeros('soil_water_infiltration__depth', at='node', clobber=True)
+    swid += 1e-6
+    siga = SoilInfiltrationGreenAmpt(mg)
+    of = OverlandFlow(mg, steep_slopes=True)
 
-    def set_value(self, name, value):
-        if name != 'rainfall__depth':
-            raise KeyError('"rainfall__depth" is the only valid setter')
-        self.input[name] = value
+    while elapsed_time < duration:
+        dt = of.calc_time_step()
+        dt = dt if dt + elapsed_time < duration else duration - elapsed_time
+        of.run_one_step(dt=dt)
+        siga.run_one_step(dt=dt)
+        elapsed_time += dt
+    return xr.DataArray(mg.at_node['soil_water_infiltration__depth'], dims=('x', 'y'))
 
-    def get_value(self, name):
-        if name != 'surface_water__depth':
-            raise KeyError('"surface_water__depth" is the only valid getter')
-        return self.store.get_f64_variable('surface_water__depth')
 
-    def initialize(self):
-        # this example uses the python netcdf library to create a store for other components to consume
-        # more complete versions of meillionen have a unified API for saving data to a store
-        self.surface_water__depth = outfile.createVariable('surface_water__depth', 'f8', ('x', 'y', 'time'))
-        self.output = outfile
-
-    def finalize(self):
-        self.output.close()
-
-    def run(self, rainfall_mm):
-        grid = RasterModelGrid(self.shape)
-        topo = np.zeros(self.shape)
-        topo[4, 5] = 0.2
-        topo[13, 3] = 0.1
-        grid.at_node['topographic__elevation'] = topo
-        grid.at_node['surface_water__depth'] = np.zeros(self.shape)
-
-        elapsed_time = 0.0
-        model_run_time = 10.0
-
-        storm_duration_s = 10.0
-        of = OverlandFlow(grid, steep_slopes=True, rainfall_intensity=rainfall_mm * (1 / storm_duration_s * 1 / 1000))
-
-        while elapsed_time < model_run_time:
-            of.dt = of.calc_time_step()  # Adaptive time step
-
-            if elapsed_time > storm_duration_s:
-                of.rainfall_intensity = 0.0
-
-            of.overland_flow()
-            elapsed_time += of.dt
-
-        xs, ys = self.shape_used
-
-        return grid.at_node['surface_water__depth'].reshape(self.shape)[xs[0]:xs[1], ys[0]:ys[1]]
-
-    def update(self):
-        rainfall = self.input['rainfall__depth']
-        for ind in range(365):
-            if ind in rainfall.index:
-                grid = self.run(rainfall[ind])
-                self.surface_water__depth[:, :, ind] = grid
-            else:
-                xsize = len(self.shape_used[0])
-                ysize = len(self.shape_used[1])
-                grid = np.zeros((xsize, ysize))
-                self.surface_water__depth[:, :, ind] = grid
+def run_year(mg, weather, swid):
+    for t, row in enumerate(weather.iterrows()):
+        infiltration_depth = run_day(mg, row.precipitation)
+        swid.set_slice(infiltration_depth, time=t)
 
 
 if __name__ == '__main__':
     args = interface.to_cli()
-    # import argparse
-    # import pandas as pd
-    #
-    # parser = argparse.ArgumentParser(description='Overland Flow')
-    # parser.add_argument('path', type=str, help='daily weather data for a year')
-    #
-    # args = parser.parse_args()
-    #
-    # weather = pd.read_fwf(args.path)
-    #
-    # # find the days that have positive precipitation
-    #
-    # rainfall = weather['rain'][weather['rain'] > 0]
-    # rainfall = rainfall[rainfall.index.isin(range(0, 365))]
-    #
-    # overland = Overland()
-    # overland.initialize()
-    # overland.set_value('rainfall__depth', rainfall)
-    # overland.update()
-    # overland.finalize()
+    weather = args.get_source('weather')
+    elevation = args.get_source('elevation')
+    surface_water_infiltation__depth = args.get_sink('soil_water_infiltation__depth')
+
+    mg = LandLabLoader.load(elevation)
+    weather = PandasLoader.load(weather)
+    swid_schema = interface.to_dict()['sinks']['soil_water_infiltration__depth']['dimensions']
+    swid_schema = list(zip(swid_schema, [mg.shape[0], mg.shape[1], weather.shape[0]]))
+    with NetCDF4Saver(surface_water_infiltation__depth, swid_schema) as swid:
+        run_year(
+            mg=mg,
+            weather=weather,
+            swid=swid,
+        )
