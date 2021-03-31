@@ -1,15 +1,15 @@
 use std::collections::BTreeMap;
-use std::{env, fmt};
 use std::ffi::OsString;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
+use std::{env, fmt};
 
-use thiserror::Error;
 use itertools::Itertools;
 use serde_derive::{Deserialize, Serialize};
+use thiserror::Error;
 
+use crate::arg::req::{SinkResource, SinkResourceMap, SourceResource, SourceResourceMap};
 use crate::arg::ArgValidatorType;
-use crate::arg::req::{SourceResource, SinkResourceMap, SourceResourceMap, SinkResource};
 use std::fmt::Formatter;
 
 #[derive(Debug, Error, Deserialize, Serialize)]
@@ -17,13 +17,13 @@ pub enum FuncRequestSchemaError {
     #[error("missing sinks {0:?}")]
     MissingSinks(Vec<String>),
     #[error("missing sources {0:?}")]
-    MissingSources(Vec<String>)
+    MissingSources(Vec<String>),
 }
 
 #[derive(Debug, Error)]
 pub enum FuncCallError {
     Schema(FuncRequestSchemaError),
-    IO(std::io::Error)
+    IO(std::io::Error),
 }
 
 impl fmt::Display for FuncCallError {
@@ -31,10 +31,9 @@ impl fmt::Display for FuncCallError {
         use FuncCallError::*;
         match &self {
             Schema(ref schema) => write!(f, "{:?}", schema),
-            IO(ref io) => io.fmt(f)
+            IO(ref io) => io.fmt(f),
         }
     }
-
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -47,7 +46,7 @@ impl ResourceSchema {
     pub fn new(description: String, data_type: Arc<ArgValidatorType>) -> Self {
         Self {
             description,
-            data_type
+            data_type,
         }
     }
 }
@@ -121,10 +120,7 @@ impl FuncInterface {
         }
     }
 
-    fn validate(
-        &self,
-        fr: &FuncRequest
-    ) -> Option<FuncRequestSchemaError> {
+    fn validate(&self, fr: &FuncRequest) -> Option<FuncRequestSchemaError> {
         let sinks = &self.sinks;
         let sources = &self.sources;
         let missing_sinks = fr
@@ -134,7 +130,7 @@ impl FuncInterface {
             .map(|s| s.to_string())
             .collect_vec();
         if !missing_sinks.is_empty() {
-            return Some(FuncRequestSchemaError::MissingSinks(missing_sinks))
+            return Some(FuncRequestSchemaError::MissingSinks(missing_sinks));
         }
         let missing_sources = fr
             .sources
@@ -143,19 +139,20 @@ impl FuncInterface {
             .map(|s| s.to_string())
             .collect_vec();
         if !missing_sources.is_empty() {
-            return Some(FuncRequestSchemaError::MissingSources(missing_sources))
+            return Some(FuncRequestSchemaError::MissingSources(missing_sources));
         }
         None
     }
 
-    pub fn build_request(&self, sinks: SinkResourceMap, sources: SourceResourceMap) -> Result<FuncRequest, FuncRequestSchemaError> {
-        let fr = FuncRequest {
-            sinks,
-            sources
-        };
+    pub fn build_request(
+        &self,
+        sinks: SinkResourceMap,
+        sources: SourceResourceMap,
+    ) -> Result<FuncRequest, FuncRequestSchemaError> {
+        let fr = FuncRequest { sinks, sources };
         match self.validate(&fr) {
             Some(errors) => Err(errors),
-            None => Ok(fr)
+            None => Ok(fr),
         }
     }
 

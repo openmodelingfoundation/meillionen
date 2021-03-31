@@ -1,24 +1,21 @@
+use arrow::datatypes::Field;
+use serde_derive::{Deserialize, Serialize};
 use std::sync::Arc;
-use arrow::datatypes::{Field};
-use serde_derive::{Serialize, Deserialize};
-
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TensorValidator {
     pub dimensions: Vec<String>,
-    pub data_type: arrow::datatypes::DataType
+    pub data_type: arrow::datatypes::DataType,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Columns {
-    fields: Vec<Field>
+    fields: Vec<Field>,
 }
 
 impl Columns {
     pub fn new(fields: Vec<Field>) -> Self {
-        Self {
-            fields
-        }
+        Self { fields }
     }
 }
 
@@ -29,7 +26,7 @@ pub struct DataFrameValidator(pub Arc<Columns>);
 #[serde(tag = "type")]
 pub enum ArgValidatorType {
     Tensor(Arc<TensorValidator>),
-    DataFrame(Arc<DataFrameValidator>)
+    DataFrame(Arc<DataFrameValidator>),
 }
 
 impl ArgValidatorType {
@@ -43,14 +40,14 @@ impl ArgValidatorType {
 
     pub fn get_tensor(&self) -> Option<Arc<TensorValidator>> {
         if let Self::Tensor(ref tv) = self {
-            return Some(tv.clone())
+            return Some(tv.clone());
         }
         None
     }
 
     pub fn get_dataframe(&self) -> Option<Arc<DataFrameValidator>> {
         if let Self::DataFrame(ref df) = self {
-            return Some(df.clone())
+            return Some(df.clone());
         }
         None
     }

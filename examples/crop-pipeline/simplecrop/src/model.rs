@@ -3,7 +3,7 @@
 use std::fs::{create_dir_all, File};
 use std::io;
 use std::io::{BufRead, BufReader, BufWriter, Write};
-use std::path::{Path};
+use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
 
@@ -13,9 +13,9 @@ use arrow::record_batch::RecordBatch;
 use eyre::WrapErr;
 use itertools::Itertools;
 
-use meillionen_mt::arg::validation::{DataFrameValidator, Columns};
-use meillionen_mt::model::{ResourceSchema, FuncInterface};
+use meillionen_mt::arg::validation::{Columns, DataFrameValidator};
 use meillionen_mt::arg::ArgValidatorType;
+use meillionen_mt::model::{FuncInterface, ResourceSchema};
 
 macro_rules! make_field_vec {
     ($(($name: ident, $dt: ident)), *) => {
@@ -25,11 +25,18 @@ macro_rules! make_field_vec {
     }
 }
 
-fn make_arg_description(name: String, description: String, fields: Vec<Field>) -> (String, Arc<ResourceSchema>) {
+fn make_arg_description(
+    name: String,
+    description: String,
+    fields: Vec<Field>,
+) -> (String, Arc<ResourceSchema>) {
     let schema = Arc::new(Columns::new(fields));
     let dataframe_validator = Arc::new(DataFrameValidator(schema));
     let arg_validator = Arc::new(ArgValidatorType::DataFrame(dataframe_validator));
-    (name, Arc::new(ResourceSchema::new(description, arg_validator)))
+    (
+        name,
+        Arc::new(ResourceSchema::new(description, arg_validator)),
+    )
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -77,7 +84,7 @@ impl<'a> DailyData<'a> {
 
     pub fn arg_description() -> (String, Arc<ResourceSchema>) {
         use arrow::datatypes::DataType::*;
-        let fields =make_field_vec![
+        let fields = make_field_vec![
             (irrigation, Float32),
             (temp_max, Float32),
             (temp_min, Float32),
@@ -88,7 +95,7 @@ impl<'a> DailyData<'a> {
         make_arg_description(
             Self::NAME.to_string(),
             Self::DESCRIPTION.to_string(),
-            fields
+            fields,
         )
     }
 }
@@ -132,17 +139,21 @@ impl YearlyData {
     const NAME: &'static str = "yearly";
     const DESCRIPTION: &'static str = "Yearly parameters influencing crop growth";
 
-    fn value<T: ArrowPrimitiveType>(rb: &RecordBatch, name: &str, i: usize) -> eyre::Result<T::Native> {
+    fn value<T: ArrowPrimitiveType>(
+        rb: &RecordBatch,
+        name: &str,
+        i: usize,
+    ) -> eyre::Result<T::Native> {
         let col_ind = rb.schema().index_of(&name)?;
         let col = rb.column(col_ind);
-        col
-            .as_any()
+        col.as_any()
             .downcast_ref::<PrimitiveArray<T>>()
             .map(|a| a.value(i))
-            .ok_or(eyre::Report::msg(
-                format!("column type mismatch. expected {:#?} got {:#?}",
-                        T::DATA_TYPE,
-                        rb.column(col_ind).data_type())))
+            .ok_or(eyre::Report::msg(format!(
+                "column type mismatch. expected {:#?} got {:#?}",
+                T::DATA_TYPE,
+                rb.column(col_ind).data_type()
+            )))
     }
 
     pub fn arg_description() -> (String, Arc<ResourceSchema>) {
@@ -165,7 +176,6 @@ impl YearlyData {
             (plant_matter_leaves_removed, Float32),
             (plant_development_phase, Float32),
             (plant_leaf_specific_area, Float32),
-
             (soil_water_content_wilting_point, Float32),
             (soil_water_content_field_capacity, Float32),
             (soil_water_content_saturation, Float32),
@@ -173,14 +183,13 @@ impl YearlyData {
             (soil_drainage_daily_percent, Float32),
             (soil_runoff_curve_number, Float32),
             (soil_water_storage, Float32),
-
             (day_of_planting, Int32),
             (printout_freq, Int32)
         ];
         make_arg_description(
             Self::NAME.to_string(),
             Self::DESCRIPTION.to_string(),
-            fields
+            fields,
         )
     }
 
@@ -211,7 +220,6 @@ impl YearlyData {
             (plant_matter_leaves_removed, Float32Type),
             (plant_development_phase, Float32Type),
             (plant_leaf_specific_area, Float32Type),
-
             (soil_water_content_wilting_point, Float32Type),
             (soil_water_content_field_capacity, Float32Type),
             (soil_water_content_saturation, Float32Type),
@@ -219,7 +227,6 @@ impl YearlyData {
             (soil_drainage_daily_percent, Float32Type),
             (soil_runoff_curve_number, Float32Type),
             (soil_water_storage, Float32Type),
-
             (day_of_planting, Int32Type),
             (printout_freq, Int32Type)
         ])
@@ -355,7 +362,7 @@ impl SoilDataSet {
             .map(|f| f.parse::<f32>().ok())
             .collect::<Option<Vec<f32>>>()?;
         if let [_srad, _tmax, _tmin, _rain, _irr, rof, inf, drn, etp, esa, epa, swc, swc_dp, swfac1, swfac2] =
-        fs[..]
+            fs[..]
         {
             self.day_of_year.push(doy);
             self.soil_daily_runoff.push(rof);
@@ -408,7 +415,7 @@ impl SoilDataSet {
         make_arg_description(
             Self::NAME.to_string(),
             Self::DESCRIPTION.to_string(),
-            fields
+            fields,
         )
     }
 }
@@ -485,16 +492,14 @@ impl PlantDataSet {
         make_arg_description(
             Self::NAME.to_string(),
             Self::DESCRIPTION.to_string(),
-            fields
+            fields,
         )
     }
 }
 
 fn load_output_data<P: AsRef<Path>>(dir: P) -> eyre::Result<(RecordBatch, RecordBatch)> {
-    let po = PlantDataSet::load(
-        &dir.as_ref().join("output/plant.out"))?;
-    let so = SoilDataSet::load(
-        &dir.as_ref().join("output/soil.out"))?;
+    let po = PlantDataSet::load(&dir.as_ref().join("output/plant.out"))?;
+    let so = SoilDataSet::load(&dir.as_ref().join("output/soil.out"))?;
     use arrow::datatypes::DataType::*;
     let soil = {
         let (fields, cols): (Vec<Field>, Vec<ArrayRef>) = vec![
@@ -507,17 +512,23 @@ fn load_output_data<P: AsRef<Path>>(dir: P) -> eyre::Result<(RecordBatch, Record
             ("soil_water_excess_stress", so.soil_water_excess_stress),
             ("soil_water_profile_ratio", so.soil_water_profile_ratio),
             ("soil_water_storage_depth", so.soil_water_storage_depth),
-            ("plant_potential_transpiration", so.plant_potential_transpiration),
+            (
+                "plant_potential_transpiration",
+                so.plant_potential_transpiration,
+            ),
         ]
-            .into_iter()
-            .map(|(name, col)| -> (Field, ArrayRef) {
-                (Field::new(name, Float32, false), Arc::new(Float32Array::from(col)))
-            })
-            .chain({
-                let day: ArrayRef = Arc::new(Int32Array::from(so.day_of_year));
-                vec![(Field::new("day", Int32, false), day)]
-            })
-            .unzip();
+        .into_iter()
+        .map(|(name, col)| -> (Field, ArrayRef) {
+            (
+                Field::new(name, Float32, false),
+                Arc::new(Float32Array::from(col)),
+            )
+        })
+        .chain({
+            let day: ArrayRef = Arc::new(Int32Array::from(so.day_of_year));
+            vec![(Field::new("day", Int32, false), day)]
+        })
+        .unzip();
 
         let schema_ref = Arc::new(Schema::new(fields));
         RecordBatch::try_new(schema_ref, cols).map_err(eyre::Report::msg)
@@ -532,15 +543,18 @@ fn load_output_data<P: AsRef<Path>>(dir: P) -> eyre::Result<(RecordBatch, Record
             ("plant_matter_fruit", po.plant_matter_fruit),
             ("plant_matter_root", po.plant_matter_root),
         ]
-            .into_iter()
-            .map(|(name, col)| -> (Field, ArrayRef) {
-                (Field::new(name, Float32, false), Arc::new(Float32Array::from(col)))
-            })
-            .chain({
-                let day: ArrayRef = Arc::new(Int32Array::from(po.day_of_year));
-                vec![(Field::new("day", Int32, false), day)]
-            })
-            .unzip();
+        .into_iter()
+        .map(|(name, col)| -> (Field, ArrayRef) {
+            (
+                Field::new(name, Float32, false),
+                Arc::new(Float32Array::from(col)),
+            )
+        })
+        .chain({
+            let day: ArrayRef = Arc::new(Int32Array::from(po.day_of_year));
+            vec![(Field::new("day", Int32, false), day)]
+        })
+        .unzip();
         let schema_ref = Arc::new(Schema::new(fields));
         RecordBatch::try_new(schema_ref, cols).map_err(eyre::Report::msg)
     }?;
@@ -585,7 +599,11 @@ impl<'a> SimpleCropConfig<'a> {
         Ok(())
     }
 
-    pub fn run(&self, cli_path: impl AsRef<Path>, dir: impl AsRef<Path>) -> eyre::Result<(RecordBatch, RecordBatch)> {
+    pub fn run(
+        &self,
+        cli_path: impl AsRef<Path>,
+        dir: impl AsRef<Path>,
+    ) -> eyre::Result<(RecordBatch, RecordBatch)> {
         let cli_path = cli_path
             .as_ref()
             .canonicalize()

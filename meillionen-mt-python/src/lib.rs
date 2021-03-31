@@ -6,27 +6,29 @@ use pyo3::prelude::*;
 use pythonize::{depythonize, pythonize};
 use serde::{Deserialize, Serialize};
 
-use meillionen_mt::{arg, extension_columns as ext_cols};
 use meillionen_mt::arg::req;
 use meillionen_mt::model;
+use meillionen_mt::{arg, extension_columns as ext_cols};
 
 fn to_dict<T>(data: &T) -> PyResult<PyObject>
-    where T: Serialize {
-    pythonize(
-        Python::acquire_gil().python(),
-        &data
-    ).map_err(|e| PyValueError::new_err(e.to_string()))
+where
+    T: Serialize,
+{
+    pythonize(Python::acquire_gil().python(), &data)
+        .map_err(|e| PyValueError::new_err(e.to_string()))
 }
 
 fn from_dict<'de, T>(data: &'de PyAny) -> PyResult<T>
-    where T: Deserialize<'de> {
+where
+    T: Deserialize<'de>,
+{
     depythonize(data).map_err(|e| PyValueError::new_err(e.to_string()))
 }
 
 #[pyclass]
 #[derive(Debug)]
 struct SourceResource {
-    inner: req::SourceResource
+    inner: req::SourceResource,
 }
 
 #[pymethods]
@@ -39,32 +41,28 @@ impl SourceResource {
 #[pyfunction]
 fn netcdf_source(data: &PyAny) -> PyResult<SourceResource> {
     Ok(SourceResource {
-        inner: from_dict(data)?
+        inner: from_dict(data)?,
     })
 }
 
 #[pyfunction]
 fn feather_source(path: String) -> SourceResource {
     SourceResource {
-        inner: Arc::new(req::FeatherResource {
-            path
-        })
+        inner: Arc::new(req::FeatherResource { path }),
     }
 }
 
 #[pyfunction]
 fn file_source(path: String) -> SourceResource {
     SourceResource {
-        inner: Arc::new(req::FileResource {
-            path
-        })
+        inner: Arc::new(req::FileResource { path }),
     }
 }
 
 #[pyclass]
 #[derive(Debug)]
 struct SinkResource {
-    inner: req::SinkResource
+    inner: req::SinkResource,
 }
 
 #[pymethods]
@@ -77,25 +75,21 @@ impl SinkResource {
 #[pyfunction]
 fn netcdf_sink(data: &PyAny) -> PyResult<SinkResource> {
     Ok(SinkResource {
-        inner: from_dict(data)?
+        inner: from_dict(data)?,
     })
 }
 
 #[pyfunction]
 fn feather_sink(path: String) -> SinkResource {
     SinkResource {
-        inner: Arc::new(req::FeatherResource {
-            path
-        })
+        inner: Arc::new(req::FeatherResource { path }),
     }
 }
 
 #[pyfunction]
 fn file_sink(path: String) -> SinkResource {
     SinkResource {
-        inner: Arc::new(req::FileResource {
-            path
-        })
+        inner: Arc::new(req::FileResource { path }),
     }
 }
 
@@ -105,7 +99,7 @@ type SourceResourceMap = BTreeMap<String, SourceResource>;
 #[pyclass]
 #[derive(Debug)]
 struct TensorValidator {
-    inner: Arc<arg::validation::TensorValidator>
+    inner: Arc<arg::validation::TensorValidator>,
 }
 
 #[pymethods]
@@ -113,7 +107,7 @@ impl TensorValidator {
     #[staticmethod]
     fn from_dict(data: &PyAny) -> PyResult<Self> {
         Ok(Self {
-            inner: Arc::new(from_dict(data)?)
+            inner: Arc::new(from_dict(data)?),
         })
     }
 
@@ -125,7 +119,7 @@ impl TensorValidator {
 #[pyclass]
 #[derive(Debug)]
 struct ArgValidatorType {
-    inner: Arc<arg::ArgValidatorType>
+    inner: Arc<arg::ArgValidatorType>,
 }
 
 #[pymethods]
@@ -133,7 +127,7 @@ impl ArgValidatorType {
     #[staticmethod]
     fn from_dict(data: &PyAny) -> PyResult<Self> {
         Ok(Self {
-            inner: Arc::new(from_dict(data)?)
+            inner: Arc::new(from_dict(data)?),
         })
     }
 
@@ -183,7 +177,6 @@ impl DimMeta {
     }
 }
 
-
 #[pyclass]
 #[derive(Debug)]
 struct FuncRequest {
@@ -208,9 +201,7 @@ impl FuncRequest {
     }
 
     pub fn get_sink(&self, s: &str) -> Option<SinkResource> {
-        self.inner
-            .get_sink(s)
-            .map(|sr| SinkResource { inner: sr })
+        self.inner.get_sink(s).map(|sr| SinkResource { inner: sr })
     }
 
     pub fn get_source(&self, s: &str) -> Option<SourceResource> {
@@ -232,9 +223,7 @@ pub struct FuncInterface {
 
 impl FuncInterface {
     pub fn new(inner: Arc<model::FuncInterface>) -> Self {
-        Self {
-            inner
-        }
+        Self { inner }
     }
 }
 
@@ -257,7 +246,7 @@ impl FuncInterface {
     #[staticmethod]
     fn from_dict(data: &PyAny) -> PyResult<Self> {
         Ok(Self {
-            inner: Arc::new(from_dict(data)?)
+            inner: Arc::new(from_dict(data)?),
         })
     }
 
