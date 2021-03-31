@@ -57,7 +57,7 @@ fn run_record_batch(cli_path: String, dir: String, daily_batch: &RecordBatch, ye
 fn run(cli_path: String, dir: String, daily_stream: StreamReader<&[u8]>, yearly_stream: StreamReader<&[u8]>) -> eyre::Result<(RecordBatch, RecordBatch)> {
     // 365 days of weather
     let stream_convert = |stream: StreamReader<&[u8]>| -> eyre::Result<RecordBatch> {
-        let rc = stream.into_iter().nth(0)
+        let rc = stream.into_iter().next()
             .ok_or(eyre::eyre!("Stream was empty"))?
             .map_err(|e| eyre::eyre!(e))?;
         Ok(rc)

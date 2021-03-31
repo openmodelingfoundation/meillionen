@@ -1,3 +1,5 @@
+import os
+
 from meillionen.io import PandasLoader, PandasSaver
 from meillionen.meillionen import FuncInterface
 from .simplecrop_cli import run, get_func_interface
@@ -29,7 +31,8 @@ def simplecrop_mock_ipc_run(cli_path, dir, daily: pd.DataFrame, yearly: pd.DataF
     return to_table(plant_ref), to_table(soil_ref)
 
 
-def run_cli(cli_path):
+def run_cli():
+    cli_path = os.environ.get('SIMPLECROP', 'simplecrop')
     args = interface.to_cli()
     daily: pd.DataFrame = PandasLoader.load(args.get_source('daily'))
     yearly: pd.DataFrame = PandasLoader.load(args.get_source('yearly'))

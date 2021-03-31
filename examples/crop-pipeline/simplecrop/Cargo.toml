@@ -7,6 +7,9 @@ edition = "2018"
 [package.metadata.maturin]
 requires-dist = ['numpy', 'pandas', 'pyarrow', 'xarray']
 
+[package.metadata.maturin.scripts]
+simplecrop = "simplecrop_cli:run_cli"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
