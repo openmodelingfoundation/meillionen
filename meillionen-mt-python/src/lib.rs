@@ -52,6 +52,15 @@ fn feather_source(path: String) -> SourceResource {
     }
 }
 
+#[pyfunction]
+fn file_source(path: String) -> SourceResource {
+    SourceResource {
+        inner: Arc::new(req::FileResource {
+            path
+        })
+    }
+}
+
 #[pyclass]
 #[derive(Debug)]
 struct SinkResource {
@@ -76,6 +85,15 @@ fn netcdf_sink(data: &PyAny) -> PyResult<SinkResource> {
 fn feather_sink(path: String) -> SinkResource {
     SinkResource {
         inner: Arc::new(req::FeatherResource {
+            path
+        })
+    }
+}
+
+#[pyfunction]
+fn file_sink(path: String) -> SinkResource {
+    SinkResource {
+        inner: Arc::new(req::FileResource {
             path
         })
     }
@@ -265,8 +283,10 @@ impl FuncInterface {
 fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(netcdf_sink, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(feather_sink, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(file_sink, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(netcdf_source, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(feather_source, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(file_source, m)?)?;
 
     m.add_class::<SinkResource>()?;
     m.add_class::<SourceResource>()?;

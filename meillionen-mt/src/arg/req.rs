@@ -36,6 +36,17 @@ impl Sink for FeatherResource {}
 #[typetag::serde]
 impl Source for FeatherResource {}
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct FileResource {
+    pub path: String
+}
+
+#[typetag::serde]
+impl Sink for FileResource {}
+
+#[typetag::serde]
+impl Source for FileResource {}
+
 // right now source and sink types are the same
 // but that will change when the request handling
 // is more established

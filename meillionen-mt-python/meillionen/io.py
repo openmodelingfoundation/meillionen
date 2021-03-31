@@ -1,7 +1,37 @@
-import os
+from typing import Dict, Union
 
+from landlab.io import read_esri_ascii, write_esri_ascii
+import netCDF4
+import numpy as np
 import pandas as pd
+import pickle
 import xarray as xr
+
+
+class NetCDF4Saver:
+    def __init__(self, sink, sink_schema):
+        self.sink = sink
+        sink = sink.to_dict()
+        self.dataset = netCDF4.Dataset(sink['path'], mode='w')
+        for dim, size in sink_schema:
+            print((dim, size))
+            self.dataset.createDimension(dim, size)
+        self.variable = self.dataset.createVariable(sink['variable'], 'f4', [f[0] for f in sink_schema])
+
+    def set_slice(self, array: xr.DataArray, **slices: Dict[str, Union[int, slice]]):
+        vdims = self.variable.dimensions
+        xs = tuple(slices[d] if d in slices else slice(None) for d in vdims)
+        vdims_remaining = [v for v in vdims if v not in slices.keys()]
+        self.variable[xs] = array.transpose(*vdims_remaining)
+
+    def close(self):
+        self.dataset.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
 
 class XArrayLoader:
@@ -51,3 +81,34 @@ class PandasSaver:
         sink = sink_resource.to_dict()
         assert sink['type'] == 'FeatherResource'
         data.to_feather(sink['path'])
+
+
+class LandLabLoader:
+    @staticmethod
+    def load(dem_resource):
+        dem = dem_resource.to_dict()
+        mg, z = read_esri_ascii(dem['path'],name='topographic__elevation')
+        mg.status_at_node[mg.nodes_at_right_edge] = mg.BC_NODE_IS_FIXED_VALUE
+        mg.status_at_node[np.isclose(z, -9999)] = mg.BC_NODE_IS_CLOSED
+        return mg
+
+
+class PickleLoader:
+    @staticmethod
+    def load(model_resource):
+        model = model_resource.to_dict()
+        return pickle.load(model['path'])
+
+
+class PickleSaver:
+    @staticmethod
+    def save(model_resource, model):
+        model_meta = model_resource.to_dict()
+        pickle.dump(model, model_meta['path'])
+
+
+class LandLabSaver:
+    @staticmethod
+    def save(dem_resource, mg, variable: str):
+        dem_meta = dem_resource.to_dict()
+        write_esri_ascii(dem_meta['path'], mg, variable, clobber=True)
