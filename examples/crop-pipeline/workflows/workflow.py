@@ -41,7 +41,7 @@ def chunkify_soil_water_infiltration_depth(swid):
     ds = netCDF4.Dataset(swid['path'], 'r')
     variable = ds[swid['variable']]
     x_d, y_d, time_d = variable.get_dims()
-    return [{'soil_water_infiltration__depth': variable[x, y, :], 'x': x, 'y': y} for (x,y) in itertools.product(range(3), range(3))]
+    return [{'soil_water_infiltration__depth': variable[x, y, :], 'x': x, 'y': y} for (x,y) in itertools.product(range(10,15), range(20,25))]
 
 
 @task()

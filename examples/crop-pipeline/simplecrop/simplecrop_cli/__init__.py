@@ -39,4 +39,4 @@ def run_cli():
     tempdir = args.get_sink('tempdir').to_dict()['path']
     plant, soil = simplecrop_mock_ipc_run(cli_path, tempdir, daily, yearly)
     PandasSaver.save(args.get_sink('plant'), plant)
-    PandasSaver.save(args.get_sink('soil'), plant)
+    PandasSaver.save(args.get_sink('soil'), soil)
