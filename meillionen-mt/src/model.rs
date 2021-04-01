@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use std::ffi::OsString;
-use std::process::{Command, Stdio, Output};
+use std::process::{Command, Output, Stdio};
 use std::sync::Arc;
 use std::{env, fmt};
 
@@ -156,11 +156,7 @@ impl FuncInterface {
         }
     }
 
-    pub fn call_cli(
-        &self,
-        program_path: &str,
-        fc: &FuncRequest,
-    ) -> Result<Output, FuncCallError> {
+    pub fn call_cli(&self, program_path: &str, fc: &FuncRequest) -> Result<Output, FuncCallError> {
         let mut cmd = Command::new(program_path)
             .arg("run")
             .stdin(Stdio::piped())

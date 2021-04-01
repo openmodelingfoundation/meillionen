@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use std;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
+use std;
 
 use pythonize::{depythonize, pythonize};
 use serde::{Deserialize, Serialize};
@@ -277,14 +277,19 @@ impl FuncInterface {
     }
 
     fn call_cli(&self, program_name: &str, fc: &FuncRequest) -> PyResult<()> {
-        let output = self.inner
+        let output = self
+            .inner
             .call_cli(program_name, &fc.inner)
             .map_err(|err| PyIOError::new_err(err.to_string()))?;
         if output.status.success() {
             print!("{}", std::str::from_utf8(output.stdout.as_ref()).unwrap());
             Ok(())
         } else {
-            Err(PyIOError::new_err(std::str::from_utf8(&output.stderr).unwrap_or("Unknown error").to_string()))
+            Err(PyIOError::new_err(
+                std::str::from_utf8(&output.stderr)
+                    .unwrap_or("Unknown error")
+                    .to_string(),
+            ))
         }
     }
 }

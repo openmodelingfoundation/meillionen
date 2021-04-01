@@ -27,7 +27,7 @@ pub struct DataFrameValidator(pub Arc<Columns>);
 pub enum ArgValidatorType {
     Tensor(Arc<TensorValidator>),
     DataFrame(Arc<DataFrameValidator>),
-    Other
+    Other,
 }
 
 impl ArgValidatorType {
