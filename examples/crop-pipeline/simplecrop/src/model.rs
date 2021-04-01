@@ -331,7 +331,7 @@ pub fn get_func_interface() -> Arc<FuncInterface> {
     fi.set_sink(soil_key, soil_sink);
     let (plant_key, plant_sink) = PlantDataSet::arg_description();
     fi.set_sink(plant_key, plant_sink);
-
+    fi.set_sink("tempdir".to_string(), Arc::new(ResourceSchema::new("temporary state dir containing simplecrop templated files".to_string(), Arc::new(ArgValidatorType::Other))));
     Arc::new(fi)
 }
 

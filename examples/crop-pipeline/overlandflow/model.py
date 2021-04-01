@@ -74,12 +74,12 @@ def run_day(mg, precipitation: float, duration=1800):
         of.run_one_step(dt=dt)
         siga.run_one_step(dt=dt)
         elapsed_time += dt
-    return xr.DataArray(mg.at_node['soil_water_infiltration__depth'], dims=('x', 'y'))
+    return xr.DataArray(mg.at_node['soil_water_infiltration__depth'].reshape(mg.shape), dims=('x', 'y'))
 
 
 def run_year(mg, weather, swid):
-    for t, row in enumerate(weather.iterrows()):
-        infiltration_depth = run_day(mg, row.precipitation)
+    for t, row in weather.iterrows():
+        infiltration_depth = run_day(mg, row.rainfall__depth)
         swid.set_slice(infiltration_depth, time=t)
 
 
@@ -87,11 +87,11 @@ if __name__ == '__main__':
     args = interface.to_cli()
     weather = args.get_source('weather')
     elevation = args.get_source('elevation')
-    surface_water_infiltation__depth = args.get_sink('soil_water_infiltation__depth')
+    surface_water_infiltation__depth = args.get_sink('soil_water_infiltration__depth')
 
     mg = LandLabLoader.load(elevation)
     weather = PandasLoader.load(weather)
-    swid_schema = interface.to_dict()['sinks']['soil_water_infiltration__depth']['dimensions']
+    swid_schema = interface.to_dict()['sinks']['soil_water_infiltration__depth']['data_type']['dimensions']
     swid_schema = list(zip(swid_schema, [mg.shape[0], mg.shape[1], weather.shape[0]]))
     with NetCDF4Saver(surface_water_infiltation__depth, swid_schema) as swid:
         run_year(

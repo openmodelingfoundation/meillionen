@@ -36,6 +36,7 @@ def run_cli():
     args = interface.to_cli()
     daily: pd.DataFrame = PandasLoader.load(args.get_source('daily'))
     yearly: pd.DataFrame = PandasLoader.load(args.get_source('yearly'))
-    plant, soil = simplecrop_mock_ipc_run(cli_path, 'ex', daily, yearly)
+    tempdir = args.get_sink('tempdir').to_dict()['path']
+    plant, soil = simplecrop_mock_ipc_run(cli_path, tempdir, daily, yearly)
     PandasSaver.save(args.get_sink('plant'), plant)
     PandasSaver.save(args.get_sink('soil'), plant)

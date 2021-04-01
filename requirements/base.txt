@@ -1,8 +1,10 @@
+jupyter
 landlab
 maturin
 netCDF4
 numpy
 pandas
+prefect
 pyarrow
 pytest
 sh

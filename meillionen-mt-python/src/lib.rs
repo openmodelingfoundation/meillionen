@@ -15,14 +15,14 @@ where
     T: Serialize,
 {
     pythonize(Python::acquire_gil().python(), &data)
-        .map_err(|e| PyValueError::new_err(e.to_string()))
+        .map_err(|e| PyValueError::new_err(format!("{:?}", e)))
 }
 
 fn from_dict<'de, T>(data: &'de PyAny) -> PyResult<T>
 where
     T: Deserialize<'de>,
 {
-    depythonize(data).map_err(|e| PyValueError::new_err(e.to_string()))
+    depythonize(data).map_err(|e| PyValueError::new_err(format!("{:?}", e)))
 }
 
 #[pyclass]

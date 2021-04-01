@@ -96,7 +96,7 @@ fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
         let yearly_stream = StreamReader::try_new(yearly_stream_ref)
             .map_err(|e| PyIOError::new_err(e.to_string()))?;
         let (plant, soil) = run(cli_path, dir, daily_stream, yearly_stream)
-            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+            .map_err(|e| PyValueError::new_err(format!("{:?}", e)))?;
         let to_pybytes = |rb: RecordBatch| -> PyResult<&PyBytes> {
             let mut sink = Vec::<u8>::new();
             {
@@ -113,7 +113,7 @@ fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m, "get_func_interface")]
     fn get_func_interface_py<'a>(_py: Python<'a>) -> PyResult<&PyAny> {
         let s = serde_json::to_string(get_func_interface().as_ref())
-            .map_err(|e| PyValueError::new_err(format!("{:#?}", e)))?;
+            .map_err(|e| PyValueError::new_err(format!("{:?}", e)))?;
         let json = _py.import("json")?;
         json.call("loads", (s,), None)
     }

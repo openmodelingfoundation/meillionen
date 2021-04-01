@@ -4,8 +4,14 @@ from landlab.io import read_esri_ascii, write_esri_ascii
 import netCDF4
 import numpy as np
 import pandas as pd
+import pathlib
 import pickle
 import xarray as xr
+
+
+def mkdir_p(path):
+    p = pathlib.Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
 
 
 class NetCDF4Saver:
@@ -80,6 +86,7 @@ class PandasSaver:
     def save(sink_resource, data: pd.DataFrame):
         sink = sink_resource.to_dict()
         assert sink['type'] == 'FeatherResource'
+        mkdir_p(sink['path'])
         data.to_feather(sink['path'])
 
 
@@ -104,6 +111,7 @@ class PickleSaver:
     @staticmethod
     def save(model_resource, model):
         model_meta = model_resource.to_dict()
+        mkdir_p(model_meta['path'])
         pickle.dump(model, model_meta['path'])
 
 
@@ -111,4 +119,5 @@ class LandLabSaver:
     @staticmethod
     def save(dem_resource, mg, variable: str):
         dem_meta = dem_resource.to_dict()
+        mkdir_p(dem_meta['path'])
         write_esri_ascii(dem_meta['path'], mg, variable, clobber=True)
