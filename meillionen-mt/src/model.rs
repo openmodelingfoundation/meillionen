@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use std::ffi::OsString;
-use std::process::{Command, Stdio};
+use std::process::{Command, Stdio, Output};
 use std::sync::Arc;
 use std::{env, fmt};
 
@@ -160,7 +160,7 @@ impl FuncInterface {
         &self,
         program_path: &str,
         fc: &FuncRequest,
-    ) -> Result<std::process::ExitStatus, FuncCallError> {
+    ) -> Result<Output, FuncCallError> {
         let mut cmd = Command::new(program_path)
             .arg("run")
             .stdin(Stdio::piped())
@@ -171,7 +171,7 @@ impl FuncInterface {
         let stdin = cmd.stdin.take().expect("could not open stdin");
         serde_json::to_writer(stdin, fc).expect("could not write request to stdin");
 
-        cmd.wait().map_err(FuncCallError::IO)
+        cmd.wait_with_output().map_err(FuncCallError::IO)
     }
 }
 
