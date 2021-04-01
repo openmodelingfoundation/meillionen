@@ -2,7 +2,7 @@ import itertools
 from pathlib import Path
 
 import netCDF4
-from meillionen import FunctionModelCLI, file_source, feather_source, feather_sink, netcdf_sink, file_sink
+from meillionen import FunctionModelCLI, file_source, feather_source, feather_sink, netcdf_sink, file_sink, parquet_sink, parquet_source
 from meillionen.io import PandasLoader, PandasSaver
 from meillionen.meillionen import FuncRequest
 from prefect import task, Flow, Task
@@ -58,11 +58,11 @@ def simplecrop_process_chunk(data):
     y = data['y']
     d = PandasLoader.load(daily)
     d['rainfall'] = soil_water_infiltration__depth
-    d_resource = feather_source(str(Path(f'outputs/daily/{x}/{y}.feather').resolve()))
+    d_resource = parquet_source(str(Path(f'outputs/daily/{x}/{y}.feather').resolve()))
     PandasSaver.save(d_resource, d)
 
-    plant = feather_sink(f'outputs/plant/{x}/{y}.feather')
-    soil = feather_sink(f'outputs/soil/{x}/{y}.feather')
+    plant = parquet_sink(f'outputs/plant/{x}/{y}/data.parquet')
+    soil = parquet_sink(f'outputs/soil/{x}/{y}/data.parquet')
     tempdir = file_sink(f'outputs/temp/{x}/{y}')
     sc_req = FuncRequest()
     sc_req.set_source('daily', d_resource)
@@ -70,8 +70,6 @@ def simplecrop_process_chunk(data):
     sc_req.set_sink('plant', plant)
     sc_req.set_sink('soil', soil)
     sc_req.set_sink('tempdir', tempdir)
-
-    print(sc_req.to_dict())
 
     simplecrop(sc_req)
 

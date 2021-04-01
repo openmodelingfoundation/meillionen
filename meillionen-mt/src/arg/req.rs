@@ -37,6 +37,17 @@ impl Sink for FeatherResource {}
 impl Source for FeatherResource {}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ParquetResource {
+    pub path: String,
+}
+
+#[typetag::serde]
+impl Sink for ParquetResource {}
+
+#[typetag::serde]
+impl Source for ParquetResource {}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct FileResource {
     pub path: String,
 }

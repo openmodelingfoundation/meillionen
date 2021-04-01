@@ -71,13 +71,18 @@ class PandasLoader:
         return pd.read_feather(source['path'])
 
     @staticmethod
+    def _load_parquet(source) -> pd.DataFrame:
+        return pd.read_parquet(source['path'])
+
+    @staticmethod
     def load(source_resource):
         source = source_resource.to_dict()
         return _PANDAS_LOADER[source['type']](source)
 
 
 _PANDAS_LOADER = {
-    'FeatherResource': PandasLoader._load_feather
+    'FeatherResource': PandasLoader._load_feather,
+    'ParquetResource': PandasLoader._load_parquet
 }
 
 
@@ -85,9 +90,14 @@ class PandasSaver:
     @staticmethod
     def save(sink_resource, data: pd.DataFrame):
         sink = sink_resource.to_dict()
-        assert sink['type'] == 'FeatherResource'
         mkdir_p(sink['path'])
-        data.to_feather(sink['path'])
+        if sink['type'] == 'FeatherResource':
+            data.to_feather(sink['path'])
+            return
+        elif sink['type'] == 'ParquetResource':
+            data.to_parquet(sink['path'])
+            return
+        raise ValueError(f'{sink["type"]} is not valid type for pandas saver')
 
 
 class LandLabLoader:
