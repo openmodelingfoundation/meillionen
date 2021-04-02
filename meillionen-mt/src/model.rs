@@ -160,6 +160,7 @@ impl FuncInterface {
         let mut cmd = Command::new(program_path)
             .arg("run")
             .stdin(Stdio::piped())
+            .stderr(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
             .unwrap_or_else(|_| panic!("could not spawn process {}", program_path));

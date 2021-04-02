@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
+use indoc::formatdoc;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use std;
@@ -276,20 +277,26 @@ impl FuncInterface {
         }
     }
 
-    fn call_cli(&self, program_name: &str, fc: &FuncRequest) -> PyResult<()> {
+    fn call_cli(&self, program_name: &str, fc: &FuncRequest) -> PyResult<String> {
         let output = self
             .inner
             .call_cli(program_name, &fc.inner)
-            .map_err(|err| PyIOError::new_err(err.to_string()))?;
+            .map_err(|err| PyIOError::new_err(format!("{:?}", err)))?;
         if output.status.success() {
-            print!("{}", std::str::from_utf8(output.stdout.as_ref()).unwrap());
-            Ok(())
+            Ok(String::from_utf8_lossy(&output.stdout).to_string())
         } else {
-            Err(PyIOError::new_err(
-                std::str::from_utf8(&output.stderr)
-                    .unwrap_or("Unknown error")
-                    .to_string(),
-            ))
+            let out = String::from_utf8_lossy(&output.stdout);
+            let err = String::from_utf8_lossy(&output.stderr);
+            Err(PyIOError::new_err(formatdoc! {"
+
+                Stdout:
+                {}
+
+                Stderr:
+                {}",
+                out,
+                err
+            }))
         }
     }
 }

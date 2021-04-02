@@ -10,6 +10,7 @@ edition = "2018"
 requires-dist = ['pyarrow', 'netCDF4', 'numpy', 'pandas', 'sh']
 
 [dependencies]
+indoc = "1.0.3"
 meillionen-mt = { path = "../meillionen-mt", version = "0.1.0" }
 pyo3 = "0.13.2"
 serde = "1.0.124"
