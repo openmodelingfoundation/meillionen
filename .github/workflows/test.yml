@@ -29,6 +29,7 @@ jobs:
       - name: Install Python Dependencies Into VirtualEnv
         run: python3 -m venv .venv \
           && . .venv/bin/activate \
+          && python -m pip install --upgrade pip \
           && python -m pip install -r requirements/base.txt
       - name: Test Python Meillionen Wrapper
         run: . .venv/bin/activate && cd meillionen-mt-python && maturin develop && pytest
