@@ -38,23 +38,3 @@ Computational models for hydrology, ecology, social systems and others areas are
 6. Support different deployment strategies - the model interface should support containerization as well as use as regular language installed package
 
 The pre-alpha [meillionen](https://github.com/openmodelingfoundation/meillionen) library is in the early stages of attempting to address those goals when used alongside an existing modelling toolkit. Currently the library supports creating command line interface wrappers that give the model user schemas about what sort of data the model expected to consume and produce as well as a uniform way to call those models. In future versions we would like to support streaming of data to models as well as support for model communication using http 2. 
-
-Getting Started
----------------
-
-### Install `meillionen`
-
-Coming soon (will be distributed on pypi, cargo, conda)
-
-### Download the examples
-
-```bash
-git clone --depth 1 https://github.com/openmodelingfoundation/meillionen.git
-```
-
-### Set up the example environment
-
-```bash
-# install the wheels into the .venv virtualenv
-make show-examples
-```
