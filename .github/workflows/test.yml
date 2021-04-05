@@ -3,7 +3,6 @@ name: Test Meillionen Packages
 on:
   push:
     paths-ignore:
-    - 'meillionen-docs/**'
     - 'notebooks/**' 
 
 jobs:
@@ -32,3 +31,16 @@ jobs:
           && python -m pip install -r requirements/base.txt
       - name: Test Python Meillionen Wrapper
         run: . .venv/bin/activate && cd meillionen-mt-python && maturin develop && pytest
+      - name: Build simplecrop
+        run: make target/simplecrop/simplecrop
+      - name: Build the docs
+        shell: bash -l {0}
+        run: |
+          SIMPLECROP=$(pwd)/target/simplecrop/simplecrop jupyter-book build meillionen-docs
+      # Push the book's HTML to github-pages
+      - name: Deploy the docs
+        uses: peaceiris/actions-gh-pages@v3.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./meillionen-docs/_build/html
+          force_orphan: true

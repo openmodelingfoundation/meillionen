@@ -18,7 +18,7 @@ build-simplecrop: target/simplecrop/simplecrop
 
 target/simplecrop/simplecrop: $(wildcard $(SIMPLECROP_BASE)/cli/*.f03) $(SIMPLECROP_BASE)/build.sh
 	cd $(SIMPLECROP_BASE) \
-		&& docker run -it --rm --workdir /code -v $$(pwd):/code gcc bash build.sh cli \
+		&& ./build.sh cli \
 		&& cd - \
 		&& mkdir -p target/simplecrop \
 		&& mv $(SIMPLECROP_BASE)/target/cli/simplecrop $@
