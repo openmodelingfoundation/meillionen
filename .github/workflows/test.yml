@@ -19,8 +19,7 @@ jobs:
       - name: Set Rust Version to Unstable
         uses: actions-rs/toolchain@v1
         with:
-          override: true
-          toolchain: nightly
+          target: 86_64-unknown-linux-musl
       - name: Test Rust
         uses: actions-rs/cargo@v1
         with:
@@ -36,7 +35,9 @@ jobs:
       - name: Build the docs
         shell: bash -l {0}
         run: |
-          SIMPLECROP=$(pwd)/target/simplecrop/simplecrop jupyter-book build meillionen-docs
+          export SIMPLECROP=$(pwd)/target/simplecrop/simplecrop \
+          && . .venv/bin/activate \
+          && jupyter-book build meillionen-docs
       # Push the book's HTML to github-pages
       - name: Deploy the docs
         uses: peaceiris/actions-gh-pages@v3.8.0
