@@ -1,4 +1,5 @@
 jupyter
+jupyter-book
 landlab
 maturin
 netCDF4
