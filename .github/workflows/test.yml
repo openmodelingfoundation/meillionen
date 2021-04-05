@@ -33,7 +33,16 @@ jobs:
       - name: Test Python Meillionen Wrapper
         run: . .venv/bin/activate && cd meillionen-mt-python && maturin develop && pytest
       - name: Build Python Packages
-        run: make
+        run: |
+          . .venv/bin/activate \
+          && maturin build -i $(which python) \
+          --manifest-path meillionen-mt-python/Cargo.toml \
+          --cargo-extra-args='--features "pyo3/extension-module"' \
+          && maturin build -i $(which python) \
+          --manifest-path meillionen-mt-python/Cargo.toml \
+          --cargo-extra-args='--features "pyo3/extension-module"' \
+          && ls target/wheels \
+          && python -m pip install target/wheels/*
       - name: Build simplecrop
         run: make target/simplecrop/simplecrop
       - name: Build the docs
