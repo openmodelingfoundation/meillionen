@@ -16,8 +16,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: 'true'
-      - name: Set Rust Version to Unstable
-        uses: actions-rs/toolchain@v1
       - name: Test Rust
         uses: actions-rs/cargo@v1
         with:
