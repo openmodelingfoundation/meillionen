@@ -1,6 +1,4 @@
-from .meillionen import FuncRequest, FuncInterface
-import json
-import sh
+from .meillionen import FuncRequest, FuncInterface, create_interface_from_cli
 
 
 class FunctionModelCLI:
@@ -10,7 +8,7 @@ class FunctionModelCLI:
 
     @classmethod
     def from_path(cls, path):
-        interface = FuncInterface.from_dict(json.loads(model('interface').stdout))
+        interface = create_interface_from_cli(path)
         return cls(interface=interface, path=path)
 
     def __call__(self, fr):
