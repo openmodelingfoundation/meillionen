@@ -301,8 +301,14 @@ impl FuncInterface {
     }
 }
 
+#[pyfunction]
+fn create_interface_from_cli(path: &str) -> PyResult<FuncInterface> {
+    Ok(FuncInterface::new(Arc::new(model::FuncInterface::from_cli(path).map_err(|e| PyIOError::new_err(format!("{:?}", e)))?)))
+}
+
 #[pymodule]
 fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(pyo3::wrap_pyfunction!(create_interface_from_cli, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(netcdf_sink, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(feather_sink, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(file_sink, m)?)?;

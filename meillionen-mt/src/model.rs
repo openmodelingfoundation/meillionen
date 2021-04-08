@@ -21,18 +21,38 @@ pub enum FuncRequestSchemaError {
 }
 
 #[derive(Debug, Error)]
-pub enum FuncCallError {
+pub enum MeillionenError {
     Schema(FuncRequestSchemaError),
     IO(std::io::Error),
+    JsonError(serde_json::Error)
 }
 
-impl fmt::Display for FuncCallError {
+impl fmt::Display for MeillionenError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        use FuncCallError::*;
+        use MeillionenError::*;
         match &self {
             Schema(ref schema) => write!(f, "{:?}", schema),
             IO(ref io) => io.fmt(f),
+            JsonError(ref je) => je.fmt(f)
         }
+    }
+}
+
+impl From<serde_json::Error> for MeillionenError {
+    fn from(e: serde_json::Error) -> Self {
+        MeillionenError::JsonError(e)
+    }
+}
+
+impl From<std::io::Error> for MeillionenError {
+    fn from(e: std::io::Error) -> Self {
+        MeillionenError::IO(e)
+    }
+}
+
+impl From<FuncRequestSchemaError> for MeillionenError {
+    fn from(e: FuncRequestSchemaError) -> Self {
+        MeillionenError::Schema(e)
     }
 }
 
@@ -156,7 +176,7 @@ impl FuncInterface {
         }
     }
 
-    pub fn call_cli(&self, program_path: &str, fc: &FuncRequest) -> Result<Output, FuncCallError> {
+    pub fn call_cli(&self, program_path: &str, fc: &FuncRequest) -> Result<Output, MeillionenError> {
         let mut cmd = Command::new(program_path)
             .arg("run")
             .stdin(Stdio::piped())
@@ -168,7 +188,21 @@ impl FuncInterface {
         let stdin = cmd.stdin.take().expect("could not open stdin");
         serde_json::to_writer(stdin, fc).expect("could not write request to stdin");
 
-        cmd.wait_with_output().map_err(FuncCallError::IO)
+        cmd.wait_with_output().map_err(MeillionenError::IO)
+    }
+
+    pub fn from_cli(path: &str) -> Result<FuncInterface, MeillionenError> {
+        let child = Command::new(path)
+            .arg("interface")
+            .stdin(Stdio::piped())
+            .stderr(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .map_err::<std::io::Error, _>(From::from)?
+            .wait_with_output()
+            .map_err::<std::io::Error, _>(From::from)?;
+        let fi: FuncInterface = serde_json::from_slice(child.stdout.as_slice()).map_err::<serde_json::Error, _>(From::from)?;
+        Ok(fi)
     }
 }
 

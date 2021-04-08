@@ -10,7 +10,6 @@ class FunctionModelCLI:
 
     @classmethod
     def from_path(cls, path):
-        model = sh.Command(path)
         interface = FuncInterface.from_dict(json.loads(model('interface').stdout))
         return cls(interface=interface, path=path)
 

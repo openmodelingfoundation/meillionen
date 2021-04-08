@@ -8,5 +8,4 @@ pandas
 prefect
 pyarrow
 pytest
-sh
 xarray

@@ -2,7 +2,7 @@ import os
 
 from meillionen.io import PandasLoader, PandasSaver
 from meillionen.meillionen import FuncInterface
-from .simplecrop_cli import run, get_func_interface
+from .simplecrop_omf import run, get_func_interface
 from io import BytesIO
 import pyarrow as pa
 import pandas as pd

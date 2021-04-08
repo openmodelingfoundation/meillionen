@@ -81,7 +81,7 @@ fn run(
 }
 
 #[pymodule]
-fn simplecrop_cli(_py: Python, m: &PyModule) -> PyResult<()> {
+fn simplecrop_omf(_py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m, "run")]
     #[text_signature = "(cli_path, dir, daily_stream_ref, year_stream_ref, /)"]
     fn run_py<'a>(
