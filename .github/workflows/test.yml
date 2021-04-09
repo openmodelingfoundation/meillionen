@@ -3,12 +3,15 @@ name: Test Meillionen Packages
 on:
   push:
     paths-ignore:
-    - 'notebooks/**' 
+    - 'notebooks/**'
 
 jobs:
   test-packages:
     name: Test Rust Packages
     runs-on: ubuntu-latest
+#    strategy:
+#      matrix:
+#        os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
       - name: Install System Dependencies
         run: sudo apt-get install -y gfortran python3
@@ -48,13 +51,13 @@ jobs:
           --manifest-path meillionen-mt-python/Cargo.toml \
           --cargo-extra-args='--features "pyo3/extension-module"' \
           && ls target/wheels \
-          && python -m pip install target/wheels/*
-      - name: Build simplecrop
-        run: make target/simplecrop/simplecrop
+          && python -m pip install target/wheels/*.whl
+      - name: Install simplecrop
+        run: curl -OL https://github.com/openmodelingfoundation/SimpleCrop/releases/download/0.2.1/simplecrop
       - name: Build the docs
         shell: bash -l {0}
         run: |
-          export SIMPLECROP=$(pwd)/target/simplecrop/simplecrop \
+          export SIMPLECROP=$(pwd)/simplecrop \
           && . .venv/bin/activate \
           && jupyter book build meillionen-docs
       # Push the book's HTML to github-pages
