@@ -634,17 +634,17 @@ mod tests {
         let config = YearlyData::default();
         let mut cur = Cursor::new(Vec::new());
         config.save_plant_config(&mut cur).unwrap();
-        let plant_ref_data = read_to_string("simplecrop/data/plant.inp").unwrap();
+        let plant_ref_data = read_to_string("data/data/plant.inp").unwrap();
         assert_eq!(str::from_utf8(cur.get_ref()).unwrap(), plant_ref_data);
 
         let mut cur = Cursor::new(Vec::new());
         config.save_simulation_config(&mut cur).unwrap();
-        let simctnl_ref_data = read_to_string("simplecrop/data/simctrl.inp").unwrap();
+        let simctnl_ref_data = read_to_string("data/data/simctrl.inp").unwrap();
         assert_eq!(str::from_utf8(cur.get_ref()).unwrap(), simctnl_ref_data);
 
         let mut cur = Cursor::new(Vec::new());
         config.save_soil_config(&mut cur);
-        let soil_ref_data = read_to_string("simplecrop/data/soil.inp").unwrap();
+        let soil_ref_data = read_to_string("data/data/soil.inp").unwrap();
         assert_eq!(str::from_utf8(cur.get_ref()).unwrap(), soil_ref_data);
     }
 
@@ -676,7 +676,7 @@ mod tests {
 
     #[test]
     fn read_plant_t() {
-        let data = PlantDataSet::load("simplecrop/output/plant.out").unwrap();
+        let data = PlantDataSet::load("data/output/plant.out").unwrap();
         assert_eq!(data.plant_leaf_count[0], 2.0);
         assert_eq!(data.air_accumulated_temp[0], 0.0);
         assert_eq!(data.plant_matter[0], 0.3);
@@ -687,7 +687,7 @@ mod tests {
 
     #[test]
     fn read_soil_t() {
-        let data = SoilDataSet::load("simplecrop/output/soil.out").unwrap();
+        let data = SoilDataSet::load("data/output/soil.out").unwrap();
         assert_eq!(data.soil_daily_runoff[0], 0.0f32);
         assert_eq!(data.soil_daily_infiltration[0], 0.0f32);
         assert_eq!(data.soil_daily_drainage[0], 1.86f32);
