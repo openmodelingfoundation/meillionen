@@ -27,12 +27,6 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo
-      - name: Add musl target to rust compiler
-        uses: actions-rs/toolchain@v1
-        with:
-          override: true
-          toolchain: stable
-          target: x86_64-unknown-linux-musl
       - name: Test Rust
         uses: actions-rs/cargo@v1
         with:
