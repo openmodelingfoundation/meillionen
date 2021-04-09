@@ -2,10 +2,30 @@
 name = "simplecrop-omf"
 version = "0.1.0"
 authors = ["Calvin Pritchard <pritchard.calvin@gmail.com>"]
+description = "Run the SimpleCrop model in Meillionen"
+readme = "README.md"
+repository = "https://github.com/openmodelingfoundation/meillionen.git"
+license = "MIT"
 edition = "2018"
 
 [package.metadata.maturin]
 requires-dist = ['numpy', 'pandas', 'pyarrow', 'xarray']
+
+classifier = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Framework :: Meillionen",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Agriculture",
+]
 
 [package.metadata.maturin.scripts]
 simplecrop_omf = "simplecrop_omf:run_cli"

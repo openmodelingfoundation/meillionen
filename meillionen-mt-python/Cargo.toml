@@ -2,6 +2,10 @@
 name = "meillionen"
 version = "0.1.0"
 authors = ["Calvin Pritchard <pritchard.calvin@gmail.com>"]
+description = "Adapters for building interoperable computational models"
+readme = "README.md"
+repository = "https://github.com/openmodelingfoundation/meillionen.git"
+license = "MIT"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -9,7 +13,26 @@ edition = "2018"
 [package.metadata.maturin]
 requires-dist = ['pyarrow', 'netCDF4', 'numpy', 'pandas']
 
+classifier = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Framework :: Meillionen",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Modeling and Simulation",
+]
+
 [dependencies]
+arrow = "3.0.0"
+parquet = "3.0.0"
 indoc = "1.0.3"
 meillionen-mt = { path = "../meillionen-mt", version = "0.1.0" }
 pyo3 = "0.13.2"

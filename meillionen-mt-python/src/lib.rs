@@ -1,3 +1,4 @@
+mod array;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
@@ -324,6 +325,8 @@ fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<FuncRequest>()?;
     m.add_class::<FuncInterface>()?;
     m.add_class::<DimMeta>()?;
+
+    array::init(m)?;
 
     Ok(())
 }
