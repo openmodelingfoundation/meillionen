@@ -1,6 +1,6 @@
 [package]
 name = "simplecrop-omf"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Calvin Pritchard <pritchard.calvin@gmail.com>"]
 description = "Run the SimpleCrop model in Meillionen"
 readme = "README.md"
