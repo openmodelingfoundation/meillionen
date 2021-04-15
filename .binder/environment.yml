@@ -1,0 +1,19 @@
+name: simplecrop-cli
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - landlab=2.3.0
+  - netCDF4=1.5.6
+  - numpy
+  - pandas=1.2.3
+  - prefect==0.14.16
+  - pyarrow==3.0.0
+  - pip
+  - pip:
+    - --no-deps
+    - -i https://test.pypi.org/simple/
+    - meillionen
+    - simplecrop-omf
+  - simplecrop=0.2.1
+  - xarray=0.17.0
