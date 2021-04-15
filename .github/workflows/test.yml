@@ -70,8 +70,6 @@ jobs:
           export SIMPLECROP=$(pwd)/simplecrop \
           && . .venv/bin/activate \
           && jupyter book build meillionen-docs
-      - name: Make Python Dependencies Accessible to MyBinder
-        run: cp meillionen-docs/requirements.txt meillionen-docs/runtime.txt meillionen-docs/_build/html/
       # Push the book's HTML to github-pages
       - name: Deploy the docs
         uses: peaceiris/actions-gh-pages@v3.8.0
