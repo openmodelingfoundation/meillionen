@@ -1,3 +1,10 @@
--r ../requirements/base.txt
+landlab
+netCDF4
+numpy
+pandas
+prefect
+pyarrow
+pytest
+xarray
 -i https://test.pypi.org/simple/ meillionen
--i https://test.pypi.org/simple/ simplecrop-omf 
+-i https://test.pypi.org/simple/ simplecrop-omf
