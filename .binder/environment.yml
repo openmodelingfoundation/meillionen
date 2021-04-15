@@ -11,7 +11,6 @@ dependencies:
   - pyarrow==3.0.0
   - pip
   - pip:
-    - --no-deps
     - -i https://test.pypi.org/simple/
     - meillionen
     - simplecrop-omf
