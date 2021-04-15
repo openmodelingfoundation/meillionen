@@ -1,6 +1,8 @@
+# interactive
 jupyter-book
+
+# to run examples
 landlab
-maturin
 netCDF4
 numpy
 pandas
@@ -8,3 +10,6 @@ prefect
 pyarrow
 pytest
 xarray
+
+# build
+maturin
