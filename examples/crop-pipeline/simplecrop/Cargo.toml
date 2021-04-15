@@ -1,6 +1,6 @@
 [package]
 name = "simplecrop-omf"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Calvin Pritchard <pritchard.calvin@gmail.com>"]
 description = "Run the SimpleCrop model in Meillionen"
 readme = "README.md"
@@ -9,7 +9,8 @@ license = "MIT"
 edition = "2018"
 
 [package.metadata.maturin]
-requires-dist = ['numpy', 'pandas', 'pyarrow', 'xarray']
+requires-dist = []
+#requires-dist = ['numpy', 'pandas', 'pyarrow', 'xarray']
 
 classifier = [
     "Development Status :: 2 - Pre-Alpha",

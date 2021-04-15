@@ -1,6 +1,6 @@
 [package]
 name = "meillionen"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Calvin Pritchard <pritchard.calvin@gmail.com>"]
 description = "Adapters for building interoperable computational models"
 readme = "README.md"
@@ -11,7 +11,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [package.metadata.maturin]
-requires-dist = ['pyarrow', 'netCDF4', 'numpy', 'pandas']
+requires-dist = []
+#requires-dist = ['pyarrow', 'netCDF4', 'numpy', 'pandas']
 
 classifier = [
     "Development Status :: 2 - Pre-Alpha",
@@ -34,7 +35,7 @@ classifier = [
 arrow = "3.0.0"
 parquet = "3.0.0"
 indoc = "1.0.3"
-meillionen-mt = { path = "../meillionen-mt", version = "0.1.0" }
+meillionen-mt = { path = "../meillionen-mt", version = "0.1.1" }
 pyo3 = "0.13.2"
 serde = "1.0.124"
 pythonize = "0.13.0"
