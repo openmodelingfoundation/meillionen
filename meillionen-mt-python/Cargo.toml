@@ -35,7 +35,7 @@ classifier = [
 arrow = "3.0.0"
 parquet = "3.0.0"
 indoc = "1.0.3"
-meillionen-mt = { path = "../meillionen-mt", version = "0.1.1" }
+meillionen-mt = { path = "../meillionen-mt", version = "0.1.0" }
 pyo3 = "0.13.2"
 serde = "1.0.124"
 pythonize = "0.13.0"
