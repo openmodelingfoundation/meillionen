@@ -38,7 +38,7 @@ jobs:
         with:
           path: |
             .venv
-          key: ${{ runner.os }}-${{ matrix.python-version }}-venv
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-venv
       - name: Setup Virtualenv
         run: python -m venv .venv
       - name: Upgrade Pip
