@@ -1,4 +1,4 @@
-use arrow::datatypes::Field;
+use arrow::datatypes::{Field};
 use serde_derive::{Deserialize, Serialize};
 use std::sync::Arc;
 

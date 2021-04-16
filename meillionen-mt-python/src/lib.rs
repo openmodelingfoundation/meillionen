@@ -1,5 +1,4 @@
 mod array;
-use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use indoc::formatdoc;
@@ -12,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use meillionen_mt::arg::req;
 use meillionen_mt::model;
-use meillionen_mt::{arg, extension_columns as ext_cols};
+use meillionen_mt::arg;
 
 fn to_dict<T>(data: &T) -> PyResult<PyObject>
 where
@@ -111,9 +110,6 @@ fn parquet_sink(path: String) -> SinkResource {
     }
 }
 
-type SinkResourceMap = BTreeMap<String, SinkResource>;
-type SourceResourceMap = BTreeMap<String, SourceResource>;
-
 #[pyclass]
 #[derive(Debug)]
 struct TensorValidator {
@@ -151,47 +147,6 @@ impl ArgValidatorType {
 
     fn to_dict(&self) -> PyResult<PyObject> {
         to_dict(&self.inner)
-    }
-}
-
-#[pyclass]
-#[derive(Debug)]
-struct DimMeta {
-    inner: Arc<ext_cols::DimMeta>,
-}
-
-impl DimMeta {
-    fn new(inner: Arc<ext_cols::DimMeta>) -> Self {
-        Self { inner }
-    }
-}
-
-#[pymethods]
-impl DimMeta {
-    #[new]
-    fn init(name: String, size: usize, description: Option<String>) -> Self {
-        Self {
-            inner: Arc::new(ext_cols::DimMeta {
-                name,
-                size,
-                description,
-            }),
-        }
-    }
-
-    #[getter]
-    fn name(&self) -> &str {
-        self.inner.name.as_ref()
-    }
-
-    #[getter]
-    fn size(&self) -> usize {
-        self.inner.size
-    }
-
-    #[getter]
-    fn description(&self) -> Option<&String> {
-        self.inner.description.as_ref()
     }
 }
 
@@ -304,7 +259,9 @@ impl FuncInterface {
 
 #[pyfunction]
 fn create_interface_from_cli(path: &str) -> PyResult<FuncInterface> {
-    Ok(FuncInterface::new(Arc::new(model::FuncInterface::from_cli(path).map_err(|e| PyIOError::new_err(format!("{:?}", e)))?)))
+    Ok(FuncInterface::new(Arc::new(
+        model::FuncInterface::from_cli(path).map_err(|e| PyIOError::new_err(format!("{:?}", e)))?,
+    )))
 }
 
 #[pymodule]
@@ -324,7 +281,6 @@ fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ArgValidatorType>()?;
     m.add_class::<FuncRequest>()?;
     m.add_class::<FuncInterface>()?;
-    m.add_class::<DimMeta>()?;
 
     array::init(m)?;
 

@@ -10,8 +10,7 @@ use std::sync::Arc;
 use arrow::array::{ArrayRef, Float32Array, Int32Array, PrimitiveArray};
 use arrow::datatypes::{ArrowPrimitiveType, Field, Schema};
 use arrow::record_batch::RecordBatch;
-use eyre::WrapErr;
-use itertools::Itertools;
+use stable_eyre::eyre::WrapErr;
 
 use meillionen_mt::arg::validation::{Columns, DataFrameValidator};
 use meillionen_mt::arg::ArgValidatorType;
@@ -143,13 +142,13 @@ impl YearlyData {
         rb: &RecordBatch,
         name: &str,
         i: usize,
-    ) -> eyre::Result<T::Native> {
+    ) -> stable_eyre::Result<T::Native> {
         let col_ind = rb.schema().index_of(&name)?;
         let col = rb.column(col_ind);
         col.as_any()
             .downcast_ref::<PrimitiveArray<T>>()
             .map(|a| a.value(i))
-            .ok_or(eyre::Report::msg(format!(
+            .ok_or(stable_eyre::Report::msg(format!(
                 "column type mismatch. expected {:#?} got {:#?}",
                 T::DATA_TYPE,
                 rb.column(col_ind).data_type()
@@ -193,7 +192,7 @@ impl YearlyData {
         )
     }
 
-    pub fn from_recordbatch_row(rb: &RecordBatch, i: usize) -> eyre::Result<Self> {
+    pub fn from_recordbatch_row(rb: &RecordBatch, i: usize) -> stable_eyre::Result<Self> {
         use arrow::datatypes::*;
         macro_rules! make_inst_rb {
             ($(($field: ident, $ty: ty)), *) => {
@@ -385,14 +384,9 @@ impl SoilDataSet {
         Some(())
     }
 
-    fn load<P: AsRef<Path>>(p: P) -> eyre::Result<Self> {
-        let f = File::open(&p).map_err(|e| {
-            eyre::eyre!(
-                "Could not open {}. {}",
-                p.as_ref().to_string_lossy(),
-                e.to_string()
-            )
-        })?;
+    fn load<P: AsRef<Path>>(p: P) -> stable_eyre::Result<Self> {
+        let f = File::open(&p).wrap_err_with(||
+            format!("Could not open {}", p.as_ref().to_string_lossy()))?;
         let rdr = BufReader::new(f);
         let mut results = SoilDataSet::default();
         for line in rdr.lines().skip(6) {
@@ -462,18 +456,13 @@ impl PlantDataSet {
         Some(())
     }
 
-    fn load<P: AsRef<Path>>(p: P) -> eyre::Result<Self> {
+    fn load<P: AsRef<Path>>(p: P) -> stable_eyre::Result<Self> {
         println!(
             "Current Directory: {}",
             std::env::current_dir().unwrap().display()
         );
-        let f = File::open(&p).map_err(|e| {
-            eyre::eyre!(
-                "Could not open {}. {}",
-                p.as_ref().to_string_lossy(),
-                e.to_string()
-            )
-        })?;
+        let f = File::open(&p).wrap_err(
+            format!("Could not open {}", p.as_ref().to_string_lossy()))?;
         let rdr = BufReader::new(f);
         let mut results = PlantDataSet::default();
         for line in rdr.lines().skip(9) {
@@ -503,7 +492,7 @@ impl PlantDataSet {
     }
 }
 
-fn load_output_data<P: AsRef<Path>>(dir: P) -> eyre::Result<(RecordBatch, RecordBatch)> {
+fn load_output_data<P: AsRef<Path>>(dir: P) -> stable_eyre::Result<(RecordBatch, RecordBatch)> {
     let po = PlantDataSet::load(&dir.as_ref().join("output/plant.out"))?;
     let so = SoilDataSet::load(&dir.as_ref().join("output/soil.out"))?;
     use arrow::datatypes::DataType::*;
@@ -537,7 +526,7 @@ fn load_output_data<P: AsRef<Path>>(dir: P) -> eyre::Result<(RecordBatch, Record
         .unzip();
 
         let schema_ref = Arc::new(Schema::new(fields));
-        RecordBatch::try_new(schema_ref, cols).map_err(eyre::Report::msg)
+        RecordBatch::try_new(schema_ref, cols).wrap_err("Cannot create soil record batch")
     }?;
     let plant = {
         let (fields, cols): (Vec<Field>, Vec<ArrayRef>) = vec![
@@ -562,7 +551,7 @@ fn load_output_data<P: AsRef<Path>>(dir: P) -> eyre::Result<(RecordBatch, Record
         })
         .unzip();
         let schema_ref = Arc::new(Schema::new(fields));
-        RecordBatch::try_new(schema_ref, cols).map_err(eyre::Report::msg)
+        RecordBatch::try_new(schema_ref, cols).wrap_err("Cannot create plant record batch")
     }?;
     Ok((plant, soil))
 }
@@ -573,32 +562,34 @@ pub struct SimpleCropConfig<'a> {
 }
 
 impl<'a> SimpleCropConfig<'a> {
-    fn save<P: AsRef<Path>>(&self, dir: P) -> eyre::Result<()> {
+    fn save<P: AsRef<Path>>(&self, dir: P) -> stable_eyre::Result<()> {
         let dp = dir.as_ref().join("data");
-        create_dir_all(&dp)?;
-        let write_f = |path: &str| File::create(&dp.join(path)).map(BufWriter::new).unwrap();
+        create_dir_all(&dp).wrap_err("Cannot create data dir")?;
+        let write_f = |path: &str| File::create(&dp.join(path))
+            .map(BufWriter::new)
+            .wrap_err_with(|| format!("cannot create file {}", path));
 
-        let mut weather_buf = write_f("weather.inp");
+        let mut weather_buf = write_f("weather.inp")?;
         self.daily
             .save_weather(&mut weather_buf)
             .wrap_err("weather save failed")?;
 
-        let mut irrigation_buf = write_f("irrig.inp");
+        let mut irrigation_buf = write_f("irrig.inp")?;
         self.daily
             .save_irrigation(&mut irrigation_buf)
             .wrap_err("irrigation save failed")?;
 
-        let mut plant_buf = write_f("plant.inp");
+        let mut plant_buf = write_f("plant.inp")?;
         self.yearly
             .save_plant_config(&mut plant_buf)
             .wrap_err("plant save failed")?;
 
-        let mut soil_buf = write_f("soil.inp");
+        let mut soil_buf = write_f("soil.inp")?;
         self.yearly
             .save_soil_config(&mut soil_buf)
             .wrap_err("soil save failed")?;
 
-        let mut simctrl_buf = write_f("simctrl.inp");
+        let mut simctrl_buf = write_f("simctrl.inp")?;
         self.yearly
             .save_simulation_config(&mut simctrl_buf)
             .wrap_err("simctrl save failed")?;
@@ -609,13 +600,13 @@ impl<'a> SimpleCropConfig<'a> {
         &self,
         cli_path: impl AsRef<Path>,
         dir: impl AsRef<Path>,
-    ) -> eyre::Result<(RecordBatch, RecordBatch)> {
+    ) -> stable_eyre::Result<(RecordBatch, RecordBatch)> {
         let cli_path = cli_path
             .as_ref()
             .canonicalize()
-            .map_err(eyre::Report::msg)?;
-        self.save(&dir);
-        create_dir_all(&dir.as_ref().join("output"));
+            .wrap_err_with(|| format!("cannot find simplecrop executable"))?;
+        self.save(&dir)?;
+        create_dir_all(&dir.as_ref().join("output")).wrap_err("Cannot create output dir")?;
         let _r = Command::new(cli_path).current_dir(&dir).spawn()?.wait()?;
         load_output_data(&dir)
     }

@@ -49,6 +49,9 @@ interface = FuncInterface.from_dict({
 })
 
 
+# external metadata file with more detailed information
+
+
 def run_day(mg, precipitation: float, duration=1800):
     """
     Calculates the mm of water that has infiltrated into soil after a rainfall event.

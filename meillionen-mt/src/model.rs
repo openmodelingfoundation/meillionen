@@ -24,7 +24,7 @@ pub enum FuncRequestSchemaError {
 pub enum MeillionenError {
     Schema(FuncRequestSchemaError),
     IO(std::io::Error),
-    JsonError(serde_json::Error)
+    JsonError(serde_json::Error),
 }
 
 impl fmt::Display for MeillionenError {
@@ -33,7 +33,7 @@ impl fmt::Display for MeillionenError {
         match &self {
             Schema(ref schema) => write!(f, "{:?}", schema),
             IO(ref io) => io.fmt(f),
-            JsonError(ref je) => je.fmt(f)
+            JsonError(ref je) => je.fmt(f),
         }
     }
 }
@@ -176,7 +176,11 @@ impl FuncInterface {
         }
     }
 
-    pub fn call_cli(&self, program_path: &str, fc: &FuncRequest) -> Result<Output, MeillionenError> {
+    pub fn call_cli(
+        &self,
+        program_path: &str,
+        fc: &FuncRequest,
+    ) -> Result<Output, MeillionenError> {
         let mut cmd = Command::new(program_path)
             .arg("run")
             .stdin(Stdio::piped())
@@ -201,7 +205,8 @@ impl FuncInterface {
             .map_err::<std::io::Error, _>(From::from)?
             .wait_with_output()
             .map_err::<std::io::Error, _>(From::from)?;
-        let fi: FuncInterface = serde_json::from_slice(child.stdout.as_slice()).map_err::<serde_json::Error, _>(From::from)?;
+        let fi: FuncInterface = serde_json::from_slice(child.stdout.as_slice())
+            .map_err::<serde_json::Error, _>(From::from)?;
         Ok(fi)
     }
 }

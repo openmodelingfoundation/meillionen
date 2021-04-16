@@ -35,7 +35,7 @@ simplecrop_omf = "simplecrop_omf:run_cli"
 
 [dependencies]
 arrow = "3.0.0"
-eyre = "0.6.5"
+stable-eyre = "0.2.2"
 itertools = "0.10.0"
 meillionen-mt = { path = "../../../meillionen-mt", version = "0.1.0" }
 pyo3 = "0.13.2"
