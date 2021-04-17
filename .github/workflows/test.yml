@@ -65,21 +65,6 @@ jobs:
           --out wheels \
           && ls target/wheels \
           && python -m pip install wheels/*.whl
-      - name: Install simplecrop
-        run: curl -OL https://github.com/openmodelingfoundation/SimpleCrop/releases/download/0.2.1/simplecrop && chmod u+x simplecrop
-      - name: Build the docs
-        shell: bash -l {0}
-        run: |
-          export SIMPLECROP=$(pwd)/simplecrop \
-          && . .venv/bin/activate \
-          && jupyter book build meillionen-docs
-      # Push the book's HTML to github-pages
-      - name: Deploy the docs
-        uses: peaceiris/actions-gh-pages@v3.8.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./meillionen-docs/_build/html
-          force_orphan: true
   publish-release:
     name: Publish releases of packages to pypi
     if: startsWith(github.ref, 'refs/tags/v')

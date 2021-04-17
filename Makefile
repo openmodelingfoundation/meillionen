@@ -1,6 +1,7 @@
 PYTHON_PATH=python
 SIMPLECROP_BASE=examples/crop-pipeline/simplecrop/simplecrop
 WHEELS=target/wheels
+DOCS=meillionen-docs
 
 .PHONY: build
 build:
@@ -9,3 +10,8 @@ build:
 	$(PYTHON_PATH) -m pip uninstall -y meillionen simplecrop_omf
 	$(PYTHON_PATH) -m pip install --no-deps --force-reinstall target/wheels/*.whl
 
+.PHONY: publish-docs
+publish-docs:
+	jupyter book toc $(DOCS)
+	jupyter book build $(DOCS)
+	ghp-import --no-jekyll --push --force --no-history $(DOCS)/_build/html
