@@ -2,7 +2,7 @@
 
 use std::fs::{create_dir_all, File};
 use std::io;
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Write, ErrorKind};
 use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
@@ -601,14 +601,21 @@ impl<'a> SimpleCropConfig<'a> {
         cli_path: impl AsRef<Path>,
         dir: impl AsRef<Path>,
     ) -> stable_eyre::Result<(RecordBatch, RecordBatch)> {
-        let cli_path = cli_path
-            .as_ref()
-            .canonicalize()
-            .wrap_err_with(|| format!("cannot find simplecrop executable"))?;
+        let cli_path = cli_path.as_ref();
         self.save(&dir)?;
         create_dir_all(&dir.as_ref().join("output")).wrap_err("Cannot create output dir")?;
-        let _r = Command::new(cli_path).current_dir(&dir).spawn()?.wait()?;
-        load_output_data(&dir)
+        let _r = Command::new(cli_path).current_dir(&dir).spawn();
+        if _r.is_err() {
+            let e = _r.err().unwrap();
+            let k = e.kind();
+            if k == ErrorKind::NotFound {
+                return Err(e).wrap_err_with(|| format!("Executable not found at {}", &cli_path.to_string_lossy()));
+            }
+            return Err(e).wrap_err_with(|| format!("Error executing simplecrop in dir {} (got {:?})", dir.as_ref().to_string_lossy(), k));
+        } else {
+            _r.unwrap().wait().wrap_err_with(|| format!("Error during simplecrop execution in dir {}", dir.as_ref().to_string_lossy()))?;
+            load_output_data(&dir)
+        }
     }
 }
 
