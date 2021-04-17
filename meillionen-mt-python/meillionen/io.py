@@ -18,6 +18,7 @@ class NetCDF4Saver:
     def __init__(self, sink, sink_schema):
         self.sink = sink
         sink = sink.to_dict()
+        mkdir_p(sink['path'])
         self.dataset = netCDF4.Dataset(sink['path'], mode='w')
         for dim, size in sink_schema:
             print((dim, size))
