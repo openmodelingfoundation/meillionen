@@ -1,6 +1,6 @@
 [package]
 name = "meillionen"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Calvin Pritchard <pritchard.calvin@gmail.com>"]
 description = "Adapters for building interoperable computational models"
 readme = "README.md"
