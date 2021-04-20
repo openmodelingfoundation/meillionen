@@ -641,7 +641,7 @@ mod tests {
         assert_eq!(str::from_utf8(cur.get_ref()).unwrap(), simctnl_ref_data);
 
         let mut cur = Cursor::new(Vec::new());
-        config.save_soil_config(&mut cur);
+        config.save_soil_config(&mut cur).unwrap();
         let soil_ref_data = read_to_string("data/data/soil.inp").unwrap();
         assert_eq!(str::from_utf8(cur.get_ref()).unwrap(), soil_ref_data);
     }
@@ -658,7 +658,7 @@ mod tests {
         };
 
         let mut cur = Cursor::new(Vec::new());
-        w.save_weather(&mut cur);
+        w.save_weather(&mut cur).unwrap();
         assert_eq!(
             str::from_utf8(cur.get_ref()).unwrap(),
             "    1   5.1  20.0   4.4  23.9              10.7\n"
@@ -686,15 +686,15 @@ mod tests {
     #[test]
     fn read_soil_t() {
         let data = SoilDataSet::load("data/output/soil.out").unwrap();
-        assert_eq!(data.soil_daily_runoff[0], 0.0f32);
-        assert_eq!(data.soil_daily_infiltration[0], 0.0f32);
-        assert_eq!(data.soil_daily_drainage[0], 1.86f32);
-        assert_eq!(data.soil_evapotranspiration[0], 2.25f32);
-        assert_eq!(data.soil_evaporation[0], 2.23f32);
-        assert_eq!(data.plant_potential_transpiration[0], 0.02f32);
-        assert_eq!(data.soil_water_storage_depth[0], 260.97f32);
-        assert_eq!(data.soil_water_profile_ratio[0], 1.8f32);
-        assert_eq!(data.soil_water_deficit_stress[0], 1.0f32);
-        assert_eq!(data.soil_water_excess_stress[0], 1.0f32);
+        assert_eq!(data.soil_daily_runoff[1], 0.0f32);
+        assert_eq!(data.soil_daily_infiltration[1], 0.0f32);
+        assert_eq!(data.soil_daily_drainage[1], 1.86f32);
+        assert_eq!(data.soil_evapotranspiration[1], 2.25f32);
+        assert_eq!(data.soil_evaporation[1], 2.23f32);
+        assert_eq!(data.plant_potential_transpiration[1], 0.02f32);
+        assert_eq!(data.soil_water_storage_depth[1], 260.97f32);
+        assert_eq!(data.soil_water_profile_ratio[1], 1.8f32);
+        assert_eq!(data.soil_water_deficit_stress[1], 1.0f32);
+        assert_eq!(data.soil_water_excess_stress[1], 1.0f32);
     }
 }
