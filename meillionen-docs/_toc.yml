@@ -2,6 +2,7 @@ file: index
 sections:
 - file: concepts
 - file: getting_started
+- file: api/python
 - file: example/index
   sections:
   - file: example/build_overland_flow

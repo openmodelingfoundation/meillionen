@@ -18,3 +18,7 @@ latex:
 repository:
   url: https://github.com/openmodelingfoundation/meillionen
   path_to_book: meillionen-docs
+
+sphinx:
+  extra_extensions:
+    - 'sphinx.ext.autodoc'

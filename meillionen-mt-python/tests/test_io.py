@@ -1,7 +1,7 @@
 import netCDF4
 import numpy as np
-from meillionen import feather_sink, feather_source, netcdf_sink
 from meillionen.io import PandasLoader, NetCDF4Saver
+from meillionen.resource import feather_sink, feather_source, netcdf_sink
 import pytest
 import xarray as xr
 
@@ -13,13 +13,10 @@ def test_load_feather():
 
 
 def test_save_netcdf():
-    sink = netcdf_sink({
-        'type': 'NetCDFResource',
-        'path': 'data/swid.nc',
-        'variable': 'soil_water_infiltration__depth',
-        'data_type': 'Float32',
-        'slices': {}
-    })
+    sink = netcdf_sink(
+        path='data/swid.nc',
+        variable='soil_water_infiltration__depth'
+    )
     swid_schema = [('x', 6), ('y', 11), ('time', 365)]
     with NetCDF4Saver(sink, swid_schema) as swid:
         xs = xr.DataArray(np.array(range(6*11)).reshape((6, 11)), dims=('x', 'y'))

@@ -36,36 +36,15 @@ struct SourceResource {
 
 #[pymethods]
 impl SourceResource {
+    #[staticmethod]
+    fn from_dict(data: &PyAny) -> PyResult<Self> {
+        Ok(Self {
+            inner: from_dict(data)?,
+        })
+    }
+
     fn to_dict(&self) -> PyResult<PyObject> {
         to_dict(&self.inner)
-    }
-}
-
-#[pyfunction]
-fn netcdf_source(data: &PyAny) -> PyResult<SourceResource> {
-    Ok(SourceResource {
-        inner: from_dict(data)?,
-    })
-}
-
-#[pyfunction]
-fn feather_source(path: String) -> SourceResource {
-    SourceResource {
-        inner: Arc::new(req::FeatherResource { path }),
-    }
-}
-
-#[pyfunction]
-fn file_source(path: String) -> SourceResource {
-    SourceResource {
-        inner: Arc::new(req::FileResource { path }),
-    }
-}
-
-#[pyfunction]
-fn parquet_source(path: String) -> SourceResource {
-    SourceResource {
-        inner: Arc::new(req::ParquetResource { path }),
     }
 }
 
@@ -77,36 +56,15 @@ struct SinkResource {
 
 #[pymethods]
 impl SinkResource {
+    #[staticmethod]
+    fn from_dict(data: &PyAny) -> PyResult<Self> {
+        Ok(Self {
+            inner: from_dict(data)?,
+        })
+    }
+
     fn to_dict(&self) -> PyResult<PyObject> {
         to_dict(&self.inner)
-    }
-}
-
-#[pyfunction]
-fn netcdf_sink(data: &PyAny) -> PyResult<SinkResource> {
-    Ok(SinkResource {
-        inner: from_dict(data)?,
-    })
-}
-
-#[pyfunction]
-fn feather_sink(path: String) -> SinkResource {
-    SinkResource {
-        inner: Arc::new(req::FeatherResource { path }),
-    }
-}
-
-#[pyfunction]
-fn file_sink(path: String) -> SinkResource {
-    SinkResource {
-        inner: Arc::new(req::FileResource { path }),
-    }
-}
-
-#[pyfunction]
-fn parquet_sink(path: String) -> SinkResource {
-    SinkResource {
-        inner: Arc::new(req::ParquetResource { path }),
     }
 }
 
@@ -267,14 +225,6 @@ fn create_interface_from_cli(path: &str) -> PyResult<FuncInterface> {
 #[pymodule]
 fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(create_interface_from_cli, m)?)?;
-    m.add_function(pyo3::wrap_pyfunction!(netcdf_sink, m)?)?;
-    m.add_function(pyo3::wrap_pyfunction!(feather_sink, m)?)?;
-    m.add_function(pyo3::wrap_pyfunction!(file_sink, m)?)?;
-    m.add_function(pyo3::wrap_pyfunction!(parquet_sink, m)?)?;
-    m.add_function(pyo3::wrap_pyfunction!(netcdf_source, m)?)?;
-    m.add_function(pyo3::wrap_pyfunction!(feather_source, m)?)?;
-    m.add_function(pyo3::wrap_pyfunction!(file_source, m)?)?;
-    m.add_function(pyo3::wrap_pyfunction!(parquet_source, m)?)?;
 
     m.add_class::<SinkResource>()?;
     m.add_class::<SourceResource>()?;
