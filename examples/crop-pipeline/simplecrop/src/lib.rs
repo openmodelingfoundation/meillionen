@@ -1,6 +1,7 @@
-use arrow::array::Float32Array;
+use arrow::array::{Float32Array, ArrayRef};
 use arrow::ipc::reader::StreamReader;
 use arrow::record_batch::RecordBatch;
+use libc::uintptr_t;
 use pyo3::exceptions::{PyIOError, PyKeyError, PyValueError, PyRuntimeError};
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
@@ -60,6 +61,26 @@ fn run_record_batch(
     config.run(&cli_path, &dir)
 }
 
+fn to_py_array(array: &ArrayRef, py: Python, pa: &PyModule) -> PyResult<PyObject> {
+    let (array_ptr, schema_ptr) = array.to_raw()
+        .map_err(|e| PyValueError::new_err(format!("{:?}", e)))?;
+    let array = pa.getattr("Array")?
+        .call_method1(
+            "_import_from_c",
+            (array_ptr as uintptr_t, schema_ptr as uintptr_t))?;
+    Ok(array.to_object(py))
+}
+
+fn to_recordbatch(rb: &RecordBatch, py: Python, pa: &PyModule) -> PyResult<PyObject> {
+    let schema = rb.schema();
+    let arrays = rb.columns().iter().map(|a| to_py_array(a, py, pa)).collect::<PyResult<Vec<PyObject>>>()?;
+    let names = schema.fields().iter().map(|f| f.name().as_str()).collect::<Vec<&str>>();
+    let record = pa
+        .getattr("RecordBatch")?
+        .call_method1("from_arrays", (arrays, names))?;
+    Ok(record.to_object(py))
+}
+
 fn run(
     cli_path: String,
     dir: String,
@@ -112,11 +133,12 @@ fn simplecrop_omf(_py: Python, m: &PyModule) -> PyResult<()> {
     }
 
     #[pyfn(m, "get_func_interface")]
-    fn get_func_interface_py<'a>(_py: Python<'a>) -> PyResult<&PyAny> {
-        let s = serde_json::to_string(get_func_interface().as_ref())
-            .map_err(|e| PyRuntimeError::new_err(format!("{:?}", e)))?;
-        let json = _py.import("json")?;
-        json.call("loads", (s,), None)
+    fn get_func_interface_py(_py: Python) -> PyResult<PyObject> {
+        let rb = get_func_interface()
+            .map_err(|e| PyValueError::new_err(format!("{:?}", e)))?
+            .into_recordbatch();
+        let pyarrow = _py.import("pyarrow")?;
+        to_recordbatch(&rb, _py, pyarrow)
     }
 
     Ok(())

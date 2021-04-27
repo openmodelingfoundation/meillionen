@@ -2,6 +2,7 @@ mod array;
 use std::sync::Arc;
 
 use indoc::formatdoc;
+use libc::uintptr_t;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use std;
@@ -11,8 +12,17 @@ use serde::{Deserialize, Serialize};
 
 use meillionen_mt::arg::req;
 use meillionen_mt::model;
-use meillionen_mt::arg;
+use arrow::array::ArrayRef;
+use arrow::record_batch::RecordBatch;
+use arrow::datatypes::DataType;
+use std::collections::HashMap;
+use std::convert::{TryInto, TryFrom};
 
+fn value_error<T>(e: T) -> PyErr where T: std::fmt::Debug {
+    PyValueError::new_err(format!("{:?}", e))
+}
+
+#[allow(dead_code)]
 fn to_dict<T>(data: &T) -> PyResult<PyObject>
 where
     T: Serialize,
@@ -21,6 +31,7 @@ where
         .map_err(|e| PyValueError::new_err(format!("{:?}", e)))
 }
 
+#[allow(dead_code)]
 fn from_dict<'de, T>(data: &'de PyAny) -> PyResult<T>
 where
     T: Deserialize<'de>,
@@ -28,83 +39,149 @@ where
     depythonize(data).map_err(|e| PyValueError::new_err(format!("{:?}", e)))
 }
 
-#[pyclass]
-#[derive(Debug)]
-struct SourceResource {
-    inner: req::SourceResource,
+fn to_py_array(array: &ArrayRef, py: Python, pa: &PyModule) -> PyResult<PyObject> {
+    let (array_ptr, schema_ptr) = array.to_raw().map_err(value_error)?;
+    let array = pa.getattr("Array")?
+        .call_method1(
+            "_import_from_c",
+            (array_ptr as uintptr_t, schema_ptr as uintptr_t))?;
+    Ok(array.to_object(py))
 }
 
-#[pymethods]
-impl SourceResource {
-    #[staticmethod]
-    fn from_dict(data: &PyAny) -> PyResult<Self> {
-        Ok(Self {
-            inner: from_dict(data)?,
-        })
-    }
-
-    fn to_dict(&self) -> PyResult<PyObject> {
-        to_dict(&self.inner)
-    }
+fn to_recordbatch(rb: &RecordBatch, py: Python, pa: &PyModule) -> PyResult<PyObject> {
+    let schema = rb.schema();
+    let arrays = rb.columns().iter().map(|a| to_py_array(a, py, pa)).collect::<PyResult<Vec<PyObject>>>()?;
+    let names = schema.fields().iter().map(|f| f.name().as_str()).collect::<Vec<&str>>();
+    let record = pa
+        .getattr("RecordBatch")?
+        .call_method1("from_arrays", (arrays, names))?;
+    Ok(record.to_object(py))
 }
 
-#[pyclass]
-#[derive(Debug)]
-struct SinkResource {
-    inner: req::SinkResource,
-}
-
-#[pymethods]
-impl SinkResource {
-    #[staticmethod]
-    fn from_dict(data: &PyAny) -> PyResult<Self> {
-        Ok(Self {
-            inner: from_dict(data)?,
-        })
-    }
-
-    fn to_dict(&self) -> PyResult<PyObject> {
-        to_dict(&self.inner)
+macro_rules! impl_to_builder {
+    ($t:ty) => {
+        #[pymethods]
+        impl $t {
+            fn to_builder(&self, field: &str, name: &str, fr: &mut RequestBuilder) -> PyResult<()>
+            {
+                let resource = std::any::type_name::<Self>();
+                let inner = &self.inner;
+                let data: Vec<u8> = inner
+                    .try_into()
+                    .map_err(value_error)?;
+                fr.inner.add(field, name, resource, data.as_slice())
+                    .map_err(value_error)?;
+                Ok(())
+            }
+        }
     }
 }
 
 #[pyclass]
 #[derive(Debug)]
-struct TensorValidator {
-    inner: Arc<arg::validation::TensorValidator>,
+struct RequestBuilder {
+    inner: model::RequestBuilder
 }
 
 #[pymethods]
-impl TensorValidator {
-    #[staticmethod]
-    fn from_dict(data: &PyAny) -> PyResult<Self> {
-        Ok(Self {
-            inner: Arc::new(from_dict(data)?),
-        })
+impl RequestBuilder {
+    #[new]
+    fn __init__(program_name: &str) -> Self {
+        Self {
+            inner: model::RequestBuilder::new(program_name)
+        }
     }
 
-    fn to_dict(&self) -> PyResult<PyObject> {
-        to_dict(&self.inner)
+    fn pop_recordbatch(&mut self) -> PyResult<PyObject> {
+        let rb = self.inner.extract_to_recordbatch();
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let pa = py.import("pyarrow")?;
+        to_recordbatch(&rb, py, pa)
     }
 }
 
 #[pyclass]
 #[derive(Debug)]
-struct ArgValidatorType {
-    inner: Arc<arg::ArgValidatorType>,
+struct NetCDFResource {
+    inner: req::NetCDFResource,
 }
 
+impl_to_builder!(NetCDFResource);
+
 #[pymethods]
-impl ArgValidatorType {
-    #[staticmethod]
-    fn from_dict(data: &PyAny) -> PyResult<Self> {
+impl NetCDFResource {
+    #[new]
+    fn __init__(path: String, variable: String, dtype: &PyAny) -> PyResult<Self> {
+        let data_type: DataType = depythonize(dtype)?;
         Ok(Self {
-            inner: Arc::new(from_dict(data)?),
+            inner: req::NetCDFResource {
+                path,
+                variable,
+                data_type,
+                slices: HashMap::new()
+            }
         })
     }
+}
 
-    fn to_dict(&self) -> PyResult<PyObject> {
-        to_dict(&self.inner)
+#[pyclass]
+#[derive(Debug)]
+struct FeatherResource {
+    inner: req::FeatherResource
+}
+
+impl_to_builder!(FeatherResource);
+
+#[pymethods]
+impl FeatherResource {
+    #[new]
+    fn __init__(path: String) -> Self {
+        Self {
+            inner: req::FeatherResource {
+                path
+            }
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+struct ParquetResource {
+    inner: req::ParquetResource
+}
+
+impl_to_builder!(ParquetResource);
+
+#[pymethods]
+impl ParquetResource {
+    #[new]
+    fn __init__(path: String) -> Self {
+        Self {
+            inner: req::ParquetResource {
+                path
+            }
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+struct FileResource {
+    inner: req::FileResource
+}
+
+impl_to_builder!(FileResource);
+
+#[pymethods]
+impl FileResource {
+    #[new]
+    fn __init__(path: String) -> Self {
+        Self {
+            inner: req::FileResource {
+                path
+            }
+        }
     }
 }
 
@@ -115,34 +192,21 @@ struct FuncRequest {
 }
 
 #[pymethods]
+/// A request against a function interface
 impl FuncRequest {
     #[new]
-    pub fn new() -> Self {
+    pub fn new(name: &str, fi: &FuncInterface) -> Self {
         Self {
-            inner: model::FuncRequest::new(),
+            inner: model::FuncRequest::new(name, fi.inner.clone()),
         }
     }
 
-    pub fn set_sink(&mut self, s: &str, si: &SinkResource) {
-        self.inner.set_sink(s, &si.inner)
-    }
-
-    pub fn set_source(&mut self, s: &str, sr: &SourceResource) {
-        self.inner.set_source(s, &sr.inner)
-    }
-
-    pub fn get_sink(&self, s: &str) -> Option<SinkResource> {
-        self.inner.get_sink(s).map(|sr| SinkResource { inner: sr })
-    }
-
-    pub fn get_source(&self, s: &str) -> Option<SourceResource> {
-        self.inner
-            .get_source(s)
-            .map(|sr| SourceResource { inner: sr })
-    }
-
-    pub fn to_dict(&self) -> PyResult<PyObject> {
-        to_dict(&self.inner)
+    pub fn extract_to_table(&mut self) -> PyResult<PyObject> {
+        let rb = self.inner.extract_to_recordbatch();
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let pyarrow = py.import("pyarrow")?;
+        to_recordbatch(&rb, py, pyarrow)
     }
 }
 
@@ -158,65 +222,63 @@ impl FuncInterface {
     }
 }
 
-#[pymethods]
-impl FuncInterface {
-    #[new]
-    fn __init__(s: &str) -> Self {
-        Self {
-            inner: Arc::new(model::FuncInterface::new(s)),
-        }
-    }
+/// Call the model using its command line interface
+///
+/// :param fi: a function interface
+/// :type fi: FuncInterface
+/// :param program_name: the path to the program
+/// :type program_name: str
+/// :param fc: the request
+/// :type fc: FuncRequest
+/// :returns: the stdout or stderr of the program execution
+/// :rtype: str
+#[pyfunction]
+#[text_signature = "(fi, program_name, fc, /)"]
+fn client_call_cli(fi: &FuncInterface, program_name: &str, fc: &mut FuncRequest) -> PyResult<String> {
+    let output = fi
+        .inner
+        .call_cli(program_name, &mut fc.inner)
+        .map_err(|err| PyIOError::new_err(format!("{:?}", err)))?;
+    if output.status.success() {
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    } else {
+        let out = String::from_utf8_lossy(&output.stdout);
+        let err = String::from_utf8_lossy(&output.stderr);
+        Err(PyIOError::new_err(formatdoc! {"
 
-    #[staticmethod]
-    fn from_json(s: &str) -> PyResult<Self> {
-        Ok(Self {
-            inner: serde_json::from_str(s).map_err(|e| PyIOError::new_err(e.to_string()))?,
-        })
-    }
+            Stdout:
+            {}
 
-    #[staticmethod]
-    fn from_dict(data: &PyAny) -> PyResult<Self> {
-        Ok(Self {
-            inner: Arc::new(from_dict(data)?),
-        })
-    }
-
-    fn to_dict(&self) -> PyResult<PyObject> {
-        to_dict(&self.inner)
-    }
-
-    fn to_cli(&self) -> FuncRequest {
-        FuncRequest {
-            inner: self.inner.to_cli(),
-        }
-    }
-
-    fn call_cli(&self, program_name: &str, fc: &FuncRequest) -> PyResult<String> {
-        let output = self
-            .inner
-            .call_cli(program_name, &fc.inner)
-            .map_err(|err| PyIOError::new_err(format!("{:?}", err)))?;
-        if output.status.success() {
-            Ok(String::from_utf8_lossy(&output.stdout).to_string())
-        } else {
-            let out = String::from_utf8_lossy(&output.stdout);
-            let err = String::from_utf8_lossy(&output.stderr);
-            Err(PyIOError::new_err(formatdoc! {"
-
-                Stdout:
-                {}
-
-                Stderr:
-                {}",
-                out,
-                err
-            }))
-        }
+            Stderr:
+            {}",
+            out,
+            err
+        }))
     }
 }
 
+/// Extract arguments given to the model being executed on the command line
+///
+/// :param fi: a function interface
+/// :type fi: FuncInterface
+/// :returns: a function request
+/// :rtype: FuncRequest
 #[pyfunction]
-fn create_interface_from_cli(path: &str) -> PyResult<FuncInterface> {
+#[text_signature = "(fi, /)"]
+fn server_process_cli_stdin(py: Python, fi: &FuncInterface) -> PyResult<PyObject> {
+    let pa = py.import("pyarrow")?;
+    to_recordbatch(&fi.inner.to_cli().map_err(value_error)?.into_recordbatch(), py, pa)
+}
+
+/// Create an command line interface wrapper to a model
+///
+/// :param path: the local path to the model
+/// :type path: str
+/// :return: an interface to call the model with
+/// :rtype: FuncInterface
+#[pyfunction]
+#[text_signature = "(path, /)"]
+fn client_create_interface_from_cli(path: &str) -> PyResult<FuncInterface> {
     Ok(FuncInterface::new(Arc::new(
         model::FuncInterface::from_cli(path).map_err(|e| PyIOError::new_err(format!("{:?}", e)))?,
     )))
@@ -224,11 +286,16 @@ fn create_interface_from_cli(path: &str) -> PyResult<FuncInterface> {
 
 #[pymodule]
 fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(pyo3::wrap_pyfunction!(create_interface_from_cli, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(client_call_cli, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(client_create_interface_from_cli, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(server_process_cli_stdin, m)?)?;
 
-    m.add_class::<SinkResource>()?;
-    m.add_class::<SourceResource>()?;
-    m.add_class::<ArgValidatorType>()?;
+    m.add_class::<RequestBuilder>()?;
+    m.add_class::<FileResource>()?;
+    m.add_class::<FeatherResource>()?;
+    m.add_class::<NetCDFResource>()?;
+    m.add_class::<ParquetResource>()?;
+
     m.add_class::<FuncRequest>()?;
     m.add_class::<FuncInterface>()?;
 

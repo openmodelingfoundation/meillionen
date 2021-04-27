@@ -12,9 +12,9 @@ use arrow::datatypes::{ArrowPrimitiveType, Field, Schema};
 use arrow::record_batch::RecordBatch;
 use stable_eyre::eyre::WrapErr;
 
-use meillionen_mt::arg::validation::{Columns, DataFrameValidator};
-use meillionen_mt::arg::ArgValidatorType;
-use meillionen_mt::model::{FuncInterface, ResourceSchema};
+use meillionen_mt::arg::validation::{Columns, DataFrameValidator, Unvalidated};
+use meillionen_mt::model::{FuncInterface, RequestBuilder};
+use std::convert::{TryInto};
 
 macro_rules! make_field_vec {
     ($(($name: ident, $dt: ident)), *) => {
@@ -25,17 +25,17 @@ macro_rules! make_field_vec {
 }
 
 fn make_arg_description(
-    name: String,
-    description: String,
+    name: &str,
+    description: &str,
     fields: Vec<Field>,
-) -> (String, Arc<ResourceSchema>) {
+) -> stable_eyre::Result<(String, Vec<u8>)> {
     let schema = Arc::new(Columns::new(fields));
-    let dataframe_validator = Arc::new(DataFrameValidator(schema));
-    let arg_validator = Arc::new(ArgValidatorType::DataFrame(dataframe_validator));
-    (
-        name,
-        Arc::new(ResourceSchema::new(description, arg_validator)),
-    )
+    let dataframe_validator = DataFrameValidator::new(description, schema);
+    let serialized = (&dataframe_validator).try_into().wrap_err("serializing dataframe validator failed")?;
+    Ok((
+        name.to_string(),
+        serialized
+    ))
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -81,7 +81,7 @@ impl<'a> DailyData<'a> {
         Ok(())
     }
 
-    pub fn arg_description() -> (String, Arc<ResourceSchema>) {
+    pub fn arg_description() -> stable_eyre::Result<(String, Vec<u8>)> {
         use arrow::datatypes::DataType::*;
         let fields = make_field_vec![
             (irrigation, Float32),
@@ -92,8 +92,8 @@ impl<'a> DailyData<'a> {
             (energy_flux, Float32)
         ];
         make_arg_description(
-            Self::NAME.to_string(),
-            Self::DESCRIPTION.to_string(),
+            Self::NAME.as_ref(),
+            Self::DESCRIPTION.as_ref(),
             fields,
         )
     }
@@ -155,7 +155,7 @@ impl YearlyData {
             )))
     }
 
-    pub fn arg_description() -> (String, Arc<ResourceSchema>) {
+    pub fn arg_description() -> stable_eyre::Result<(String, Vec<u8>)> {
         use arrow::datatypes::DataType::*;
         let fields = make_field_vec![
             (plant_leaves_max_number, Float32),
@@ -186,8 +186,8 @@ impl YearlyData {
             (printout_freq, Int32)
         ];
         make_arg_description(
-            Self::NAME.to_string(),
-            Self::DESCRIPTION.to_string(),
+            Self::NAME.as_ref(),
+            Self::DESCRIPTION.as_ref(),
             fields,
         )
     }
@@ -318,26 +318,24 @@ impl Default for YearlyData {
     }
 }
 
-pub fn get_func_interface() -> Arc<FuncInterface> {
-    let mut fi = FuncInterface::new("simplecrop");
+pub fn get_func_interface() -> stable_eyre::Result<FuncInterface> {
+    let mut builder = RequestBuilder::new("simplecrop_omf");
 
-    let (daily_key, daily_source) = DailyData::arg_description();
-    fi.set_source(daily_key, daily_source);
-    let (yearly_key, yearly_source) = YearlyData::arg_description();
-    fi.set_source(yearly_key, yearly_source);
+    let (daily_key, daily_source) = DailyData::arg_description()?;
+    builder.add("source", daily_key.as_str(), "dataframe_validator", daily_source.as_slice())?;
+    let (yearly_key, yearly_source) = YearlyData::arg_description()?;
+    builder.add("source", yearly_key.as_str(), "dataframe_validator", yearly_source.as_slice())?;
 
-    let (soil_key, soil_sink) = SoilDataSet::arg_description();
-    fi.set_sink(soil_key, soil_sink);
-    let (plant_key, plant_sink) = PlantDataSet::arg_description();
-    fi.set_sink(plant_key, plant_sink);
-    fi.set_sink(
-        "tempdir".to_string(),
-        Arc::new(ResourceSchema::new(
-            "temporary state dir containing simplecrop templated files".to_string(),
-            Arc::new(ArgValidatorType::Other),
-        )),
-    );
-    Arc::new(fi)
+    let (soil_key, soil_sink) = SoilDataSet::arg_description()?;
+    builder.add("sink", soil_key.as_str(), "dataframe_validator", soil_sink.as_slice())?;
+    let (plant_key, plant_sink) = PlantDataSet::arg_description()?;
+    builder.add("sink", plant_key.as_str(), "dataframe_validator", plant_sink.as_slice())?;
+    let unval: Vec<u8> = (&Unvalidated::new()).try_into().wrap_err("unavalidated serialization error")?;
+    builder.add("sink", "tempdir", "unvalidated", unval.as_slice())?;
+    let rb = builder.extract_to_recordbatch();
+
+    let fi = FuncInterface::try_new(rb).unwrap();
+    Ok(fi)
 }
 
 #[derive(Debug, Default)]
@@ -397,7 +395,7 @@ impl SoilDataSet {
         Ok(results)
     }
 
-    pub fn arg_description() -> (String, Arc<ResourceSchema>) {
+    pub fn arg_description() -> stable_eyre::Result<(String, Vec<u8>)> {
         use arrow::datatypes::DataType::*;
         let fields = make_field_vec![
             (day_of_year, Int32),
@@ -413,8 +411,8 @@ impl SoilDataSet {
             (soil_water_excess_stress, Float32)
         ];
         make_arg_description(
-            Self::NAME.to_string(),
-            Self::DESCRIPTION.to_string(),
+            Self::NAME.as_ref(),
+            Self::DESCRIPTION.as_ref(),
             fields,
         )
     }
@@ -473,7 +471,7 @@ impl PlantDataSet {
         Ok(results)
     }
 
-    pub fn arg_description() -> (String, Arc<ResourceSchema>) {
+    pub fn arg_description() -> stable_eyre::Result<(String, Vec<u8>)> {
         use arrow::datatypes::DataType::*;
         let fields = make_field_vec![
             (day_of_year, Int32),
@@ -485,8 +483,8 @@ impl PlantDataSet {
             (plant_leaf_area_index, Float32)
         ];
         make_arg_description(
-            Self::NAME.to_string(),
-            Self::DESCRIPTION.to_string(),
+            Self::NAME.as_ref(),
+            Self::DESCRIPTION.as_ref(),
             fields,
         )
     }

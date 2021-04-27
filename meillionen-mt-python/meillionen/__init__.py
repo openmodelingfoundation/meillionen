@@ -1,1 +1,1 @@
-from .client import FunctionModelCLI
+from .client import ClientFunctionModel
