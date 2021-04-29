@@ -3,7 +3,7 @@ Resources are references to datasets that provide the information necessary to
 load or save the data later.
 """
 import pathlib
-from typing import Dict, Union, Any
+from typing import Dict, Union, Any, List
 
 from pyarrow.cffi import ffi
 import numpy as np
@@ -97,22 +97,55 @@ class FuncBase:
 
     def to_recordbatch(self, program_name):
         rb = ResourceBuilder(program_name)
-        for (sink_name, sink) in self._sinks.items():
-            sink.to_builder("sink", sink_name, rb)
-        for (source_name, source) in self._sources.items():
-            source.to_builder("source", source_name, rb)
+        for (resource, kwargs) in self._rows():
+            resource.to_builder(**kwargs, rb=rb)
         return rb.pop()
 
 
 class FuncRequest(FuncBase):
     SERIALIZERS = RESOURCES
 
+    def _rows(self):
+        for (name, sink) in self._sinks.items():
+            yield (sink, {'field': 'sink', 'name': name})
+        for (name, source) in self._sources.items():
+            yield (source, {'field': 'source', 'name': name})
+
 
 class FuncInterface(FuncBase):
     SERIALIZERS = VALIDATORS
 
+    def _rows(self):
+        for (name, sink) in self._sinks.items():
+            yield (sink.validator, {'field': 'sink', 'name': name})
+        for (name, source) in self._sources.items():
+            yield (source.validator, {'field': 'source', 'name': name})
 
-class PandasLoader:
+
+class DataFrameResourceBase:
+    RESOURCE_TYPES = []
+
+    def __init__(self, description, fields):
+        fields = self._normalize_fields(fields)
+        self.validator = DataFrameValidator.from_dict({
+            'resources': self.RESOURCE_TYPES,
+            'description': description,
+            'columns': {
+                'fields': fields
+            }
+        })
+
+    @classmethod
+    def _normalize_fields(cls, fields: List[Dict[str, Any]]):
+        fields = fields.copy()
+        for field in fields:
+            for (attr, val) in [('nullable', False), ('dict_id', 0), ('dict_is_borrowed', False)]:
+                if not hasattr(field, attr):
+                    setattr(field, attr, val)
+        return fields
+
+
+class PandasLoader(DataFrameResourceBase):
     RESOURCE_TYPES = [FEATHER_RESOURCE, PARQUET_RESOURCE]
 
     PANDAS_LOADERS = {
@@ -120,24 +153,18 @@ class PandasLoader:
         PARQUET_RESOURCE: pd.read_parquet
     }
 
-    def __init__(self, validator):
-        self.validator = validator
-
     def load(self, resource):
         path = resource.to_dict()['path']
         return self.PANDAS_LOADERS[resource.name](path)
 
 
-class PandasSaver:
+class PandasSaver(DataFrameResourceBase):
     RESOURCE_TYPES = [FEATHER_RESOURCE, PARQUET_RESOURCE]
 
     PANDAS_SAVERS = {
         FEATHER_RESOURCE: 'to_feather',
         PARQUET_RESOURCE: 'to_parquet'
     }
-
-    def __init__(self, validator):
-        self.validator = validator
 
     def save(self, resource, df: pd.DataFrame):
         path = resource.to_dict()['path']
@@ -151,8 +178,13 @@ class NetCDFPreSaver:
         NETCDF_RESOURCE: NetCDFResource
     }
 
-    def __init__(self, validator):
-        self.validator = validator
+    def __init__(self, description, dimensions, data_type):
+        self.validator = TensorValidator.from_dict({
+            'resources': self.RESOURCE_TYPES,
+            'description': description,
+            'dimensions': dimensions,
+            'data_type': data_type,
+        })
 
     def load(self, sink, dimensions):
         return NetCDFSliceSaver(sink=sink, dimensions=dimensions)
@@ -197,8 +229,15 @@ class LandLabLoader:
     A loader to load raster files into landlab grid objects
     """
 
-    def __init__(self, validator):
-        self.validator = validator
+    RESOURCE_TYPES = [FILE_RESOURCE]
+
+    def __init__(self, description, dimensions, data_type):
+        self.validator = TensorValidator.from_dict({
+            'resources': self.RESOURCE_TYPES,
+            'description': description,
+            'dimensions': dimensions,
+            'data_type': data_type,
+        })
 
     def load(self, resource):
         """

@@ -148,14 +148,14 @@ macro_rules! impl_to_builder {
     ($t:ty) => {
         #[pymethods]
         impl $t {
-            fn to_builder(&self, field: &str, name: &str, fr: &mut ResourceBuilder) -> PyResult<()>
+            fn to_builder(&self, field: &str, name: &str, rb: &mut ResourceBuilder) -> PyResult<()>
             {
                 let resource = std::any::type_name::<Self>();
                 let inner = &self.inner;
                 let data: Vec<u8> = inner
                     .try_into()
                     .map_err(value_error)?;
-                fr.inner.add(field, name, resource, data.as_slice())
+                rb.inner.add(field, name, resource, data.as_slice())
                     .map_err(value_error)?;
                 Ok(())
             }
