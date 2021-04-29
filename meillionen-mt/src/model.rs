@@ -61,7 +61,7 @@ impl From<FuncRequestSchemaError> for MeillionenError {
 }
 
 #[derive(Debug)]
-pub struct RequestBuilder {
+pub struct ResourceBuilder {
     program_name: String,
     field: StringBuilder,
     name: StringBuilder,
@@ -69,7 +69,7 @@ pub struct RequestBuilder {
     payload: BinaryBuilder
 }
 
-impl RequestBuilder {
+impl ResourceBuilder {
     pub fn new(program_name: &str) -> Self {
         Self {
             program_name: program_name.to_string(),
@@ -114,6 +114,35 @@ impl RequestBuilder {
     }
 }
 
+fn build_from_recordbatch<T, F>(rb: RecordBatch, f: F) -> stable_eyre::Result<T>
+    where F: FnOnce(String, RecordBatch) -> T
+{
+    use arrow::datatypes::DataType;
+    let names = [
+        ("field", DataType::Utf8),
+        ("name", DataType::Utf8),
+        ("resource", DataType::Utf8),
+        ("payload", DataType::Binary)
+    ];
+    for (field, meta) in rb.schema().fields().iter().zip(names.iter()) {
+        let (name, dt) = meta;
+        let fname = field.name().as_str();
+        if &fname != name {
+            return Err(stable_eyre::eyre::eyre!("field name mismatch: expected {} got {}", name, fname));
+        }
+        if field.data_type() != dt {
+            return Err(stable_eyre::eyre::eyre!("datatype mismatch for field {}: expected {} got {}", fname, dt, field.data_type()))
+        }
+    }
+    let name = rb
+        .schema()
+        .metadata()
+        .get("meillionen-name")
+        .ok_or(stable_eyre::eyre::eyre!("metadata was missing key 'meillionen-name'"))
+        .map(|name| name.to_string())?;
+    Ok(f(name, rb))
+}
+
 #[derive(Debug)]
 pub struct FuncInterface {
     name: String,
@@ -122,32 +151,11 @@ pub struct FuncInterface {
 
 impl FuncInterface {
     pub fn try_new(rb: RecordBatch) -> stable_eyre::Result<Self> {
-        use arrow::datatypes::DataType;
-        let names = [
-            ("field", DataType::Utf8),
-            ("name", DataType::Utf8),
-            ("resource", DataType::Utf8),
-            ("payload", DataType::Binary)
-        ];
-        for (field, meta) in rb.schema().fields().iter().zip(names.iter()) {
-            let (name, dt) = meta;
-            let fname = field.name().as_str();
-            if &fname != name {
-                return Err(stable_eyre::eyre::eyre!("field name mismatch: expected {} got {}", name, fname));
+        build_from_recordbatch(rb, move |name: String, rb: RecordBatch| {
+            Self {
+                name,
+                rb
             }
-            if field.data_type() != dt {
-                return Err(stable_eyre::eyre::eyre!("datatype mismatch for field {}: expected {} got {}", fname, dt, field.data_type()))
-            }
-        }
-        let name = rb
-            .schema()
-            .metadata()
-            .get("meillionen-name")
-            .ok_or(stable_eyre::eyre::eyre!("metadata was missing key 'meillionen-name'"))
-            .map(|name| name.to_string())?;
-        Ok(Self {
-            name,
-            rb,
         })
     }
 
@@ -200,9 +208,9 @@ impl FuncInterface {
             .unwrap_or_else(|_| panic!("could not spawn process {}", program_path));
 
         let stdin = cmd.stdin.take().wrap_err("could not open stdin")?;
-        let rb = fc.extract_to_recordbatch();
+        let rb = fc.recordbatch();
         let mut sr = StreamWriter::try_new(stdin, rb.schema().as_ref()).wrap_err(format!("could not create input stream writer for {}", program_path))?;
-        sr.write(&rb).wrap_err("could not write record batch to input stream")?;
+        sr.write(rb).wrap_err("could not write record batch to input stream")?;
         cmd.wait_with_output().wrap_err_with(|| format!("waiting for program {} to finish failed", program_path))
     }
 
@@ -237,23 +245,21 @@ pub type ResourceMap = BTreeMap<String, Arc<SerializedResource>>;
 
 #[derive(Debug)]
 pub struct FuncRequest {
-    builder: RequestBuilder,
-    interface: Arc<FuncInterface>
+    name: String,
+    rb: RecordBatch
 }
 
 impl FuncRequest {
-    pub fn new(program_name: &str, interface: Arc<FuncInterface>) -> Self {
-        Self {
-            builder: RequestBuilder::new(program_name),
-            interface,
-        }
+    pub fn try_new(rb: RecordBatch) -> stable_eyre::Result<Self> {
+        build_from_recordbatch(rb, move |name: String, rb: RecordBatch| {
+            Self {
+                name,
+                rb
+            }
+        })
     }
 
-    pub fn add(&mut self, field: &str, name: &str, resource: &str, payload: &[u8]) -> stable_eyre::Result<()> {
-        self.builder.add(field, name, resource, payload).wrap_err_with(|| format!("could not {} {}", field, name))
-    }
-
-    pub fn extract_to_recordbatch(&mut self) -> RecordBatch {
-        self.builder.extract_to_recordbatch()
+    pub fn recordbatch(&self) -> &RecordBatch {
+        &self.rb
     }
 }

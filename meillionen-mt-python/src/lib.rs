@@ -3,20 +3,22 @@ use std::sync::Arc;
 
 use indoc::formatdoc;
 use libc::uintptr_t;
-use pyo3::exceptions::{PyIOError, PyValueError};
+use pyo3::exceptions::{PyIOError, PyValueError, PyIndexError};
 use pyo3::prelude::*;
 use std;
 
 use pythonize::{depythonize, pythonize};
 use serde::{Deserialize, Serialize};
 
-use meillionen_mt::arg::req;
+use meillionen_mt::arg::resource;
+use meillionen_mt::arg::validation;
 use meillionen_mt::model;
-use arrow::array::ArrayRef;
+use arrow::array::{ArrayRef, make_array_from_raw, Array};
 use arrow::record_batch::RecordBatch;
 use arrow::datatypes::DataType;
 use std::collections::HashMap;
 use std::convert::{TryInto, TryFrom};
+use arrow::ffi;
 
 fn value_error<T>(e: T) -> PyErr where T: std::fmt::Debug {
     PyValueError::new_err(format!("{:?}", e))
@@ -58,11 +60,95 @@ fn to_recordbatch(rb: &RecordBatch, py: Python, pa: &PyModule) -> PyResult<PyObj
     Ok(record.to_object(py))
 }
 
+fn to_rust_array(obj: &PyAny) -> PyResult<ArrayRef> {
+    let (array_ptr, schema_ptr) = ffi::ArrowArray::into_raw(unsafe { ffi::ArrowArray::empty() });
+    obj.call_method1(
+        "_export_to_c",
+        (array_ptr as uintptr_t, schema_ptr as uintptr_t),
+    )?;
+    let array = unsafe { make_array_from_raw(array_ptr, schema_ptr).map_err(value_error)? };
+    Ok(array)
+}
+
+macro_rules! impl_to_from_dict {
+    ($T:ty) => {
+        #[pymethods]
+        impl $T {
+            #[staticmethod]
+            fn from_dict(data: &PyAny) -> PyResult<Self> {
+                Ok(Self {
+                    inner: from_dict(data)?
+                })
+            }
+
+            fn to_dict(&self) -> PyResult<PyObject> {
+                to_dict(&self.inner)
+            }
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+struct DataFrameValidator {
+    inner: validation::DataFrameValidator
+}
+
+impl_to_from_dict!(DataFrameValidator);
+
+#[pyclass]
+#[derive(Debug)]
+struct TensorValidator {
+    inner: validation::TensorValidator
+}
+
+impl_to_from_dict!(TensorValidator);
+
+#[pyclass]
+#[derive(Debug)]
+struct Unvalidated {
+    inner: validation::Unvalidated
+}
+
+impl_to_from_dict!(Unvalidated);
+
+#[pymethods]
+impl Unvalidated {
+    #[new]
+    fn new() -> Self {
+        Self {
+            inner: validation::Unvalidated::new()
+        }
+    }
+}
+
+macro_rules! impl_from_arrow_array {
+    ($T:ty, $Inner:ty) => {
+        #[pymethods]
+        impl $T {
+            #[staticmethod]
+            fn from_arrow_array(obj: &PyAny, index: usize) -> PyResult<Self> {
+                let array = to_rust_array(obj)?;
+                let b = array
+                    .as_any()
+                    .downcast_ref::<arrow::array::BinaryArray>()
+                    .ok_or(PyValueError::new_err("arrow array is not binary"))?;
+                if b.len() <= index {
+                    return Err(PyIndexError::new_err(format!("index {} greater than length {}", index, b.len())))
+                }
+                let data = b.value(index);
+                let inner: $Inner = TryFrom::try_from(data).map_err(value_error)?;
+                Ok(Self { inner })
+            }
+        }
+    }
+}
+
 macro_rules! impl_to_builder {
     ($t:ty) => {
         #[pymethods]
         impl $t {
-            fn to_builder(&self, field: &str, name: &str, fr: &mut RequestBuilder) -> PyResult<()>
+            fn to_builder(&self, field: &str, name: &str, fr: &mut ResourceBuilder) -> PyResult<()>
             {
                 let resource = std::any::type_name::<Self>();
                 let inner = &self.inner;
@@ -79,20 +165,20 @@ macro_rules! impl_to_builder {
 
 #[pyclass]
 #[derive(Debug)]
-struct RequestBuilder {
-    inner: model::RequestBuilder
+struct ResourceBuilder {
+    inner: model::ResourceBuilder
 }
 
 #[pymethods]
-impl RequestBuilder {
+impl ResourceBuilder {
     #[new]
     fn __init__(program_name: &str) -> Self {
         Self {
-            inner: model::RequestBuilder::new(program_name)
+            inner: model::ResourceBuilder::new(program_name)
         }
     }
 
-    fn pop_recordbatch(&mut self) -> PyResult<PyObject> {
+    fn pop(&mut self) -> PyResult<PyObject> {
         let rb = self.inner.extract_to_recordbatch();
         let gil = Python::acquire_gil();
         let py = gil.python();
@@ -104,9 +190,11 @@ impl RequestBuilder {
 #[pyclass]
 #[derive(Debug)]
 struct NetCDFResource {
-    inner: req::NetCDFResource,
+    inner: resource::NetCDFResource,
 }
 
+impl_to_from_dict!(NetCDFResource);
+impl_from_arrow_array!(NetCDFResource, resource::NetCDFResource);
 impl_to_builder!(NetCDFResource);
 
 #[pymethods]
@@ -115,7 +203,7 @@ impl NetCDFResource {
     fn __init__(path: String, variable: String, dtype: &PyAny) -> PyResult<Self> {
         let data_type: DataType = depythonize(dtype)?;
         Ok(Self {
-            inner: req::NetCDFResource {
+            inner: resource::NetCDFResource {
                 path,
                 variable,
                 data_type,
@@ -128,9 +216,11 @@ impl NetCDFResource {
 #[pyclass]
 #[derive(Debug)]
 struct FeatherResource {
-    inner: req::FeatherResource
+    inner: resource::FeatherResource
 }
 
+impl_to_from_dict!(FeatherResource);
+impl_from_arrow_array!(FeatherResource, resource::FeatherResource);
 impl_to_builder!(FeatherResource);
 
 #[pymethods]
@@ -138,7 +228,7 @@ impl FeatherResource {
     #[new]
     fn __init__(path: String) -> Self {
         Self {
-            inner: req::FeatherResource {
+            inner: resource::FeatherResource {
                 path
             }
         }
@@ -148,9 +238,11 @@ impl FeatherResource {
 #[pyclass]
 #[derive(Debug)]
 struct ParquetResource {
-    inner: req::ParquetResource
+    inner: resource::ParquetResource
 }
 
+impl_to_from_dict!(ParquetResource);
+impl_from_arrow_array!(ParquetResource, resource::ParquetResource);
 impl_to_builder!(ParquetResource);
 
 #[pymethods]
@@ -158,7 +250,7 @@ impl ParquetResource {
     #[new]
     fn __init__(path: String) -> Self {
         Self {
-            inner: req::ParquetResource {
+            inner: resource::ParquetResource {
                 path
             }
         }
@@ -168,9 +260,11 @@ impl ParquetResource {
 #[pyclass]
 #[derive(Debug)]
 struct FileResource {
-    inner: req::FileResource
+    inner: resource::FileResource
 }
 
+impl_to_from_dict!(FileResource);
+impl_from_arrow_array!(FileResource, resource::FileResource);
 impl_to_builder!(FileResource);
 
 #[pymethods]
@@ -178,7 +272,7 @@ impl FileResource {
     #[new]
     fn __init__(path: String) -> Self {
         Self {
-            inner: req::FileResource {
+            inner: resource::FileResource {
                 path
             }
         }
@@ -195,18 +289,19 @@ struct FuncRequest {
 /// A request against a function interface
 impl FuncRequest {
     #[new]
-    pub fn new(name: &str, fi: &FuncInterface) -> Self {
-        Self {
-            inner: model::FuncRequest::new(name, fi.inner.clone()),
-        }
+    pub fn new(rb: &mut ResourceBuilder) -> PyResult<Self> {
+        Ok(Self {
+            inner: model::FuncRequest::try_new(rb.inner.extract_to_recordbatch())
+                .map_err(value_error)?,
+        })
     }
 
     pub fn extract_to_table(&mut self) -> PyResult<PyObject> {
-        let rb = self.inner.extract_to_recordbatch();
+        let rb = self.inner.recordbatch();
         let gil = Python::acquire_gil();
         let py = gil.python();
         let pyarrow = py.import("pyarrow")?;
-        to_recordbatch(&rb, py, pyarrow)
+        to_recordbatch(rb, py, pyarrow)
     }
 }
 
@@ -290,11 +385,15 @@ fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(client_create_interface_from_cli, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(server_process_cli_stdin, m)?)?;
 
-    m.add_class::<RequestBuilder>()?;
+    m.add_class::<ResourceBuilder>()?;
     m.add_class::<FileResource>()?;
     m.add_class::<FeatherResource>()?;
     m.add_class::<NetCDFResource>()?;
     m.add_class::<ParquetResource>()?;
+
+    m.add_class::<DataFrameValidator>()?;
+    m.add_class::<TensorValidator>()?;
+    m.add_class::<Unvalidated>()?;
 
     m.add_class::<FuncRequest>()?;
     m.add_class::<FuncInterface>()?;

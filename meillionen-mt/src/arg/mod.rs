@@ -1,3 +1,3 @@
-pub mod req;
+pub mod resource;
 pub mod validation;
 mod base;

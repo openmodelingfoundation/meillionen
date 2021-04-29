@@ -13,7 +13,7 @@ use arrow::record_batch::RecordBatch;
 use stable_eyre::eyre::WrapErr;
 
 use meillionen_mt::arg::validation::{Columns, DataFrameValidator, Unvalidated};
-use meillionen_mt::model::{FuncInterface, RequestBuilder};
+use meillionen_mt::model::{FuncInterface, ResourceBuilder};
 use std::convert::{TryInto};
 
 macro_rules! make_field_vec {
@@ -27,10 +27,11 @@ macro_rules! make_field_vec {
 fn make_arg_description(
     name: &str,
     description: &str,
+    resources: Vec<String>,
     fields: Vec<Field>,
 ) -> stable_eyre::Result<(String, Vec<u8>)> {
     let schema = Arc::new(Columns::new(fields));
-    let dataframe_validator = DataFrameValidator::new(description, schema);
+    let dataframe_validator = DataFrameValidator::new(resources, description, schema);
     let serialized = (&dataframe_validator).try_into().wrap_err("serializing dataframe validator failed")?;
     Ok((
         name.to_string(),
@@ -94,6 +95,7 @@ impl<'a> DailyData<'a> {
         make_arg_description(
             Self::NAME.as_ref(),
             Self::DESCRIPTION.as_ref(),
+            vec!["meillionen::FeatherResource".to_string(), "meillionen::ParquetResource".to_string()],
             fields,
         )
     }
@@ -188,6 +190,7 @@ impl YearlyData {
         make_arg_description(
             Self::NAME.as_ref(),
             Self::DESCRIPTION.as_ref(),
+            vec!["meillionen::FeatherResource".to_string(), "meillionen::ParquetResource".to_string()],
             fields,
         )
     }
@@ -319,7 +322,7 @@ impl Default for YearlyData {
 }
 
 pub fn get_func_interface() -> stable_eyre::Result<FuncInterface> {
-    let mut builder = RequestBuilder::new("simplecrop_omf");
+    let mut builder = ResourceBuilder::new("simplecrop_omf");
 
     let (daily_key, daily_source) = DailyData::arg_description()?;
     builder.add("source", daily_key.as_str(), "dataframe_validator", daily_source.as_slice())?;
@@ -413,6 +416,8 @@ impl SoilDataSet {
         make_arg_description(
             Self::NAME.as_ref(),
             Self::DESCRIPTION.as_ref(),
+            vec!["meillionen::FeatherResource".to_string(), "meillionen::ParquetResource".to_string()],
+
             fields,
         )
     }
@@ -485,6 +490,8 @@ impl PlantDataSet {
         make_arg_description(
             Self::NAME.as_ref(),
             Self::DESCRIPTION.as_ref(),
+            vec!["meillionen::FeatherResource".to_string(), "meillionen::ParquetResource".to_string()],
+
             fields,
         )
     }
