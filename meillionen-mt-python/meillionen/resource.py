@@ -139,9 +139,9 @@ class DataFrameResourceBase:
     def _normalize_fields(cls, fields: List[Dict[str, Any]]):
         fields = fields.copy()
         for field in fields:
-            for (attr, val) in [('nullable', False), ('dict_id', 0), ('dict_is_borrowed', False)]:
+            for (attr, val) in [('nullable', False), ('dict_id', 0), ('dict_is_ordered', False)]:
                 if not hasattr(field, attr):
-                    setattr(field, attr, val)
+                    field[attr] = val
         return fields
 
 
