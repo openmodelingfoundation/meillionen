@@ -2,30 +2,33 @@
 from landlab.components.overland_flow import OverlandFlow
 from landlab.components import SoilInfiltrationGreenAmpt
 from meillionen.io import LandLabLoader, PandasLoader, NetCDF4Saver
-from meillionen.resource import FuncInterface, PandasLoader, NetCDFPreSaver
+from meillionen.meillionen import server_respond_from_cli
+from meillionen.resource import FuncInterfaceServer, FuncRequest, LandLabLoader, PandasLoaderSaver, NetCDFPreSaver
 import pandas as pd
 import xarray as xr
 
 
-model = FuncInterface(
+model = FuncInterfaceServer(
     sources={
-        'weather': PandasLoader(
+        'weather': PandasLoaderSaver.from_kwargs(
             description='Daily weather data for a year',
-            fields=[
-                {
-                    "name": "rainfall__depth",
-                    "data_type": "Float64"
-                }
-            ]
+            columns={
+                'fields': [
+                    {
+                        "name": "rainfall__depth",
+                        "data_type": "Float64"
+                    }
+                ]
+            }
         ),
-        'elevation': LandLabLoader(
+        'elevation': LandLabLoader.from_kwargs(
             description='Elevation model. Each cell is a sq m',
             data_type='Float64',
             dimensions=['x', 'y']
         )
     },
     sinks={
-        'soil_water_infiltration__depth': NetCDFPreSaver(
+        'soil_water_infiltration__depth': NetCDFPreSaver.from_kwargs(
             description='Surface water depth at each point in grid for each day in year',
             data_type='Float64',
             dimensions=['x', 'y', 'time']
@@ -81,19 +84,21 @@ def run_year_cli():
     Calculates the mm of water that has infiltrated each grid cell for day of the year after a rainfall event
     in response to a request on the command line
     """
-    args = model.process_stdin()
-    weather = args.get_source('weather')
-    elevation = args.get_source('elevation')
-    surface_water_infiltation__depth = args.get_sink('soil_water_infiltration__depth')
+    rb = server_respond_from_cli('overlandflow', model.to_recordbatch('overlandflow'))
+    print(rb.to_pandas()[['resource', 'payload']])
+    args = FuncRequest.from_recordbatch(rb)
+    weather = args.source('weather')
+    elevation = args.source('elevation')
+    surface_water_infiltation__depth = args.sink('soil_water_infiltration__depth')
 
-    mg = LandLabLoader.load(elevation)
-    weather = PandasLoader.load(weather)
-    swid_schema = model.to_dict()['sinks']['soil_water_infiltration__depth']['data_type']['dimensions']
+    model_grid = model.source('elevation').load(elevation)
+    weather = model.source('weather').load(weather)
+    swid_schema = surface_water_infiltation__depth.to_dict()['dimensions']
     # create dimension label / size parts [('x', 10), ('y', 10), ('time', 365')]
-    swid_schema = list(zip(swid_schema, [mg.shape[0], mg.shape[1], weather.shape[0]]))
-    with NetCDF4Saver(surface_water_infiltation__depth, swid_schema) as swid:
+    swid_schema = list(zip(swid_schema, [model_grid.shape[0], model_grid.shape[1], weather.shape[0]]))
+    with model.sink('soil_water_infiltration__depth').load(surface_water_infiltation__depth, swid_schema) as swid:
         run_year(
-            mg=mg,
+            mg=model_grid,
             weather=weather,
             swid=swid,
         )

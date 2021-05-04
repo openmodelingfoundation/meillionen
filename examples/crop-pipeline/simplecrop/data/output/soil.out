@@ -4,7 +4,7 @@ Results of soil water balance simulation:
   Day   Solar     Max     Min                                          Evapo-    Soil   Plant   Water Content Drought   Water
    of    Rad.    Temp    Temp    Rain   Irrig  Runoff   Infil   Drain   Trans   Evap.  Trans. content   (mm3/  Stress  Stress
  Year (MJ/m2)    (oC)    (oC)    (mm)    (mm)    (mm)    (mm)    (mm)    (mm)    (mm)    (mm)    (mm)    mm3)  Factor  Factor
-    0********     0.0     0.0    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  246.50   1.700   1.000   1.000
+    0     0.0     0.0     0.0    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  246.50   1.700   1.000   1.000
     3    12.1    14.4     1.1    0.00    0.00    0.00    0.00    1.86    2.25    2.23    0.02  260.97   1.800   1.000   1.000
     6    12.4    21.1     5.0    0.00    0.00    0.00    0.00    2.25    2.64    2.62    0.02  264.09   1.821   1.000   1.000
     9     6.1    20.0     8.3    0.00    0.00    0.00    0.00    0.94    1.32    1.31    0.01  253.64   1.749   1.000   1.000

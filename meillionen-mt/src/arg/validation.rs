@@ -10,6 +10,9 @@ pub struct TensorValidator {
     pub resources: Vec<String>,
 }
 
+impl_try_from_u8!(TensorValidator);
+impl_try_from_validator!(TensorValidator);
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Columns {
     fields: Vec<Field>,

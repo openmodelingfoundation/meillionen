@@ -1,24 +1,24 @@
 import netCDF4
 import numpy as np
-from meillionen.io import PandasLoader, NetCDF4Saver
-from meillionen.resource import feather_sink, feather_source, netcdf_sink
+from meillionen.resource import PandasLoaderSaver, FeatherResource, NetCDFResource, NetCDFPreSaver, Unvalidated
 import pytest
 import xarray as xr
 
 
 def test_load_feather():
-    source = feather_sink("../examples/crop-pipeline/simplecrop/data/yearly.feather")
-    df = PandasLoader.load(source)
+    source = FeatherResource.from_dict({"path": "../examples/crop-pipeline/simplecrop/data/yearly.feather"})
+    df = PandasLoaderSaver(Unvalidated()).load(source)
     assert df.shape == (1, 26)
 
 
 def test_save_netcdf():
-    sink = netcdf_sink(
+    sink = NetCDFResource(
         path='data/swid.nc',
-        variable='soil_water_infiltration__depth'
+        variable='soil_water_infiltration__depth',
+        dimensions=['x', 'y', 'time']
     )
     swid_schema = [('x', 6), ('y', 11), ('time', 365)]
-    with NetCDF4Saver(sink, swid_schema) as swid:
+    with NetCDFPreSaver(Unvalidated()).load(sink, swid_schema) as swid:
         xs = xr.DataArray(np.array(range(6*11)).reshape((6, 11)), dims=('x', 'y'))
         swid.set_slice(xs, time=5)
     with netCDF4.Dataset('data/swid.nc', 'r') as swid:

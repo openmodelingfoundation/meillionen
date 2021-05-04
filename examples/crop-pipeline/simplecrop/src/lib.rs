@@ -1,14 +1,12 @@
-use arrow::array::{Float32Array, ArrayRef};
+use arrow::array::{Float32Array};
 use arrow::ipc::reader::StreamReader;
 use arrow::record_batch::RecordBatch;
-use libc::uintptr_t;
 use pyo3::exceptions::{PyIOError, PyKeyError, PyValueError, PyRuntimeError};
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
 use model::{DailyData, SimpleCropConfig, YearlyData};
 
-use crate::model::get_func_interface;
 use stable_eyre::eyre::WrapErr;
 
 mod model;
@@ -54,31 +52,11 @@ fn run_record_batch(
         energy_flux,
     };
 
-    let yearly = YearlyData::from_recordbatch_row(yearly_batch, 0).unwrap();
+    let yearly = YearlyData::from_recordbatch_row(yearly_batch, 0)?;
 
     let config = SimpleCropConfig { daily, yearly };
 
     config.run(&cli_path, &dir)
-}
-
-fn to_py_array(array: &ArrayRef, py: Python, pa: &PyModule) -> PyResult<PyObject> {
-    let (array_ptr, schema_ptr) = array.to_raw()
-        .map_err(|e| PyValueError::new_err(format!("{:?}", e)))?;
-    let array = pa.getattr("Array")?
-        .call_method1(
-            "_import_from_c",
-            (array_ptr as uintptr_t, schema_ptr as uintptr_t))?;
-    Ok(array.to_object(py))
-}
-
-fn to_recordbatch(rb: &RecordBatch, py: Python, pa: &PyModule) -> PyResult<PyObject> {
-    let schema = rb.schema();
-    let arrays = rb.columns().iter().map(|a| to_py_array(a, py, pa)).collect::<PyResult<Vec<PyObject>>>()?;
-    let names = schema.fields().iter().map(|f| f.name().as_str()).collect::<Vec<&str>>();
-    let record = pa
-        .getattr("RecordBatch")?
-        .call_method1("from_arrays", (arrays, names))?;
-    Ok(record.to_object(py))
 }
 
 fn run(
@@ -92,12 +70,12 @@ fn run(
         let rc = stream
             .into_iter()
             .next()
-            .ok_or(stable_eyre::eyre::eyre!("Stream was empty")).unwrap()
-            .map_err(|e| stable_eyre::eyre::eyre!(e)).unwrap();
+            .ok_or(stable_eyre::eyre::eyre!("Stream was empty"))?
+            .map_err(|e| stable_eyre::eyre::eyre!(e))?;
         Ok(rc)
     };
-    let daily_batch = stream_convert(daily_stream).unwrap();
-    let yearly_batch = stream_convert(yearly_stream).unwrap();
+    let daily_batch = stream_convert(daily_stream)?;
+    let yearly_batch = stream_convert(yearly_stream)?;
     run_record_batch(cli_path, dir, &daily_batch, &yearly_batch)
 }
 
@@ -130,15 +108,6 @@ fn simplecrop_omf(_py: Python, m: &PyModule) -> PyResult<()> {
             Ok(PyBytes::new(_py, sink.as_ref()))
         };
         Ok((to_pybytes(plant)?, to_pybytes(soil)?))
-    }
-
-    #[pyfn(m, "get_func_interface")]
-    fn get_func_interface_py(_py: Python) -> PyResult<PyObject> {
-        let rb = get_func_interface()
-            .map_err(|e| PyValueError::new_err(format!("{:?}", e)))?
-            .into_recordbatch();
-        let pyarrow = _py.import("pyarrow")?;
-        to_recordbatch(&rb, _py, pyarrow)
     }
 
     Ok(())

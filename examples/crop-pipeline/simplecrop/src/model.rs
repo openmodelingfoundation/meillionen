@@ -12,33 +12,6 @@ use arrow::datatypes::{ArrowPrimitiveType, Field, Schema};
 use arrow::record_batch::RecordBatch;
 use stable_eyre::eyre::WrapErr;
 
-use meillionen_mt::arg::validation::{Columns, DataFrameValidator, Unvalidated};
-use meillionen_mt::model::{FuncInterface, ResourceBuilder};
-use std::convert::{TryInto};
-
-macro_rules! make_field_vec {
-    ($(($name: ident, $dt: ident)), *) => {
-        vec![
-            $(Field::new(stringify!($name), $dt, false)), *
-        ]
-    }
-}
-
-fn make_arg_description(
-    name: &str,
-    description: &str,
-    resources: Vec<String>,
-    fields: Vec<Field>,
-) -> stable_eyre::Result<(String, Vec<u8>)> {
-    let schema = Arc::new(Columns::new(fields));
-    let dataframe_validator = DataFrameValidator::new(resources, description, schema);
-    let serialized = (&dataframe_validator).try_into().wrap_err("serializing dataframe validator failed")?;
-    Ok((
-        name.to_string(),
-        serialized
-    ))
-}
-
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DailyData<'a> {
     // irrigation related
@@ -53,9 +26,6 @@ pub struct DailyData<'a> {
 }
 
 impl<'a> DailyData<'a> {
-    const NAME: &'static str = "daily";
-    const DESCRIPTION: &'static str = "Daily inputs that influence crop yield";
-
     pub fn save_irrigation<W: Write>(&self, buf: &mut W) -> io::Result<()> {
         let mut i = 1;
         for obs in self.irrigation.iter() {
@@ -80,24 +50,6 @@ impl<'a> DailyData<'a> {
             buf.write_all(row.as_bytes())?;
         }
         Ok(())
-    }
-
-    pub fn arg_description() -> stable_eyre::Result<(String, Vec<u8>)> {
-        use arrow::datatypes::DataType::*;
-        let fields = make_field_vec![
-            (irrigation, Float32),
-            (temp_max, Float32),
-            (temp_min, Float32),
-            (rainfall, Float32),
-            (photosynthetic_energy_flux, Float32),
-            (energy_flux, Float32)
-        ];
-        make_arg_description(
-            Self::NAME.as_ref(),
-            Self::DESCRIPTION.as_ref(),
-            vec!["meillionen::FeatherResource".to_string(), "meillionen::ParquetResource".to_string()],
-            fields,
-        )
     }
 }
 
@@ -137,9 +89,6 @@ pub struct YearlyData {
 }
 
 impl YearlyData {
-    const NAME: &'static str = "yearly";
-    const DESCRIPTION: &'static str = "Yearly parameters influencing crop growth";
-
     fn value<T: ArrowPrimitiveType>(
         rb: &RecordBatch,
         name: &str,
@@ -155,44 +104,6 @@ impl YearlyData {
                 T::DATA_TYPE,
                 rb.column(col_ind).data_type()
             )))
-    }
-
-    pub fn arg_description() -> stable_eyre::Result<(String, Vec<u8>)> {
-        use arrow::datatypes::DataType::*;
-        let fields = make_field_vec![
-            (plant_leaves_max_number, Float32),
-            (plant_emp2, Float32),
-            (plant_emp1, Float32),
-            (plant_density, Float32),
-            (plant_nb, Float32),
-            (plant_leaf_max_appearance_rate, Float32),
-            (plant_growth_canopy_fraction, Float32),
-            (plant_min_repro_growth_temp, Float32),
-            (plant_repro_phase_duration, Float32),
-            (plant_leaves_number_of, Float32),
-            (plant_leaf_area_index, Float32),
-            (plant_matter, Float32),
-            (plant_matter_root, Float32),
-            (plant_matter_canopy, Float32),
-            (plant_matter_leaves_removed, Float32),
-            (plant_development_phase, Float32),
-            (plant_leaf_specific_area, Float32),
-            (soil_water_content_wilting_point, Float32),
-            (soil_water_content_field_capacity, Float32),
-            (soil_water_content_saturation, Float32),
-            (soil_profile_depth, Float32),
-            (soil_drainage_daily_percent, Float32),
-            (soil_runoff_curve_number, Float32),
-            (soil_water_storage, Float32),
-            (day_of_planting, Int32),
-            (printout_freq, Int32)
-        ];
-        make_arg_description(
-            Self::NAME.as_ref(),
-            Self::DESCRIPTION.as_ref(),
-            vec!["meillionen::FeatherResource".to_string(), "meillionen::ParquetResource".to_string()],
-            fields,
-        )
     }
 
     pub fn from_recordbatch_row(rb: &RecordBatch, i: usize) -> stable_eyre::Result<Self> {
@@ -321,26 +232,6 @@ impl Default for YearlyData {
     }
 }
 
-pub fn get_func_interface() -> stable_eyre::Result<FuncInterface> {
-    let mut builder = ResourceBuilder::new("simplecrop_omf");
-
-    let (daily_key, daily_source) = DailyData::arg_description()?;
-    builder.add("source", daily_key.as_str(), "dataframe_validator", daily_source.as_slice())?;
-    let (yearly_key, yearly_source) = YearlyData::arg_description()?;
-    builder.add("source", yearly_key.as_str(), "dataframe_validator", yearly_source.as_slice())?;
-
-    let (soil_key, soil_sink) = SoilDataSet::arg_description()?;
-    builder.add("sink", soil_key.as_str(), "dataframe_validator", soil_sink.as_slice())?;
-    let (plant_key, plant_sink) = PlantDataSet::arg_description()?;
-    builder.add("sink", plant_key.as_str(), "dataframe_validator", plant_sink.as_slice())?;
-    let unval: Vec<u8> = (&Unvalidated::new()).try_into().wrap_err("unavalidated serialization error")?;
-    builder.add("sink", "tempdir", "unvalidated", unval.as_slice())?;
-    let rb = builder.extract_to_recordbatch();
-
-    let fi = FuncInterface::try_new(rb).unwrap();
-    Ok(fi)
-}
-
 #[derive(Debug, Default)]
 pub struct SoilDataSet {
     pub day_of_year: Vec<i32>,
@@ -357,9 +248,6 @@ pub struct SoilDataSet {
 }
 
 impl SoilDataSet {
-    const NAME: &'static str = "soil";
-    const DESCRIPTION: &'static str = "Daily soil characteristics";
-
     fn deserialize(&mut self, vs: &Vec<&str>) -> Option<()> {
         let (sdoy, srest) = vs.split_first().unwrap();
         let doy = sdoy.parse::<i32>().ok()?;
@@ -397,30 +285,6 @@ impl SoilDataSet {
         }
         Ok(results)
     }
-
-    pub fn arg_description() -> stable_eyre::Result<(String, Vec<u8>)> {
-        use arrow::datatypes::DataType::*;
-        let fields = make_field_vec![
-            (day_of_year, Int32),
-            (soil_daily_runoff, Float32),
-            (soil_daily_infiltration, Float32),
-            (soil_daily_drainage, Float32),
-            (soil_evapotranspiration, Float32),
-            (soil_evaporation, Float32),
-            (plant_potential_transpiration, Float32),
-            (soil_water_storage_depth, Float32),
-            (soil_water_profile_ratio, Float32),
-            (soil_water_deficit_stress, Float32),
-            (soil_water_excess_stress, Float32)
-        ];
-        make_arg_description(
-            Self::NAME.as_ref(),
-            Self::DESCRIPTION.as_ref(),
-            vec!["meillionen::FeatherResource".to_string(), "meillionen::ParquetResource".to_string()],
-
-            fields,
-        )
-    }
 }
 
 #[derive(Debug, Default)]
@@ -436,9 +300,6 @@ pub struct PlantDataSet {
 }
 
 impl PlantDataSet {
-    const NAME: &'static str = "plant";
-    const DESCRIPTION: &'static str = "Daily plant characteristic results";
-
     fn deserialize(&mut self, vs: &Vec<&str>) -> Option<()> {
         let (sdoy, srest) = vs.split_first().unwrap();
         let doy = sdoy.parse::<i32>().ok()?;
@@ -474,26 +335,6 @@ impl PlantDataSet {
             results.deserialize(&data);
         }
         Ok(results)
-    }
-
-    pub fn arg_description() -> stable_eyre::Result<(String, Vec<u8>)> {
-        use arrow::datatypes::DataType::*;
-        let fields = make_field_vec![
-            (day_of_year, Int32),
-            (air_accumulated_temp, Float32),
-            (plant_matter, Float32),
-            (plant_matter_canopy, Float32),
-            (plant_matter_fruit, Float32),
-            (plant_matter_root, Float32),
-            (plant_leaf_area_index, Float32)
-        ];
-        make_arg_description(
-            Self::NAME.as_ref(),
-            Self::DESCRIPTION.as_ref(),
-            vec!["meillionen::FeatherResource".to_string(), "meillionen::ParquetResource".to_string()],
-
-            fields,
-        )
     }
 }
 
@@ -691,15 +532,16 @@ mod tests {
     #[test]
     fn read_soil_t() {
         let data = SoilDataSet::load("data/output/soil.out").unwrap();
-        assert_eq!(data.soil_daily_runoff[0], 0.0f32);
-        assert_eq!(data.soil_daily_infiltration[0], 0.0f32);
-        assert_eq!(data.soil_daily_drainage[0], 1.86f32);
-        assert_eq!(data.soil_evapotranspiration[0], 2.25f32);
-        assert_eq!(data.soil_evaporation[0], 2.23f32);
-        assert_eq!(data.plant_potential_transpiration[0], 0.02f32);
-        assert_eq!(data.soil_water_storage_depth[0], 260.97f32);
-        assert_eq!(data.soil_water_profile_ratio[0], 1.8f32);
-        assert_eq!(data.soil_water_deficit_stress[0], 1.0f32);
-        assert_eq!(data.soil_water_excess_stress[0], 1.0f32);
+        let i = 1;
+        assert_eq!(data.soil_daily_runoff[i], 0.0f32);
+        assert_eq!(data.soil_daily_infiltration[i], 0.0f32);
+        assert_eq!(data.soil_daily_drainage[i], 1.86f32);
+        assert_eq!(data.soil_evapotranspiration[i], 2.25f32);
+        assert_eq!(data.soil_evaporation[i], 2.23f32);
+        assert_eq!(data.plant_potential_transpiration[i], 0.02f32);
+        assert_eq!(data.soil_water_storage_depth[i], 260.97f32);
+        assert_eq!(data.soil_water_profile_ratio[i], 1.8f32);
+        assert_eq!(data.soil_water_deficit_stress[i], 1.0f32);
+        assert_eq!(data.soil_water_excess_stress[i], 1.0f32);
     }
 }

@@ -114,125 +114,77 @@ impl ResourceBuilder {
     }
 }
 
-fn build_from_recordbatch<T, F>(rb: RecordBatch, f: F) -> stable_eyre::Result<T>
-    where F: FnOnce(String, RecordBatch) -> T
-{
-    use arrow::datatypes::DataType;
-    let names = [
-        ("field", DataType::Utf8),
-        ("name", DataType::Utf8),
-        ("resource", DataType::Utf8),
-        ("payload", DataType::Binary)
-    ];
-    for (field, meta) in rb.schema().fields().iter().zip(names.iter()) {
-        let (name, dt) = meta;
-        let fname = field.name().as_str();
-        if &fname != name {
-            return Err(stable_eyre::eyre::eyre!("field name mismatch: expected {} got {}", name, fname));
-        }
-        if field.data_type() != dt {
-            return Err(stable_eyre::eyre::eyre!("datatype mismatch for field {}: expected {} got {}", fname, dt, field.data_type()))
-        }
-    }
-    let name = rb
-        .schema()
-        .metadata()
-        .get("meillionen-name")
-        .ok_or(stable_eyre::eyre::eyre!("metadata was missing key 'meillionen-name'"))
-        .map(|name| name.to_string())?;
-    Ok(f(name, rb))
+pub fn client_call_cli(
+    program_path: &str,
+    rb: &RecordBatch,
+) -> stable_eyre::Result<Output> {
+    let mut cmd = Command::new(program_path)
+        .arg("run")
+        .stdin(Stdio::piped())
+        .stderr(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap_or_else(|_| panic!("could not spawn process {}", program_path));
+
+    let stdin = cmd.stdin.take().wrap_err("could not open stdin")?;
+    let mut sw = StreamWriter::try_new(stdin, rb.schema().as_ref()).wrap_err(format!("could not create input stream writer for {}", program_path))?;
+    sw.write(rb).wrap_err("could not write record batch to input stream")?;
+    sw.finish().wrap_err("failed to finish record batch stream to stdout")?;
+    cmd.wait_with_output().wrap_err_with(|| format!("waiting for program {} to finish failed", program_path))
 }
 
-#[derive(Debug)]
-pub struct FuncInterface {
-    name: String,
-    rb: RecordBatch
+pub fn client_create_interface_from_cli(path: &str) -> stable_eyre::Result<RecordBatch> {
+    let child = Command::new(path)
+        .arg("interface")
+        .stdin(Stdio::piped())
+        .stderr(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .wrap_err_with(|| format!("calling cli program {} failed", path))?
+        .wait_with_output()
+        .wrap_err_with(|| format!("executing cli program {} failed", path))?;
+    let mut sr = StreamReader::try_new(child.stdout.as_slice())
+        .wrap_err_with(|| format!("could not read stdout from program {}", path))?;
+    let res = sr.next()
+        .ok_or(stable_eyre::eyre::eyre!("record batch stream for program {} empty", path))?;
+    if let Ok(rb) = res {
+        Ok(rb)
+    } else {
+        Err(stable_eyre::eyre::eyre!("could not read record batch for program {}", path))
+    }
 }
 
-impl FuncInterface {
-    pub fn try_new(rb: RecordBatch) -> stable_eyre::Result<Self> {
-        build_from_recordbatch(rb, move |name: String, rb: RecordBatch| {
-            Self {
-                name,
-                rb
-            }
-        })
-    }
-
-    pub fn into_recordbatch(self) -> RecordBatch {
-        self.rb
-    }
-
-    pub fn to_cli(&self) -> stable_eyre::Result<FuncInterface> {
-        let mut app = clap::App::new(self.name.as_str()).subcommand(
-            clap::SubCommand::with_name("interface").about("json describing the model interface"),
-        );
-        let run = clap::SubCommand::with_name("run").about("run the model");
-        app = app.subcommand(run);
-        let matches = app.get_matches_from(
-            vec![OsString::from(self.name.as_str())]
-                .into_iter()
-                .chain(env::args_os().dropping(2)),
-        );
-        if matches.subcommand_matches("interface").is_some() {
-            let mut sw =
-                StreamWriter::try_new(std::io::stdout(), self.rb.schema().as_ref())
-                    .wrap_err("failed to open stdout stream")?;
-            sw.write(&self.rb)
-                .wrap_err("failed to write interface record batch to stdout")?;
-            std::process::exit(0);
-        } else if matches.subcommand_matches("run").is_some() {
-            let mut sr = StreamReader::try_new(std::io::stdin()).wrap_err("could not read input of run command")?;
-            let res = sr.next().ok_or(stable_eyre::eyre::eyre!("could not read one record batch from stdin"))?;
-            if let Ok(rb) = res {
-                Self::try_new(rb)
-            } else {
-                Err(stable_eyre::eyre::eyre!("error deserializing record batch"))
-            }
-        } else {
-            std::process::exit(1);
-        }
-    }
-
-    pub fn call_cli(
-        &self,
-        program_path: &str,
-        fc: &mut FuncRequest,
-    ) -> stable_eyre::Result<Output> {
-        let mut cmd = Command::new(program_path)
-            .arg("run")
-            .stdin(Stdio::piped())
-            .stderr(Stdio::piped())
-            .stdout(Stdio::piped())
-            .spawn()
-            .unwrap_or_else(|_| panic!("could not spawn process {}", program_path));
-
-        let stdin = cmd.stdin.take().wrap_err("could not open stdin")?;
-        let rb = fc.recordbatch();
-        let mut sr = StreamWriter::try_new(stdin, rb.schema().as_ref()).wrap_err(format!("could not create input stream writer for {}", program_path))?;
-        sr.write(rb).wrap_err("could not write record batch to input stream")?;
-        cmd.wait_with_output().wrap_err_with(|| format!("waiting for program {} to finish failed", program_path))
-    }
-
-    pub fn from_cli(path: &str) -> stable_eyre::Result<Self> {
-        let child = Command::new(path)
-            .arg("interface")
-            .stdin(Stdio::piped())
-            .stderr(Stdio::piped())
-            .stdout(Stdio::piped())
-            .spawn()
-            .wrap_err_with(|| format!("calling cli program {} failed", path))?
-            .wait_with_output()
-            .wrap_err_with(|| format!("executing cli program {} failed", path))?;
-        let mut sr = StreamReader::try_new(child.stdout.as_slice())
-            .wrap_err_with(|| format!("could not read stdout from program {}", path))?;
+pub fn server_respond_from_cli(name: &str, interface: &RecordBatch) -> stable_eyre::Result<RecordBatch> {
+    let mut app = clap::App::new(name).subcommand(
+        clap::SubCommand::with_name("interface").about("json describing the model interface"),
+    );
+    let run = clap::SubCommand::with_name("run").about("run the model");
+    app = app.subcommand(run);
+    let matches = app.get_matches_from(
+        vec![OsString::from(name)]
+            .into_iter()
+            .chain(env::args_os().dropping(2)),
+    );
+    if matches.subcommand_matches("interface").is_some() {
+        let mut sw =
+            StreamWriter::try_new(std::io::stdout(), interface.schema().as_ref())
+                .wrap_err("failed to open stdout stream")?;
+        sw.write(interface)
+            .wrap_err("failed to write interface record batch to stdout")?;
+        sw.finish().wrap_err("failed to finish record batch stream to stdout")?;
+        std::process::exit(0);
+    } else if matches.subcommand_matches("run").is_some() {
+        let mut sr = StreamReader::try_new(std::io::stdin())
+            .wrap_err("could not read input of run command")?;
         let res = sr.next()
-            .ok_or(stable_eyre::eyre::eyre!("record batch stream for program {} empty", path))?;
+            .ok_or(stable_eyre::eyre::eyre!("could not read one record batch from stdin"))?;
         if let Ok(rb) = res {
-            Self::try_new(rb)
+            Ok(rb)
         } else {
-            Err(stable_eyre::eyre::eyre!("could not read record batch for program {}", path))
+            Err(stable_eyre::eyre::eyre!("error deserializing record batch"))
         }
+    } else {
+        std::process::exit(1);
     }
 }
 
@@ -242,24 +194,3 @@ pub struct SerializedResource {
     payload: Vec<u8>
 }
 pub type ResourceMap = BTreeMap<String, Arc<SerializedResource>>;
-
-#[derive(Debug)]
-pub struct FuncRequest {
-    name: String,
-    rb: RecordBatch
-}
-
-impl FuncRequest {
-    pub fn try_new(rb: RecordBatch) -> stable_eyre::Result<Self> {
-        build_from_recordbatch(rb, move |name: String, rb: RecordBatch| {
-            Self {
-                name,
-                rb
-            }
-        })
-    }
-
-    pub fn recordbatch(&self) -> &RecordBatch {
-        &self.rb
-    }
-}

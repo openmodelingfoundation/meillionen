@@ -16,6 +16,15 @@
   :members:
 ```
 
+## Function Interface
+
+```{eval-rst}
+.. currentmodule:: meillionen.meillionen
+.. automodule:: meillionen.meillionen
+  :members:
+  :special-members:
+```
+
 ## Client
 
 ```{eval-rst}

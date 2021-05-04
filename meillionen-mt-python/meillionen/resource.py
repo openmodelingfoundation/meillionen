@@ -112,7 +112,17 @@ class FuncRequest(FuncBase):
             yield (source, {'field': 'source', 'name': name})
 
 
-class FuncInterface(FuncBase):
+class FuncInterfaceClient(FuncBase):
+    SERIALIZERS = VALIDATORS
+
+    def _rows(self):
+        for (name, sink) in self._sinks.items():
+            yield (sink, {'field': 'sink', 'name': name})
+        for (name, source) in self._sources.items():
+            yield (source, {'field': 'source', 'name': name})
+
+
+class FuncInterfaceServer(FuncBase):
     SERIALIZERS = VALIDATORS
 
     def _rows(self):
@@ -125,15 +135,8 @@ class FuncInterface(FuncBase):
 class DataFrameResourceBase:
     RESOURCE_TYPES = []
 
-    def __init__(self, description, fields):
-        fields = self._normalize_fields(fields)
-        self.validator = DataFrameValidator.from_dict({
-            'resources': self.RESOURCE_TYPES,
-            'description': description,
-            'columns': {
-                'fields': fields
-            }
-        })
+    def __init__(self, validator: DataFrameValidator):
+        self.validator = validator
 
     @classmethod
     def _normalize_fields(cls, fields: List[Dict[str, Any]]):
@@ -145,7 +148,10 @@ class DataFrameResourceBase:
         return fields
 
 
-class PandasLoader(DataFrameResourceBase):
+class PandasLoaderSaver(DataFrameResourceBase):
+    """
+    A loader/saver to retrieve and persist a pandas dataframe to the location and format specified by a resource
+    """
     RESOURCE_TYPES = [FEATHER_RESOURCE, PARQUET_RESOURCE]
 
     PANDAS_LOADERS = {
@@ -153,22 +159,40 @@ class PandasLoader(DataFrameResourceBase):
         PARQUET_RESOURCE: pd.read_parquet
     }
 
-    def load(self, resource):
-        path = resource.to_dict()['path']
-        return self.PANDAS_LOADERS[resource.name](path)
-
-
-class PandasSaver(DataFrameResourceBase):
-    RESOURCE_TYPES = [FEATHER_RESOURCE, PARQUET_RESOURCE]
-
     PANDAS_SAVERS = {
         FEATHER_RESOURCE: 'to_feather',
         PARQUET_RESOURCE: 'to_parquet'
     }
 
-    def save(self, resource, df: pd.DataFrame):
+    @classmethod
+    def from_kwargs(cls, description, columns, resources=None):
+        cls._normalize_fields(columns['fields'])
+        validator = DataFrameValidator.from_dict({
+            'resources': cls.RESOURCE_TYPES if not resources else resources,
+            'description': description,
+            'columns': columns
+        })
+        return cls(validator)
+
+    def load(self, resource):
+        """
+        Loads a resource into pandas
+
+        :param resource: metadata describing the location and format of a dataset
+        :return: A pandas dataframe
+        """
         path = resource.to_dict()['path']
-        getattr(df, self.PANDAS_SAVERS[resource.name])(path)
+        return self.PANDAS_LOADERS[resource.name](path)
+
+    def save(self, resource, data: pd.DataFrame):
+        """
+        Saves a pandas dataframe to the location and in the format specified by a resource
+
+        :param sink_resource: metadata describing the location and format to save a dataset to
+        :param data: the data to be saved
+        """
+        path = resource.to_dict()['path']
+        getattr(data, self.PANDAS_SAVERS[resource.name])(path)
 
 
 class NetCDFPreSaver:
@@ -178,13 +202,18 @@ class NetCDFPreSaver:
         NETCDF_RESOURCE: NetCDFResource
     }
 
-    def __init__(self, description, dimensions, data_type):
-        self.validator = TensorValidator.from_dict({
-            'resources': self.RESOURCE_TYPES,
+    def __init__(self, validator: TensorValidator):
+        self.validator = validator
+
+    @classmethod
+    def from_kwargs(cls, description, data_type, dimensions):
+        validator = TensorValidator.from_dict({
+            'resources': cls.RESOURCE_TYPES,
             'description': description,
             'dimensions': dimensions,
             'data_type': data_type,
         })
+        return cls(validator)
 
     def load(self, sink, dimensions):
         return NetCDFSliceSaver(sink=sink, dimensions=dimensions)
@@ -231,19 +260,24 @@ class LandLabLoader:
 
     RESOURCE_TYPES = [FILE_RESOURCE]
 
-    def __init__(self, description, dimensions, data_type):
-        self.validator = TensorValidator.from_dict({
-            'resources': self.RESOURCE_TYPES,
+    def __init__(self, validator):
+        self.validator = validator
+
+    @classmethod
+    def from_kwargs(cls, description, dimensions, data_type):
+        validator = TensorValidator.from_dict({
+            'resources': cls.RESOURCE_TYPES,
             'description': description,
             'dimensions': dimensions,
             'data_type': data_type,
         })
+        return cls(validator)
 
     def load(self, resource):
         """
         Loads a raster file into a landlab grid
 
-        :param dem_resource: metadata describing where the raster is located and its format
+        :param resource: metadata describing where the raster is located and its format
         :return: A landlab grid
         """
         dem = resource.to_dict()

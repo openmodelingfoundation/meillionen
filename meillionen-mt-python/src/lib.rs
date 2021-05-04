@@ -15,8 +15,7 @@ use meillionen_mt::arg::validation;
 use meillionen_mt::model;
 use arrow::array::{ArrayRef, make_array_from_raw, Array};
 use arrow::record_batch::RecordBatch;
-use arrow::datatypes::DataType;
-use std::collections::HashMap;
+use arrow::datatypes::{Field, Schema};
 use std::convert::{TryInto, TryFrom};
 use arrow::ffi;
 
@@ -50,7 +49,7 @@ fn to_py_array(array: &ArrayRef, py: Python, pa: &PyModule) -> PyResult<PyObject
     Ok(array.to_object(py))
 }
 
-fn to_recordbatch(rb: &RecordBatch, py: Python, pa: &PyModule) -> PyResult<PyObject> {
+fn to_py_recordbatch(rb: &RecordBatch, py: Python, pa: &PyModule) -> PyResult<PyObject> {
     let schema = rb.schema();
     let arrays = rb.columns().iter().map(|a| to_py_array(a, py, pa)).collect::<PyResult<Vec<PyObject>>>()?;
     let names = schema.fields().iter().map(|f| f.name().as_str()).collect::<Vec<&str>>();
@@ -70,56 +69,21 @@ fn to_rust_array(obj: &PyAny) -> PyResult<ArrayRef> {
     Ok(array)
 }
 
-macro_rules! impl_to_from_dict {
-    ($T:ty) => {
-        #[pymethods]
-        impl $T {
-            #[staticmethod]
-            fn from_dict(data: &PyAny) -> PyResult<Self> {
-                Ok(Self {
-                    inner: from_dict(data)?
-                })
-            }
-
-            fn to_dict(&self) -> PyResult<PyObject> {
-                to_dict(&self.inner)
-            }
-        }
+fn to_rust_recordbatch(obj: &PyAny) -> PyResult<RecordBatch> {
+    let pycolumns = obj.getattr("columns")?;
+    let names: Vec<String> = obj.getattr("schema")?.getattr("names")?.extract()?;
+    let mut columns = vec![];
+    let mut fields = vec![];
+    for (pycol, name) in pycolumns.iter()?.zip(names) {
+        let pycol = pycol?;
+        let col = to_rust_array(pycol)?;
+        let dt = col.data_type().clone();
+        let nullable = col.null_count() > 0;
+        columns.push(col);
+        fields.push(Field::new(name.as_str(), dt, nullable))
     }
-}
-
-#[pyclass]
-#[derive(Debug)]
-struct DataFrameValidator {
-    inner: validation::DataFrameValidator
-}
-
-impl_to_from_dict!(DataFrameValidator);
-
-#[pyclass]
-#[derive(Debug)]
-struct TensorValidator {
-    inner: validation::TensorValidator
-}
-
-impl_to_from_dict!(TensorValidator);
-
-#[pyclass]
-#[derive(Debug)]
-struct Unvalidated {
-    inner: validation::Unvalidated
-}
-
-impl_to_from_dict!(Unvalidated);
-
-#[pymethods]
-impl Unvalidated {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: validation::Unvalidated::new()
-        }
-    }
+    let rb = RecordBatch::try_new(Arc::new(Schema::new(fields)), columns).unwrap();
+    Ok(rb)
 }
 
 macro_rules! impl_from_arrow_array {
@@ -163,6 +127,79 @@ macro_rules! impl_to_builder {
     }
 }
 
+macro_rules! impl_to_from_dict {
+    ($T:ty) => {
+        #[pymethods]
+        impl $T {
+            #[staticmethod]
+            fn from_dict(data: &PyAny) -> PyResult<Self> {
+                Ok(Self {
+                    inner: from_dict(data)?
+                })
+            }
+
+            fn to_dict(&self) -> PyResult<PyObject> {
+                to_dict(&self.inner)
+            }
+        }
+    }
+}
+
+macro_rules! impl_name_prop {
+    ($T:ty) => {
+        #[pymethods]
+        impl $T {
+            #[getter]
+            fn name(&self) -> String {
+                std::any::type_name::<Self>().to_string()
+            }
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+struct DataFrameValidator {
+    inner: validation::DataFrameValidator
+}
+
+impl_to_from_dict!(DataFrameValidator);
+impl_from_arrow_array!(DataFrameValidator, validation::DataFrameValidator);
+impl_to_builder!(DataFrameValidator);
+impl_name_prop!(DataFrameValidator);
+
+#[pyclass]
+#[derive(Debug)]
+struct TensorValidator {
+    inner: validation::TensorValidator
+}
+
+impl_to_from_dict!(TensorValidator);
+impl_from_arrow_array!(TensorValidator, validation::TensorValidator);
+impl_to_builder!(TensorValidator);
+impl_name_prop!(TensorValidator);
+
+#[pyclass]
+#[derive(Debug)]
+struct Unvalidated {
+    inner: validation::Unvalidated
+}
+
+impl_to_from_dict!(Unvalidated);
+impl_from_arrow_array!(Unvalidated, validation::Unvalidated);
+impl_to_builder!(Unvalidated);
+impl_name_prop!(Unvalidated);
+
+#[pymethods]
+impl Unvalidated {
+    #[new]
+    fn new() -> Self {
+        Self {
+            inner: validation::Unvalidated::new()
+        }
+    }
+}
+
 #[pyclass]
 #[derive(Debug)]
 struct ResourceBuilder {
@@ -183,7 +220,7 @@ impl ResourceBuilder {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let pa = py.import("pyarrow")?;
-        to_recordbatch(&rb, py, pa)
+        to_py_recordbatch(&rb, py, pa)
     }
 }
 
@@ -196,18 +233,17 @@ struct NetCDFResource {
 impl_to_from_dict!(NetCDFResource);
 impl_from_arrow_array!(NetCDFResource, resource::NetCDFResource);
 impl_to_builder!(NetCDFResource);
+impl_name_prop!(NetCDFResource);
 
 #[pymethods]
 impl NetCDFResource {
     #[new]
-    fn __init__(path: String, variable: String, dtype: &PyAny) -> PyResult<Self> {
-        let data_type: DataType = depythonize(dtype)?;
+    fn __init__(path: String, variable: String, dimensions: Vec<String>) -> PyResult<Self> {
         Ok(Self {
             inner: resource::NetCDFResource {
                 path,
                 variable,
-                data_type,
-                slices: HashMap::new()
+                dimensions
             }
         })
     }
@@ -222,6 +258,7 @@ struct FeatherResource {
 impl_to_from_dict!(FeatherResource);
 impl_from_arrow_array!(FeatherResource, resource::FeatherResource);
 impl_to_builder!(FeatherResource);
+impl_name_prop!(FeatherResource);
 
 #[pymethods]
 impl FeatherResource {
@@ -244,6 +281,7 @@ struct ParquetResource {
 impl_to_from_dict!(ParquetResource);
 impl_from_arrow_array!(ParquetResource, resource::ParquetResource);
 impl_to_builder!(ParquetResource);
+impl_name_prop!(ParquetResource);
 
 #[pymethods]
 impl ParquetResource {
@@ -266,6 +304,7 @@ struct FileResource {
 impl_to_from_dict!(FileResource);
 impl_from_arrow_array!(FileResource, resource::FileResource);
 impl_to_builder!(FileResource);
+impl_name_prop!(FileResource);
 
 #[pymethods]
 impl FileResource {
@@ -276,44 +315,6 @@ impl FileResource {
                 path
             }
         }
-    }
-}
-
-#[pyclass]
-#[derive(Debug)]
-struct FuncRequest {
-    inner: model::FuncRequest,
-}
-
-#[pymethods]
-/// A request against a function interface
-impl FuncRequest {
-    #[new]
-    pub fn new(rb: &mut ResourceBuilder) -> PyResult<Self> {
-        Ok(Self {
-            inner: model::FuncRequest::try_new(rb.inner.extract_to_recordbatch())
-                .map_err(value_error)?,
-        })
-    }
-
-    pub fn extract_to_table(&mut self) -> PyResult<PyObject> {
-        let rb = self.inner.recordbatch();
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let pyarrow = py.import("pyarrow")?;
-        to_recordbatch(rb, py, pyarrow)
-    }
-}
-
-#[pyclass]
-#[derive(Debug)]
-pub struct FuncInterface {
-    inner: Arc<model::FuncInterface>,
-}
-
-impl FuncInterface {
-    pub fn new(inner: Arc<model::FuncInterface>) -> Self {
-        Self { inner }
     }
 }
 
@@ -328,11 +329,10 @@ impl FuncInterface {
 /// :returns: the stdout or stderr of the program execution
 /// :rtype: str
 #[pyfunction]
-#[text_signature = "(fi, program_name, fc, /)"]
-fn client_call_cli(fi: &FuncInterface, program_name: &str, fc: &mut FuncRequest) -> PyResult<String> {
-    let output = fi
-        .inner
-        .call_cli(program_name, &mut fc.inner)
+#[text_signature = "(program_name, fc, /)"]
+fn client_call_cli(program_name: &str, pyrb: &PyAny) -> PyResult<String> {
+    let request = to_rust_recordbatch(pyrb)?;
+    let output = model::client_call_cli(program_name, &request)
         .map_err(|err| PyIOError::new_err(format!("{:?}", err)))?;
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
@@ -354,15 +354,18 @@ fn client_call_cli(fi: &FuncInterface, program_name: &str, fc: &mut FuncRequest)
 
 /// Extract arguments given to the model being executed on the command line
 ///
-/// :param fi: a function interface
-/// :type fi: FuncInterface
-/// :returns: a function request
+/// :param pyrb: an interface record batch
+/// :type pyrb: RecordBatch
+/// :returns: a request record batch
 /// :rtype: FuncRequest
 #[pyfunction]
-#[text_signature = "(fi, /)"]
-fn server_process_cli_stdin(py: Python, fi: &FuncInterface) -> PyResult<PyObject> {
+#[text_signature = "(pyrb, /)"]
+fn server_respond_from_cli(py: Python, name: &str, pyrb: &PyAny) -> PyResult<PyObject> {
+    let interface = to_rust_recordbatch(pyrb)?;
+    let request = model::server_respond_from_cli(name, &interface)
+        .map_err(value_error)?;
     let pa = py.import("pyarrow")?;
-    to_recordbatch(&fi.inner.to_cli().map_err(value_error)?.into_recordbatch(), py, pa)
+    to_py_recordbatch(&request, py, pa)
 }
 
 /// Create an command line interface wrapper to a model
@@ -373,17 +376,20 @@ fn server_process_cli_stdin(py: Python, fi: &FuncInterface) -> PyResult<PyObject
 /// :rtype: FuncInterface
 #[pyfunction]
 #[text_signature = "(path, /)"]
-fn client_create_interface_from_cli(path: &str) -> PyResult<FuncInterface> {
-    Ok(FuncInterface::new(Arc::new(
-        model::FuncInterface::from_cli(path).map_err(|e| PyIOError::new_err(format!("{:?}", e)))?,
-    )))
+fn client_create_interface_from_cli(path: &str) -> PyResult<PyObject> {
+    let rb = model::client_create_interface_from_cli(path)
+        .map_err(|e| PyIOError::new_err(format!("{:?}", e)))?;
+    let gil = Python::acquire_gil();
+    let py = gil.python();
+    let pa = py.import("pyarrow")?;
+    to_py_recordbatch(&rb, py, pa)
 }
 
 #[pymodule]
 fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(pyo3::wrap_pyfunction!(client_call_cli, m)?)?;
     m.add_function(pyo3::wrap_pyfunction!(client_create_interface_from_cli, m)?)?;
-    m.add_function(pyo3::wrap_pyfunction!(server_process_cli_stdin, m)?)?;
+    m.add_function(pyo3::wrap_pyfunction!(server_respond_from_cli, m)?)?;
 
     m.add_class::<ResourceBuilder>()?;
     m.add_class::<FileResource>()?;
@@ -394,9 +400,6 @@ fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<DataFrameValidator>()?;
     m.add_class::<TensorValidator>()?;
     m.add_class::<Unvalidated>()?;
-
-    m.add_class::<FuncRequest>()?;
-    m.add_class::<FuncInterface>()?;
 
     array::init(m)?;
 
