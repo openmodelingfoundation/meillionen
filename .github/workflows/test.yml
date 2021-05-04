@@ -63,7 +63,6 @@ jobs:
           --manifest-path meillionen-mt-python/Cargo.toml \
           --cargo-extra-args='--features "pyo3/extension-module"' \
           --out wheels \
-          && ls target/wheels \
           && python -m pip install wheels/*.whl
   publish-release:
     name: Publish releases of packages to pypi
