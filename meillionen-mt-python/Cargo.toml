@@ -33,7 +33,7 @@ classifier = [
 
 [dependencies]
 arrow = "3.0.0"
-parquet = "3.0.0"
+parquet = "4.0.0"
 indoc = "1.0.3"
 meillionen-mt = { path = "../meillionen-mt", version = "0.1.0" }
 pyo3 = "0.13.2"
