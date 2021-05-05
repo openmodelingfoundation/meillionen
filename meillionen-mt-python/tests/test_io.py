@@ -20,7 +20,7 @@ def test_save_netcdf():
     swid_schema = [('x', 6), ('y', 11), ('time', 365)]
     with NetCDFHandler(Unvalidated()).save(sink, swid_schema) as swid:
         xs = xr.DataArray(np.array(range(6*11)).reshape((6, 11)), dims=('x', 'y'))
-        swid.set_slice(xs, time=5)
+        swid.set({'time': 5}, xs)
     with netCDF4.Dataset('data/swid.nc', 'r') as swid:
         assert swid.variables.keys() == {'soil_water_infiltration__depth'}
         v = swid['soil_water_infiltration__depth']
