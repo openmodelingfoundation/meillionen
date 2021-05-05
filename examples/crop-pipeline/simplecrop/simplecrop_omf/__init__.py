@@ -2,7 +2,7 @@ import os
 import pathlib
 
 from meillionen.meillionen import server_respond_from_cli
-from meillionen.resource import FuncInterfaceServer, FuncRequest, PandasLoaderSaver, Unvalidated
+from meillionen.resource import FuncInterfaceServer, FuncRequest, PandasHandler, Unvalidated
 from .simplecrop_omf import run
 from io import BytesIO
 import pyarrow as pa
@@ -24,7 +24,7 @@ class MkDirSaver:
 
 interface = FuncInterfaceServer(
     sources={
-        'daily': PandasLoaderSaver.from_kwargs(
+        'daily': PandasHandler.from_kwargs(
             description="Daily inputs that influence crop yield",
             columns={
                 'fields': [
@@ -43,7 +43,7 @@ interface = FuncInterfaceServer(
                 ]
             }
         ),
-        'yearly': PandasLoaderSaver.from_kwargs(
+        'yearly': PandasHandler.from_kwargs(
             description='Yearly parameters influencing crop growth',
             columns={
                 'fields': [
@@ -93,7 +93,7 @@ interface = FuncInterfaceServer(
         )
     },
     sinks={
-        'plant': PandasLoaderSaver.from_kwargs(
+        'plant': PandasHandler.from_kwargs(
             description='Daily plant characteristic results',
             columns={
                 'fields': [
@@ -114,7 +114,7 @@ interface = FuncInterfaceServer(
                 ]
             }
         ),
-        'soil': PandasLoaderSaver.from_kwargs(
+        'soil': PandasHandler.from_kwargs(
             description='Daily soil characteristics',
             columns={
                 'fields': [

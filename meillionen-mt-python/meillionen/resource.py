@@ -11,7 +11,7 @@ import pandas as pd
 import pyarrow as pa
 import netCDF4
 import xarray as xr
-from landlab.io import read_esri_ascii
+from landlab.io import read_esri_ascii, write_esri_ascii
 from meillionen.meillionen import \
     ResourceBuilder, \
     FeatherResource, \
@@ -148,7 +148,7 @@ class DataFrameResourceBase:
         return fields
 
 
-class PandasLoaderSaver(DataFrameResourceBase):
+class PandasHandler(DataFrameResourceBase):
     """
     A loader/saver to retrieve and persist a pandas dataframe to the location and format specified by a resource
     """
@@ -195,7 +195,7 @@ class PandasLoaderSaver(DataFrameResourceBase):
         getattr(data, self.PANDAS_SAVERS[resource.name])(path)
 
 
-class NetCDFPreSaver:
+class NetCDFHandler:
     RESOURCE_TYPES = [NETCDF_RESOURCE]
 
     NETCDF_SAVERS = {
@@ -215,8 +215,27 @@ class NetCDFPreSaver:
         })
         return cls(validator)
 
-    def load(self, sink, dimensions):
-        return NetCDFSliceSaver(sink=sink, dimensions=dimensions)
+    def load(self, resource):
+        return NetCDFSliceLoader(source=resource)
+
+    def save(self, resource, dimensions):
+        return NetCDFSliceSaver(sink=resource, dimensions=dimensions)
+
+
+NDSlice = Dict[str, Union[int, slice]]
+
+
+class NetCDFSliceLoader:
+    def __init__(self, source):
+        self.source = source
+        source = source.to_dict()
+        self.dataset = netCDF4.Dataset(source['path'], mode='r')
+        self.variable = self.dataset[source['variable']]
+
+    def get(self, slices: NDSlice):
+        vdims = self.variable.dimensions
+        xs = tuple(slices[d] if d in slices else slice(None) for d in vdims)
+        return self.variable[xs]
 
 
 class NetCDFSliceSaver:
@@ -230,7 +249,7 @@ class NetCDFSliceSaver:
             self.dataset.createDimension(dim, size)
         self.variable = self.dataset.createVariable(sink['variable'], 'f4', [f[0] for f in dimensions])
 
-    def set_slice(self, array: xr.DataArray, **slices: Dict[str, Union[int, slice]]):
+    def set(self, slices: Dict[str, Union[int, slice]], array: xr.DataArray):
         """
         Save an array to a slice of a NetCDF variable
 
@@ -253,7 +272,7 @@ class NetCDFSliceSaver:
         self._close()
 
 
-class LandLabLoader:
+class LandLabGridHandler:
     """
     A loader to load raster files into landlab grid objects
     """
@@ -285,3 +304,13 @@ class LandLabLoader:
         mg.status_at_node[mg.nodes_at_right_edge] = mg.BC_NODE_IS_FIXED_VALUE
         mg.status_at_node[np.isclose(z, -9999)] = mg.BC_NODE_IS_CLOSED
         return mg
+
+    def save(self, resource, mg):
+        """
+        Save a landlab model grid into an esri ascii grid
+
+        :param resource: metadata describing where to save the model grid to
+        :param mg: a landlab model grid
+        """
+        dem = resource.to_dict()
+        write_esri_ascii(dem['path'], mg)

@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 from landlab.components.overland_flow import OverlandFlow
 from landlab.components import SoilInfiltrationGreenAmpt
-from meillionen.io import LandLabLoader, PandasLoader, NetCDF4Saver
 from meillionen.meillionen import server_respond_from_cli
-from meillionen.resource import FuncInterfaceServer, FuncRequest, LandLabLoader, PandasLoaderSaver, NetCDFPreSaver
+from meillionen.resource import FuncInterfaceServer, FuncRequest, LandLabGridHandler, PandasHandler, NetCDFHandler
 import pandas as pd
 import xarray as xr
 
 
 model = FuncInterfaceServer(
     sources={
-        'weather': PandasLoaderSaver.from_kwargs(
+        'weather': PandasHandler.from_kwargs(
             description='Daily weather data for a year',
             columns={
                 'fields': [
@@ -21,14 +20,14 @@ model = FuncInterfaceServer(
                 ]
             }
         ),
-        'elevation': LandLabLoader.from_kwargs(
+        'elevation': LandLabGridHandler.from_kwargs(
             description='Elevation model. Each cell is a sq m',
             data_type='Float64',
             dimensions=['x', 'y']
         )
     },
     sinks={
-        'soil_water_infiltration__depth': NetCDFPreSaver.from_kwargs(
+        'soil_water_infiltration__depth': NetCDFHandler.from_kwargs(
             description='Surface water depth at each point in grid for each day in year',
             data_type='Float64',
             dimensions=['x', 'y', 'time']
@@ -76,7 +75,7 @@ def run_year(mg, weather: pd.DataFrame, swid):
     """
     for t, row in weather.iterrows():
         infiltration_depth = run_day(mg, row.rainfall__depth)
-        swid.set_slice(infiltration_depth, time=t)
+        swid.set({'time': t}, infiltration_depth)
 
 
 def run_year_cli():
@@ -96,7 +95,7 @@ def run_year_cli():
     swid_schema = surface_water_infiltation__depth.to_dict()['dimensions']
     # create dimension label / size parts [('x', 10), ('y', 10), ('time', 365')]
     swid_schema = list(zip(swid_schema, [model_grid.shape[0], model_grid.shape[1], weather.shape[0]]))
-    with model.sink('soil_water_infiltration__depth').load(surface_water_infiltation__depth, swid_schema) as swid:
+    with model.sink('soil_water_infiltration__depth').save(surface_water_infiltation__depth, swid_schema) as swid:
         run_year(
             mg=model_grid,
             weather=weather,
