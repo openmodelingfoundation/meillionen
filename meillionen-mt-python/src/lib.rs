@@ -149,8 +149,8 @@ macro_rules! impl_name_prop {
     ($T:ty) => {
         #[pymethods]
         impl $T {
-            #[getter]
-            fn name(&self) -> String {
+            #[classattr]
+            fn name() -> String {
                 std::any::type_name::<Self>().to_string()
             }
         }
