@@ -18,6 +18,7 @@ use arrow::record_batch::RecordBatch;
 use arrow::datatypes::{Field, Schema};
 use std::convert::{TryInto, TryFrom};
 use arrow::ffi;
+use pyo3::types::PyDict;
 
 fn value_error<T>(e: T) -> PyErr where T: std::fmt::Debug {
     PyValueError::new_err(format!("{:?}", e))
@@ -145,13 +146,42 @@ macro_rules! impl_to_from_dict {
     }
 }
 
-macro_rules! impl_name_prop {
+macro_rules! impl_transformers {
     ($T:ty) => {
         #[pymethods]
         impl $T {
+            #[staticmethod]
+            fn transformers(_py: Python) -> &PyDict {
+                PyDict::new(_py)
+            }
+        }
+    };
+    ($T:ty, $(($prop:ident, $transformer:ident)),*) => {
+        #[pymethods]
+        impl $T {
+            #[staticmethod]
+            fn transformers(_py: Python) -> PyResult<&PyDict> {
+                let dict = PyDict::new(_py);
+                $(dict.set_item(std::stringify!($prop), std::stringify!($transformer))
+                    .map_err(value_error)?;);*
+                Ok(dict)
+            }
+        }
+    }
+}
+
+macro_rules! impl_name_prop {
+    ($T:ty, $name:literal) => {
+        #[pymethods]
+        impl $T {
             #[classattr]
-            fn name() -> String {
-                std::any::type_name::<Self>().to_string()
+            fn name() -> &'static str {
+                std::any::type_name::<Self>()
+            }
+
+            #[classattr]
+            fn function_name() -> &'static str {
+                $name
             }
         }
     }
@@ -166,7 +196,8 @@ struct DataFrameValidator {
 impl_to_from_dict!(DataFrameValidator);
 impl_from_arrow_array!(DataFrameValidator, validation::DataFrameValidator);
 impl_to_builder!(DataFrameValidator);
-impl_name_prop!(DataFrameValidator);
+impl_name_prop!(DataFrameValidator, "data_frame");
+impl_transformers!(DataFrameValidator);
 
 #[pyclass]
 #[derive(Debug)]
@@ -177,7 +208,8 @@ struct TensorValidator {
 impl_to_from_dict!(TensorValidator);
 impl_from_arrow_array!(TensorValidator, validation::TensorValidator);
 impl_to_builder!(TensorValidator);
-impl_name_prop!(TensorValidator);
+impl_name_prop!(TensorValidator, "tensor");
+impl_transformers!(TensorValidator);
 
 #[pyclass]
 #[derive(Debug)]
@@ -188,7 +220,8 @@ struct Unvalidated {
 impl_to_from_dict!(Unvalidated);
 impl_from_arrow_array!(Unvalidated, validation::Unvalidated);
 impl_to_builder!(Unvalidated);
-impl_name_prop!(Unvalidated);
+impl_name_prop!(Unvalidated, "unvalidated");
+impl_transformers!(Unvalidated);
 
 #[pymethods]
 impl Unvalidated {
@@ -233,7 +266,8 @@ struct NetCDFResource {
 impl_to_from_dict!(NetCDFResource);
 impl_from_arrow_array!(NetCDFResource, resource::NetCDFResource);
 impl_to_builder!(NetCDFResource);
-impl_name_prop!(NetCDFResource);
+impl_name_prop!(NetCDFResource, "netcdf");
+impl_transformers!(NetCDFResource, (path, path_transformer));
 
 #[pymethods]
 impl NetCDFResource {
@@ -258,7 +292,8 @@ struct FeatherResource {
 impl_to_from_dict!(FeatherResource);
 impl_from_arrow_array!(FeatherResource, resource::FeatherResource);
 impl_to_builder!(FeatherResource);
-impl_name_prop!(FeatherResource);
+impl_name_prop!(FeatherResource, "feather");
+impl_transformers!(FeatherResource, (path, path_transformer));
 
 #[pymethods]
 impl FeatherResource {
@@ -281,7 +316,8 @@ struct ParquetResource {
 impl_to_from_dict!(ParquetResource);
 impl_from_arrow_array!(ParquetResource, resource::ParquetResource);
 impl_to_builder!(ParquetResource);
-impl_name_prop!(ParquetResource);
+impl_name_prop!(ParquetResource, "parquet");
+impl_transformers!(ParquetResource, (path, path_transformer));
 
 #[pymethods]
 impl ParquetResource {
@@ -304,7 +340,8 @@ struct FileResource {
 impl_to_from_dict!(FileResource);
 impl_from_arrow_array!(FileResource, resource::FileResource);
 impl_to_builder!(FileResource);
-impl_name_prop!(FileResource);
+impl_name_prop!(FileResource, "file");
+impl_transformers!(FileResource, (path, path_transformer));
 
 #[pymethods]
 impl FileResource {

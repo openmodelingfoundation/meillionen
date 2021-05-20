@@ -2,10 +2,12 @@
 Resources are references to datasets that provide the information necessary to
 load or save the data later.
 """
+import functools
+import os
 import pathlib
-from typing import Dict, Union, Any, List
+from typing import Dict, Union, Any, List, Optional
 
-from pyarrow.cffi import ffi
+from pyarrow.dataset import dataset, DirectoryPartitioning
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -57,6 +59,22 @@ class FuncBase:
     def __init__(self, sources: Dict[str, Any], sinks: Dict[str, Any]):
         self._sources = sources
         self._sinks = sinks
+
+    @property
+    def sinks(self):
+        return self._sinks.items()
+
+    @property
+    def sink_names(self):
+        return self._sinks.keys()
+
+    @property
+    def sources(self):
+        return self._sources.items()
+
+    @property
+    def source_names(self):
+        return self._sources.keys()
 
     def sink(self, name):
         return self._sinks[name]
@@ -115,6 +133,16 @@ class FuncRequest(FuncBase):
 class FuncInterfaceClient(FuncBase):
     SERIALIZERS = VALIDATORS
 
+    DEFAULT_RESOURCE = {
+        DataFrameValidator: ParquetResource,
+        TensorValidator: NetCDFResource,
+        Unvalidated: FileResource
+    }
+
+    def __init__(self, name, sources: Dict[str, Any], sinks: Dict[str, Any]):
+        super().__init__(sources=sources, sinks=sinks)
+        self.name = name
+
     def _rows(self):
         for (name, sink) in self._sinks.items():
             yield (sink, {'field': 'sink', 'name': name})
@@ -172,7 +200,7 @@ class PandasHandler(DataFrameResourceBase):
             'description': description,
             'columns': columns
         })
-        return cls(validator)
+        return cls(validator=validator)
 
     def load(self, resource):
         """

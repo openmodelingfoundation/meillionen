@@ -26,9 +26,8 @@ import netCDF4
 from meillionen.client import ClientFunctionModel
 from meillionen.resource import PandasHandler, FuncRequest
 from meillionen.resource import \
-    FileResource, FeatherResource, FeatherResource, NetCDFResource, ParquetResource
+    FileResource, FeatherResource, FeatherResource, NetCDFResource, ParquetResource, PathPrefixTransformer, ResourceFactory
 from prefect import task, Flow
-
 
 os.environ['SIMPLECROP'] = 'simplecrop'
 os.environ['RUST_BACKTRACE'] = '1'
@@ -235,4 +234,8 @@ with Flow('crop_pipeline') as flow:
     yield_chunks = simplecrop_process_chunk.map(simplecrop_chunks)
 
 flow.run()
+```
+
+```{code-cell} ipython3
+
 ```

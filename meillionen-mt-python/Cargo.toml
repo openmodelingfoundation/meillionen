@@ -33,10 +33,11 @@ classifier = [
 
 [dependencies]
 arrow = "4.0.0"
-parquet = "4.0.0"
 indoc = "1.0.3"
 libc = "0.2.93"
 meillionen-mt = { path = "../meillionen-mt", version = "0.1.0" }
+parquet = "4.0.0"
+paste = "1.0.5"
 pyo3 = "0.13.2"
 serde = "1.0.124"
 pythonize = "0.13.0"
