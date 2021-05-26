@@ -226,9 +226,9 @@ impl_transformers!(Unvalidated);
 #[pymethods]
 impl Unvalidated {
     #[new]
-    fn new() -> Self {
+    fn new(ext: &str) -> Self {
         Self {
-            inner: validation::Unvalidated::new()
+            inner: validation::Unvalidated::new(ext)
         }
     }
 }

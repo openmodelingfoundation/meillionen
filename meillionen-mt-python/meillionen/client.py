@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 import pyarrow as pa
 from pyarrow.dataset import DirectoryPartitioning, dataset
 
-from .resource import FuncInterfaceClient, FuncRequest
+from .resource import FuncInterfaceClient, FuncRequest, infer_resource
 from meillionen.meillionen import client_create_interface_from_cli, client_call_cli, FileResource, ParquetResource, \
     FeatherResource
 
@@ -78,18 +78,20 @@ class ClientFunctionModel:
     """
     A client that supports calling meillionen models as command line programs
     """
-    def __init__(self, interface: FuncInterfaceClient, path: str, sink_handle_provider):
+    def __init__(self, interface: FuncInterfaceClient, path: str, trial, sinks: Dict[str, Any], partitioning):
         """
         Create a command line interface to a meillionen model
 
         :param interface: metadata describing the model interface
         :param path: local path to the model. supports finding models
-        :param sink_handle_provider: provides handles given settings
+        :param sinks: provides handles given settings
         accessible the PATH environment variable
         """
         self.interface = interface
         self.path = path
-        self.sink_handle_provider = sink_handle_provider
+        self.trial = trial
+        self.sinks = sinks
+        self.partitioning = partitioning
 
     def source(self, name):
         return self.interface.source(name)
@@ -98,7 +100,7 @@ class ClientFunctionModel:
         return self.interface.sink(name)
 
     @classmethod
-    def from_path(cls, name: str, path: str, handle_provider_overrides=None) -> 'ClientFunctionModel':
+    def from_path(cls, name: str, path: str, trial, sinks, partitioning) -> 'ClientFunctionModel':
         """
         Create a command line interface client for a meillionen model
 
@@ -109,21 +111,29 @@ class ClientFunctionModel:
         """
         response = client_create_interface_from_cli(path)
         interface = FuncInterfaceClient.from_recordbatch(name=name, recordbatch=response)
-        hp = interface.handle_provider
-        if handle_provider_overrides:
-            for source_name, hf in handle_provider_overrides.items():
-                hp[source_name] = hf
-        return cls(interface=interface, path=path, sink_handle_provider=hp)
+        sinks = cls.infer_sinks(interface, sinks)
+        return cls(interface=interface, path=path, sinks=sinks, trial=trial, partitioning=partitioning)
 
-    def set_storage(self, storage):
-        self.storage = storage
-
-    def run_partition(self, sources: Dict[str, Any], params):
-        sinks = self.storage.create_sink_resources(**params)
-        self.run(sources=sources, sinks=sinks)
+    @classmethod
+    def infer_sinks(cls, interface, sinks: Dict[str, Any]):
+        sinks = sinks.copy()
+        for sink_name in sinks:
+            if not sinks[sink_name]:
+                sinks[sink_name] = infer_resource(interface.sink(sink_name))
         return sinks
 
-    def run(self, sources: Dict[str, Any], sinks: Dict[str, Any]):
+    def run(self, sources: Dict[str, Any], sinks: Optional[Dict[str, Any]] = None, partition: Optional[Dict[str, Any]] = None):
+        if sinks is None:
+            sinks = {}
+        else:
+            sinks = sinks.copy()
+        if partition is None:
+            partition = {}
+        partition = [partition[name] for name in self.partitioning.schema.names]
+        for sink_name in self.sinks:
+            if sink_name not in sinks:
+                sinks[sink_name] = self.sinks[sink_name]
+            sinks[sink_name] = sinks[sink_name].build(settings=self.trial.sinks, partition=partition)
         fr = FuncRequest(sources=sources, sinks=sinks)
         rb = fr.to_recordbatch(self.path)
         client_call_cli(self.path, rb)

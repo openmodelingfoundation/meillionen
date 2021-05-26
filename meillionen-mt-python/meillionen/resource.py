@@ -5,7 +5,7 @@ load or save the data later.
 import functools
 import os
 import pathlib
-from typing import Dict, Union, Any, List, Optional
+from typing import Dict, Union, Any, List, Optional, Literal
 
 from pyarrow.dataset import dataset, DirectoryPartitioning
 import numpy as np
@@ -24,40 +24,72 @@ from meillionen.meillionen import \
     Unvalidated
 
 
-class FeatherResource:
-    ext = '.feather'
+class BasePathResource:
+    resource_class = None
 
-    def __call__(self, settings):
-        path = settings.prefix.joinpath(self.ext)
-        return _FeatherResource(path=path)
+    def __init__(self, ext: str, base_path: Optional[str] = None, name: Optional[str] = None):
+        self._ext = ext
+        self._base_path = base_path
+        self._name = name
 
+    def build_kwargs(self, settings, partition, name: str):
+        base_path = self._base_path if self._base_path else settings.base_path
+        name = self._name if self._name else name
+        partition = [str(p) for p in partition]
+        path = os.path.join(base_path, *partition, f'{name}.{self._ext}')
+        return {'path': path}
 
-class FileResource:
-    def __init__(self, ext):
-        self.ext = ext
-
-    def __call__(self, settings):
-        path = settings.prefix.joinpath(self.ext)
-        return _FileResource(path=path)
-
-
-class NetCDFResource:
-    ext = '.nc'
-
-    def __init__(self, variable):
-        self.variable = variable
-
-    def __call__(self, settings):
-        path = settings.prefix.joinpath(self.ext)
-        return _NetCDFResource(path=path, variable=self.variable)
+    def build(self, settings, partition, name: str):
+        kwargs = self.build_kwargs(settings=settings, partition=partition, name=name)
+        return self.resource_class(**kwargs)
 
 
-class ParquetResource:
-    ext = '.parquet'
+class FeatherResource(BasePathResource):
+    resource_class = _FeatherResource
 
-    def __call__(self, settings):
-        path = settings.prefix.joinpath(self.ext)
-        return _ParquetResource(path=path)
+    def __init__(self, base_path: Optional[str] = None, name: Optional[str] = None):
+        super().__init__('.feather', base_path=base_path, name=name)
+
+
+class FileResource(BasePathResource):
+    resource_class = _FileResource
+
+
+class NetCDFResource(BasePathResource):
+    def __init__(self, base_path: Optional[str] = None, name: Optional[str] = None):
+        super().__init__('.nc', base_path=base_path, name=name)
+
+    def build(self, settings, partition, name: str):
+        kwargs = self.build_kwargs(settings=settings, partition=partition, name=name)
+        kwargs['variable'] = name
+        return self.resource_class(**kwargs)
+
+
+class ParquetResource(BasePathResource):
+    resource_class = _ParquetResource
+
+    def __init__(self, base_path: Optional[str] = None, name: Optional[str] = None):
+        super().__init__('.parquet', base_path=base_path, name=name)
+
+
+@functools.singledispatch
+def infer_resource(validator):
+    raise NotImplemented()
+
+
+@infer_resource.register(DataFrameValidator)
+def _(validator):
+    return ParquetResource()
+
+
+@infer_resource.register(TensorValidator)
+def _(validator):
+    return NetCDFResource()
+
+
+@infer_resource.register(Unvalidated)
+def _(validator):
+    return FileResource(validator.to_dict()['ext'])
 
 
 RESOURCES = {

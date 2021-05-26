@@ -45,11 +45,15 @@ impl_try_from_u8!(DataFrameValidator);
 impl_try_from_validator!(DataFrameValidator);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Unvalidated {}
+pub struct Unvalidated {
+    ext: String
+}
 
 impl Unvalidated {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(ext: &str) -> Self {
+        Self {
+            ext: ext.to_string()
+        }
     }
 }
 
