@@ -137,9 +137,10 @@ soil_df
 ## Using Prefect to Feed Overland Flow Results into Simple Crop
 
 ```{code-cell} ipython3
-from meillionen.client import Storage, PartitionedDirectory, PartitionedParquet
+from meillionen.client import ResourceBuilder
 from pyarrow.dataset import partitioning
 import pyarrow as pa
+import pandas as pd
 import pathlib
 
 trial = experiment.trial("simplecrop-parallelism")
@@ -158,16 +159,40 @@ simplecrop_sinks = {
   'tempdir': FileResource(ext="", name="tmp")
 }
 
+simplecrop_partitioning = partitioning(
+    pa.schema([("x", pa.int32()), ("y", pa.int32())]))
+
 simplecrop = ClientFunctionModel.from_path(
   name='simplecrop_omf', 
   path='simplecrop_omf',
   sinks=simplecrop_sinks,
   trial=trial,
-  partitioning=partitioning(
-    pa.schema([("x", pa.int32()), ("y", pa.int32())])))
+  partitioning=simplecrop_partitioning)
 ```
 
 ```{code-cell} ipython3
+class DailyRainfallUpdater(ResourceBuilder):
+    def __init__(self, settings, partitioning, validator):
+        self.handler = PandasHandler(validator)
+        super().__init__(name='daily', settings=settings, partitioning=partitioning)
+        
+    def save(self, daily_df, rainfall, partition):
+        daily_df['rainfall'] = rainfall
+        daily = self._complete(FeatherResource(), partition=partition)
+        self.handler.save(daily, data=daily_df)
+        return daily
+
+
+daily_df = pd.read_feather(os.path.join(trial.sources.base_path, 'daily.feather'))
+yearly = FeatherResource().build(settings=trial.sources, name='yearly')
+        
+daily_rainfall_updater = DailyRainfallUpdater(
+    settings=trial.sinks,
+    partitioning=simplecrop_partitioning,
+    validator=simplecrop.source('daily')
+)
+
+        
 @task()
 def run_overland_flow():
     sources = {
@@ -178,6 +203,7 @@ def run_overland_flow():
     sinks = overlandflow.run(sources=sources)
 
     return sinks['soil_water_infiltration__depth']
+
 
 @task()
 def chunkify_soil_water_infiltration_depth(swid):
@@ -191,10 +217,11 @@ def simplecrop_process_chunk(data):
     soil_water_infiltration__depth = data['soil_water_infiltration__depth']
     x = data['x']
     y = data['y']
-    daily_df['rainfall'] = soil_water_infiltration__depth
-    daily = FeatherResource().build(settings=trial.sinks, name='daily', partition=[x, y])
-    PandasHandler(simplecrop.source('daily')).save(daily, data=daily_df)
-
+    daily = daily_rainfall_updater.save(
+        daily_df,
+        soil_water_infiltration__depth,
+        partition=dict(x=x, y=y))
+    
     sources = {
         'daily': daily,
         'yearly': yearly
@@ -202,30 +229,12 @@ def simplecrop_process_chunk(data):
 
     sinks = simplecrop.run(sources=sources, partition=dict(x=x, y=y))
 
-
-daily_df = pd.read_feather(os.path.join(trial.sources.base_path, 'daily.feather'))
-yearly = FeatherResource().build(settings=trial.sources, name='yearly')
-
-
 with Flow('crop_pipeline') as flow:
     overland_flow = run_overland_flow()
     surface_water_depth_chunks = chunkify_soil_water_infiltration_depth(overland_flow)
     yield_chunks = simplecrop_process_chunk.map(surface_water_depth_chunks)
 
 flow.run()
-```
-
-```{code-cell} ipython3
-daily_df
-```
-
-```{code-cell} ipython3
-daily = FeatherResource().build(settings=trial.sinks, name='daily', partition=[20, 20])
-PandasHandler(simplecrop.source('daily')).save(daily, data=daily_df)
-```
-
-```{code-cell} ipython3
-daily_df
 ```
 
 ```{code-cell} ipython3

@@ -10,69 +10,14 @@ from meillionen.meillionen import client_create_interface_from_cli, client_call_
     FeatherResource
 
 
-class PartitionedStorage:
-    RESOURCE_CLASS = None
-    FILE_NAME = None
-
-    def __init__(self, path: pathlib.Path, partitioning: dataset.DirectoryPartitioning):
-        self.path = path
+class ResourceBuilder:
+    def __init__(self, name, settings, partitioning):
+        self.name = name
+        self.settings = settings
         self.partitioning = partitioning
 
-    def __call__(self, **params: Dict[str, Any]):
-        schema: pa.schema = self.partitioning.schema
-        segments = [str(params[name]) for name in schema.names]
-        path = self.path.joinpath(*segments, self.FILE_NAME)
-        return self.RESOURCE_CLASS(str(path))
-
-
-class PartitionedDirectory(PartitionedStorage):
-    RESOURCE_CLASS = FileResource
-    FILE_NAME = ''
-
-
-class PartitionedParquet(PartitionedStorage):
-    RESOURCE_CLASS = ParquetResource
-    FILE_NAME = 'data.parquet'
-
-    def to_dataset(self):
-        return dataset.dataset(source=self.path, partitioning=self.partitioning)
-
-    def to_table(self):
-        return self.to_dataset().to_table()
-
-    def to_pandas(self):
-        return self.to_table().to_pandas()
-
-
-class PartitionedFeather(PartitionedStorage):
-    RESOURCE_CLASS = FeatherResource
-    FILE_NAME = 'data.feather'
-
-    def to_dataset(self):
-        return dataset.dataset(source=self.path, partitioning=self.partitioning)
-
-    def to_table(self):
-        return self.to_dataset().to_table()
-
-    def to_pandas(self):
-        return self.to_table().to_pandas()
-
-
-class Storage:
-    def __init__(self, **resource_factories):
-        self.resource_factories = resource_factories
-
-    def create_sink_resources(self, **params):
-        return { name: rf(**params) for name, rf in self.resource_factories.items() }
-
-
-class HandleProvider:
-    def __init__(self, handle_providers):
-        self.handle_providers = handle_providers
-
-    @classmethod
-    def from_interface(cls, interface):
-        pass
+    def _complete(self, resource, partition):
+        return resource.build(settings=self.settings, partition=partition, name=self.name)
 
 
 class ClientFunctionModel:
