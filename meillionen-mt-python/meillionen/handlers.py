@@ -2,21 +2,18 @@ import netCDF4
 import numpy as np
 import pandas as pd
 import pathlib
-from plistlib import Dict
-from typing import List, Any, Union
+from typing import List, Dict, Any, Union
+import xarray as xr
 
 from landlab.io import read_esri_ascii, write_esri_ascii
-from meillionen.meillionen import DataFrameValidator, TensorValidator
-
-FILE_RESOURCE = 'meillionen::FileResource'
-FEATHER_RESOURCE = 'meillionen::FeatherResource'
-NETCDF_RESOURCE = 'meillionen::NetCDFResource'
-PARQUET_RESOURCE = 'meillionen::ParquetResource'
+from meillionen.resource import FEATHER_RESOURCE, PARQUET_RESOURCE, NETCDF_RESOURCE, FILE_RESOURCE
+from meillionen.meillionen import DataFrameValidator, TensorValidator, NetCDFResource
 
 
 def _mkdir_p(path):
     p = pathlib.Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
+
 
 
 class DataFrameResourceBase:
@@ -79,7 +76,31 @@ class PandasHandler(DataFrameResourceBase):
         :param data: the data to be saved
         """
         path = resource.to_dict()['path']
+        _mkdir_p(path)
         getattr(data, self.PANDAS_SAVERS[resource.name])(path)
+
+
+def _netcdf_from_kwargs(cls, description, data_type, dimensions):
+    validator = TensorValidator.from_dict({
+        'resources': cls.RESOURCE_TYPES,
+        'description': description,
+        'dimensions': dimensions,
+        'data_type': data_type,
+    })
+    return cls(validator)
+
+
+def _netcdf_create_variable(validator, sink, dimensions):
+    sink = sink.to_dict()
+    dimnames = validator.to_dict()['dimensions']
+    _mkdir_p(sink['path'])
+    dataset = netCDF4.Dataset(sink['path'], mode='w')
+    for dim in dimnames:
+        size = dimensions[dim]
+        print((dim, size))
+        dataset.createDimension(dim, size)
+    variable = dataset.createVariable(sink['variable'], 'f4', dimnames)
+    return dataset, variable
 
 
 class NetCDFHandler:
@@ -94,19 +115,47 @@ class NetCDFHandler:
 
     @classmethod
     def from_kwargs(cls, description, data_type, dimensions):
-        validator = TensorValidator.from_dict({
-            'resources': cls.RESOURCE_TYPES,
-            'description': description,
-            'dimensions': dimensions,
-            'data_type': data_type,
-        })
-        return cls(validator)
+        return _netcdf_from_kwargs(
+            cls,
+            description=description,
+            data_type=data_type,
+            dimensions=dimensions)
+
+    def load(self, resource):
+        resource = resource.to_dict()
+        ds = netCDF4.Dataset(resource['path'])
+        return ds[resource['variable']]
+
+    def save(self, resource, data: xr.DataArray):
+        resource = resource.to_dict()
+        data = data.transpose(resource['dimensions'])
+        ds, variable = _netcdf_create_variable(self.validator, sink=resource, dimensions=data.dims)
+        variable[:] = data
+
+
+class NetCDFSliceHandler:
+    RESOURCE_TYPES = [NETCDF_RESOURCE]
+
+    NETCDF_SAVERS = {
+        NETCDF_RESOURCE: NetCDFResource
+    }
+
+    def __init__(self, validator: TensorValidator):
+        self.validator = validator
+
+    @classmethod
+    def from_kwargs(cls, description, data_type, dimensions):
+        return _netcdf_from_kwargs(
+            cls,
+            description=description,
+            data_type=data_type,
+            dimensions=dimensions)
 
     def load(self, resource):
         return NetCDFSliceLoader(source=resource)
 
     def save(self, resource, dimensions):
-        return NetCDFSliceSaver(sink=resource, dimensions=dimensions)
+        return NetCDFSliceSaver(validator=self.validator, sink=resource, dimensions=dimensions)
 
 
 NDSlice = Dict[str, Union[int, slice]]
@@ -126,15 +175,12 @@ class NetCDFSliceLoader:
 
 
 class NetCDFSliceSaver:
-    def __init__(self, sink, dimensions):
-        self.sink = sink
-        sink = self.sink.to_dict()
-        _mkdir_p(sink['path'])
-        self.dataset = netCDF4.Dataset(sink['path'], mode='w')
-        for dim, size in dimensions:
-            print((dim, size))
-            self.dataset.createDimension(dim, size)
-        self.variable = self.dataset.createVariable(sink['variable'], 'f4', [f[0] for f in dimensions])
+    def __init__(self, validator, sink, dimensions):
+        self.validator = validator
+        self.dataset, self.variable = _netcdf_create_variable(
+            validator=validator,
+            sink=sink,
+            dimensions=dimensions)
 
     def set(self, slices: Dict[str, Union[int, slice]], array: xr.DataArray):
         """

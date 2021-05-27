@@ -272,12 +272,11 @@ impl_transformers!(NetCDFResource, (path, path_transformer));
 #[pymethods]
 impl NetCDFResource {
     #[new]
-    fn __init__(path: String, variable: String, dimensions: Vec<String>) -> PyResult<Self> {
+    fn __init__(path: String, variable: String) -> PyResult<Self> {
         Ok(Self {
             inner: resource::NetCDFResource {
                 path,
                 variable,
-                dimensions
             }
         })
     }

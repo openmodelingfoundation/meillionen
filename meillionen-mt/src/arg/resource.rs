@@ -6,7 +6,6 @@ use std::fmt::Debug;
 pub struct NetCDFResource {
     pub path: String,
     pub variable: String,
-    pub dimensions: Vec<String>,
 }
 
 impl_try_from_u8!(NetCDFResource);

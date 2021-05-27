@@ -24,9 +24,11 @@ import itertools
 import os.path
 import netCDF4
 from meillionen.client import ClientFunctionModel
-from meillionen.resource import PandasHandler, FuncRequest
+
+from meillionen.experiment import Experiment, PathSettings, Trial
+from meillionen.handlers import NetCDFHandler, PandasHandler
 from meillionen.resource import \
-    FileResource, FeatherResource, FeatherResource, NetCDFResource, ParquetResource
+    FileResource, FeatherResource, NetCDFResource, ParquetResource
 from prefect import task, Flow
 
 os.environ['SIMPLECROP'] = 'simplecrop'
@@ -36,6 +38,12 @@ BASE_DIR = '../../examples/crop-pipeline'
 
 INPUT_DIR = os.path.join(BASE_DIR, 'workflows/inputs')
 OUTPUT_DIR = os.path.join(BASE_DIR, 'workflows/outputs')
+
+experiment = Experiment(
+    sinks=PathSettings(base_path=OUTPUT_DIR),
+    sources=PathSettings(base_path=INPUT_DIR)
+)
+trial = experiment.trial("2021-05-26")
 ```
 
 and build a request to call our model with.
@@ -43,36 +51,32 @@ and build a request to call our model with.
 ```{code-cell} ipython3
 overlandflow = ClientFunctionModel.from_path(
     name='overlandflow', 
-    path=os.path.join(BASE_DIR, 'overlandflow/model.py'))
+    path=os.path.join(BASE_DIR, 'overlandflow/model.py'),
+    trial=trial
+)
 ```
 
  We also need to create sources and sinks to describe our data
 
 ```{code-cell} ipython3
-elevation = FileResource(os.path.join(INPUT_DIR, "hugo_site.asc"))
+elevation = FileResource(".asc")
 
-weather = FeatherResource(os.path.join(INPUT_DIR, "rainfall.feather"))
-
-swid = NetCDFResource(
-    path=os.path.join(OUTPUT_DIR, "swid.nc"),
-    variable="soil_water_infiltration__depth",
-    dimensions=["x", "y", "time"]
-)
+weather = FeatherResource()
 
 sources = {
     'elevation': elevation,
     'weather': weather
-}
-
-**sinks** = {
-    'soil_water_infiltration__depth': swid
 }
 ```
 
 Then call the overland flow model with our request (which will create files on the file system)
 
 ```{code-cell} ipython3
-overlandflow.run(sources=sources, sinks=sinks)
+sinks = overlandflow.run(sources=sources)
+```
+
+```{code-cell} ipython3
+sinks['soil_water_infiltration__depth'].to_dict()
 ```
 
 ## Running Simple Crop on its Own
@@ -97,34 +101,36 @@ In order to wrap this model in an interface that allows you to run the model wit
 from meillionen.client import ClientFunctionModel
 import pandas as pd
 
-run_simple_crop = ClientFunctionModel.from_path(name='simplecrop', path='simplecrop_omf')
+run_simple_crop = ClientFunctionModel.from_path(
+    name='simplecrop', 
+    path='simplecrop_omf',
+    trial=trial
+)
 ```
 
 ```{code-cell} ipython3
-daily = FeatherResource(os.path.join(BASE_DIR, 'simplecrop/data/daily.feather'))
-yearly = FeatherResource(os.path.join(BASE_DIR, 'simplecrop/data/yearly.feather'))
-plant = FeatherResource(os.path.join(OUTPUT_DIR, 'plant.feather'))
-soil = FeatherResource(os.path.join(OUTPUT_DIR, 'soil.feather'))
-tempdir = FileResource('tmp')
-
 sources = {
-    'daily': daily,
-    'yearly': yearly
+    'daily': FeatherResource(),
+    'yearly': FeatherResource()
 }
 
 sinks = {
-    'plant': plant,
-    'soil': soil,
-    'tempdir': tempdir
+    'plant': FeatherResource(),
+    'soil': FeatherResource(),
+    'tempdir': FileResource(ext="", name='tmp')
 }
 ```
 
 ```{code-cell} ipython3
-run_simple_crop.run(sources=sources, sinks=sinks)
+s = run_simple_crop.run(sources=sources, sinks=sinks)
 ```
 
 ```{code-cell} ipython3
-soil_df = pd.read_feather(os.path.join(OUTPUT_DIR, 'soil.feather'))
+s['tempdir'].to_dict()
+```
+
+```{code-cell} ipython3
+soil_df = PandasHandler(run_simple_crop.sink('soil')).load(s['soil'])
 soil_df
 ```
 
@@ -136,89 +142,92 @@ from pyarrow.dataset import partitioning
 import pyarrow as pa
 import pathlib
 
-overlandflow = ClientFunctionModel.from_path(name='overlandflow', path=os.path.join(BASE_DIR, 'overlandflow/model.py'))
-simplecrop = ClientFunctionModel.from_path(name='simplecrop_omf', path='simplecrop_omf')
+trial = experiment.trial("simplecrop-parallelism")
 
-simplecrop_partition = partitioning(pa.schema([('x', pa.int32()), ('y', pa.int32())]))
-simplecrop_storage = Storage(**{
-    name: store(path=pathlib.Path(OUTPUT_DIR, name), partitioning=simplecrop_partition)
-    for name, store
-    in [
-        ('plant', PartitionedParquet),
-        ('soil', PartitionedParquet),
-        ('tempdir', PartitionedDirectory)
-    ]
-})
-simplecrop.set_storage(simplecrop_storage)
+overlandflow_sources = {
+  'elevation': FileResource(ext='.asc'),
+  'weather': FeatherResource()
+}
+
+overlandflow = ClientFunctionModel.from_path(
+  name='overlandflow', 
+  path=os.path.join(BASE_DIR, 'overlandflow/model.py'),
+  trial=trial)
+
+simplecrop_sinks = {
+  'tempdir': FileResource(ext="", name="tmp")
+}
+
+simplecrop = ClientFunctionModel.from_path(
+  name='simplecrop_omf', 
+  path='simplecrop_omf',
+  sinks=simplecrop_sinks,
+  trial=trial,
+  partitioning=partitioning(
+    pa.schema([("x", pa.int32()), ("y", pa.int32())])))
 ```
 
 ```{code-cell} ipython3
 @task()
 def run_overland_flow():
-    elevation = FileResource(os.path.join(INPUT_DIR, "hugo_site.asc"))
-    weather = FeatherResource(os.path.join(INPUT_DIR, "rainfall.feather"))
-    swid = NetCDFResource(
-        path=f"{OUTPUT_DIR}/swid.nc",
-        variable="soil_water_infiltration__depth",
-        dimensions=['x', 'y', 'time']
-    )
-
     sources = {
-        'elevation': elevation,
-        'weather': weather
-    }
-    sinks = {
-        'soil_water_infiltration__depth': swid
+        'elevation': FileResource(ext=".asc"),
+        'weather': FeatherResource()
     }
 
-    overlandflow(sources=sources, sinks=sinks)
+    sinks = overlandflow.run(sources=sources)
 
-    return swid
-
+    return sinks['soil_water_infiltration__depth']
 
 @task()
 def chunkify_soil_water_infiltration_depth(swid):
-    swid = swid.to_dict()
-    ds = netCDF4.Dataset(swid['path'], 'r')
-    variable = ds[swid['variable']]
-    x_d, y_d, time_d = variable.get_dims()
-    return [{'soil_water_infiltration__depth': variable[x, y, :], 'x': x, 'y': y} for (x,y) in itertools.product(range(10,12), range(21,23))]
-
-
-@task()
-def convert_swid_chunk_to_simplecrop(c):
-    return {'daily': daily, 'yearly': yearly, **c}
+    variable = NetCDFHandler(overlandflow.sink('soil_water_infiltration__depth')).load(swid)
+    return [{'soil_water_infiltration__depth': variable[x, y, :], 'x': x, 'y': y}
+            for (x,y) in itertools.product(range(10,12), range(21,23))]
 
 
 @task()
 def simplecrop_process_chunk(data):
-    yearly = data['yearly']
-    daily = data['daily']
     soil_water_infiltration__depth = data['soil_water_infiltration__depth']
     x = data['x']
     y = data['y']
-    df = PandasHandler(simplecrop.source('daily')).load(daily)
-    df['rainfall'] = soil_water_infiltration__depth
-    daily_resource = FeatherResource(os.path.join(OUTPUT_DIR, f'outputs/daily/{x}/{y}.feather'))
-    PandasHandler(simplecrop.source('daily')).save(daily_resource, data=df)
+    daily_df['rainfall'] = soil_water_infiltration__depth
+    daily = FeatherResource().build(settings=trial.sinks, name='daily', partition=[x, y])
+    PandasHandler(simplecrop.source('daily')).save(daily, data=daily_df)
 
     sources = {
-        'daily': daily_resource,
+        'daily': daily,
         'yearly': yearly
     }
 
-    sinks = simplecrop.run_partition(sources=sources, params=dict(x=x, y=y))
+    sinks = simplecrop.run(sources=sources, partition=dict(x=x, y=y))
 
 
-daily = FeatherResource(os.path.join(BASE_DIR, 'simplecrop/data/daily.feather'))
-yearly = FeatherResource(os.path.join(BASE_DIR, 'simplecrop/data/yearly.feather'))
+daily_df = pd.read_feather(os.path.join(trial.sources.base_path, 'daily.feather'))
+yearly = FeatherResource().build(settings=trial.sources, name='yearly')
 
 
 with Flow('crop_pipeline') as flow:
     overland_flow = run_overland_flow()
     surface_water_depth_chunks = chunkify_soil_water_infiltration_depth(overland_flow)
-    simplecrop_chunks = convert_swid_chunk_to_simplecrop.map(surface_water_depth_chunks)
-    yield_chunks = simplecrop_process_chunk.map(simplecrop_chunks)
+    yield_chunks = simplecrop_process_chunk.map(surface_water_depth_chunks)
 
 flow.run()
+```
+
+```{code-cell} ipython3
+daily_df
+```
+
+```{code-cell} ipython3
+daily = FeatherResource().build(settings=trial.sinks, name='daily', partition=[20, 20])
+PandasHandler(simplecrop.source('daily')).save(daily, data=daily_df)
+```
+
+```{code-cell} ipython3
+daily_df
+```
+
+```{code-cell} ipython3
+
 ```

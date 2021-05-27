@@ -4,16 +4,8 @@ load or save the data later.
 """
 import functools
 import os
-import pathlib
-from typing import Dict, Union, Any, List, Optional, Literal
+from typing import Optional
 
-from pyarrow.dataset import dataset, DirectoryPartitioning
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-import netCDF4
-import xarray as xr
-from landlab.io import read_esri_ascii, write_esri_ascii
 from meillionen.meillionen import \
     FeatherResource as _FeatherResource, \
     FileResource as _FileResource, \
@@ -36,10 +28,14 @@ class BasePathResource:
         base_path = self._base_path if self._base_path else settings.base_path
         name = self._name if self._name else name
         partition = [str(p) for p in partition]
-        path = os.path.join(base_path, *partition, f'{name}.{self._ext}')
+        if partition:
+            base_path = os.path.join(base_path, name)
+        path = os.path.join(base_path, *partition, f'{name}{self._ext}')
         return {'path': path}
 
-    def build(self, settings, partition, name: str):
+    def build(self, settings, name: str, partition=None):
+        if partition is None:
+            partition = []
         kwargs = self.build_kwargs(settings=settings, partition=partition, name=name)
         return self.resource_class(**kwargs)
 
@@ -56,13 +52,15 @@ class FileResource(BasePathResource):
 
 
 class NetCDFResource(BasePathResource):
+    resource_class = _NetCDFResource
+
     def __init__(self, base_path: Optional[str] = None, name: Optional[str] = None):
         super().__init__('.nc', base_path=base_path, name=name)
 
-    def build(self, settings, partition, name: str):
+    def build(self, settings, name: str, partition=None):
         kwargs = self.build_kwargs(settings=settings, partition=partition, name=name)
         kwargs['variable'] = name
-        return self.resource_class(**kwargs)
+        return  self.resource_class(**kwargs)
 
 
 class ParquetResource(BasePathResource):
@@ -92,11 +90,16 @@ def _(validator):
     return FileResource(validator.to_dict()['ext'])
 
 
+FILE_RESOURCE = 'meillionen::FileResource'
+FEATHER_RESOURCE = 'meillionen::FeatherResource'
+NETCDF_RESOURCE = 'meillionen::NetCDFResource'
+PARQUET_RESOURCE = 'meillionen::ParquetResource'
+
+
 RESOURCES = {
-    FILE_RESOURCE: FileResource,
-    FEATHER_RESOURCE: FeatherResource,
-    NETCDF_RESOURCE: NetCDFResource,
-    PARQUET_RESOURCE: ParquetResource,
+    r.name: r
+    for r in
+    [_FileResource, _FeatherResource, _NetCDFResource, _ParquetResource]
 }
 
 DATAFRAME_VALIDATOR = 'meillionen::DataFrameValidator'

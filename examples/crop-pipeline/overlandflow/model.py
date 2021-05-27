@@ -2,10 +2,10 @@
 from landlab.components.overland_flow import OverlandFlow
 from landlab.components import SoilInfiltrationGreenAmpt
 from meillionen.meillionen import server_respond_from_cli
-from meillionen.resource import FuncInterfaceServer, FuncRequest, LandLabGridHandler, PandasHandler, NetCDFHandler
+from meillionen.handlers import LandLabGridHandler, PandasHandler, NetCDFSliceHandler
+from meillionen.function import FuncInterfaceServer, FuncRequest
 import pandas as pd
 import xarray as xr
-
 
 model = FuncInterfaceServer(
     sources={
@@ -27,7 +27,7 @@ model = FuncInterfaceServer(
         )
     },
     sinks={
-        'soil_water_infiltration__depth': NetCDFHandler.from_kwargs(
+        'soil_water_infiltration__depth': NetCDFSliceHandler.from_kwargs(
             description='Surface water depth at each point in grid for each day in year',
             data_type='Float64',
             dimensions=['x', 'y', 'time']
@@ -92,10 +92,8 @@ def run_year_cli():
 
     model_grid = model.source('elevation').load(elevation)
     weather = model.source('weather').load(weather)
-    swid_schema = surface_water_infiltation__depth.to_dict()['dimensions']
-    # create dimension label / size parts [('x', 10), ('y', 10), ('time', 365')]
-    swid_schema = list(zip(swid_schema, [model_grid.shape[0], model_grid.shape[1], weather.shape[0]]))
-    with model.sink('soil_water_infiltration__depth').save(surface_water_infiltation__depth, swid_schema) as swid:
+    swid_size = {'x': model_grid.shape[0], 'y': model_grid.shape[1], 'time': weather.shape[0]}
+    with model.sink('soil_water_infiltration__depth').save(surface_water_infiltation__depth, swid_size) as swid:
         run_year(
             mg=model_grid,
             weather=weather,

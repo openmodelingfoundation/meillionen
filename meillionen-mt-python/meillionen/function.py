@@ -88,12 +88,6 @@ class FuncRequest(FuncBase):
 class FuncInterfaceClient(FuncBase):
     SERIALIZERS = VALIDATORS
 
-    DEFAULT_RESOURCE = {
-        DataFrameValidator: ParquetResource,
-        TensorValidator: NetCDFResource,
-        Unvalidated: FileResource
-    }
-
     def __init__(self, name, sources: Dict[str, Any], sinks: Dict[str, Any]):
         super().__init__(sources=sources, sinks=sinks)
         self.name = name
