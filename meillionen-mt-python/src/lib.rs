@@ -11,7 +11,7 @@ use pythonize::{depythonize, pythonize};
 use serde::{Deserialize, Serialize};
 
 use meillionen_mt::arg::resource;
-use meillionen_mt::arg::validation;
+use meillionen_mt::arg::schema;
 use meillionen_mt::model;
 use arrow::array::{ArrayRef, make_array_from_raw, Array};
 use arrow::record_batch::RecordBatch;
@@ -189,46 +189,46 @@ macro_rules! impl_name_prop {
 
 #[pyclass]
 #[derive(Debug)]
-struct DataFrameValidator {
-    inner: validation::DataFrameValidator
+struct DataFrameSchema {
+    inner: schema::DataFrameSchema
 }
 
-impl_to_from_dict!(DataFrameValidator);
-impl_from_arrow_array!(DataFrameValidator, validation::DataFrameValidator);
-impl_to_builder!(DataFrameValidator);
-impl_name_prop!(DataFrameValidator, "data_frame");
-impl_transformers!(DataFrameValidator);
+impl_to_from_dict!(DataFrameSchema);
+impl_from_arrow_array!(DataFrameSchema, schema::DataFrameSchema);
+impl_to_builder!(DataFrameSchema);
+impl_name_prop!(DataFrameSchema, "data_frame");
+impl_transformers!(DataFrameSchema);
 
 #[pyclass]
 #[derive(Debug)]
-struct TensorValidator {
-    inner: validation::TensorValidator
+struct TensorSchema {
+    inner: schema::TensorSchema
 }
 
-impl_to_from_dict!(TensorValidator);
-impl_from_arrow_array!(TensorValidator, validation::TensorValidator);
-impl_to_builder!(TensorValidator);
-impl_name_prop!(TensorValidator, "tensor");
-impl_transformers!(TensorValidator);
+impl_to_from_dict!(TensorSchema);
+impl_from_arrow_array!(TensorSchema, schema::TensorSchema);
+impl_to_builder!(TensorSchema);
+impl_name_prop!(TensorSchema, "tensor");
+impl_transformers!(TensorSchema);
 
 #[pyclass]
 #[derive(Debug)]
-struct Unvalidated {
-    inner: validation::Unvalidated
+struct Schemaless {
+    inner: schema::Schemaless
 }
 
-impl_to_from_dict!(Unvalidated);
-impl_from_arrow_array!(Unvalidated, validation::Unvalidated);
-impl_to_builder!(Unvalidated);
-impl_name_prop!(Unvalidated, "unvalidated");
-impl_transformers!(Unvalidated);
+impl_to_from_dict!(Schemaless);
+impl_from_arrow_array!(Schemaless, schema::Schemaless);
+impl_to_builder!(Schemaless);
+impl_name_prop!(Schemaless, "unvalidated");
+impl_transformers!(Schemaless);
 
 #[pymethods]
-impl Unvalidated {
+impl Schemaless {
     #[new]
     fn new(ext: &str) -> Self {
         Self {
-            inner: validation::Unvalidated::new(ext)
+            inner: schema::Schemaless::new(ext)
         }
     }
 }
@@ -433,9 +433,9 @@ fn meillionen(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<NetCDFResource>()?;
     m.add_class::<ParquetResource>()?;
 
-    m.add_class::<DataFrameValidator>()?;
-    m.add_class::<TensorValidator>()?;
-    m.add_class::<Unvalidated>()?;
+    m.add_class::<DataFrameSchema>()?;
+    m.add_class::<TensorSchema>()?;
+    m.add_class::<Schemaless>()?;
 
     array::init(m)?;
 

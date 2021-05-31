@@ -4,14 +4,14 @@ use serde_derive::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TensorValidator {
+pub struct TensorSchema {
     pub dimensions: Vec<String>,
     pub data_type: arrow::datatypes::DataType,
     pub resources: Vec<String>,
 }
 
-impl_try_from_u8!(TensorValidator);
-impl_try_from_validator!(TensorValidator);
+impl_try_from_u8!(TensorSchema);
+impl_try_from_validator!(TensorSchema);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Columns {
@@ -25,13 +25,13 @@ impl Columns {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct DataFrameValidator {
+pub struct DataFrameSchema {
     columns: Arc<Columns>,
     description: String,
     resources: Vec<String>,
 }
 
-impl DataFrameValidator {
+impl DataFrameSchema {
     pub fn new(resources: Vec<String>, description: &str, columns: Arc<Columns>) -> Self {
         Self {
             resources,
@@ -41,15 +41,15 @@ impl DataFrameValidator {
     }
 }
 
-impl_try_from_u8!(DataFrameValidator);
-impl_try_from_validator!(DataFrameValidator);
+impl_try_from_u8!(DataFrameSchema);
+impl_try_from_validator!(DataFrameSchema);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Unvalidated {
+pub struct Schemaless {
     ext: String
 }
 
-impl Unvalidated {
+impl Schemaless {
     pub fn new(ext: &str) -> Self {
         Self {
             ext: ext.to_string()
@@ -57,5 +57,5 @@ impl Unvalidated {
     }
 }
 
-impl_try_from_u8!(Unvalidated);
-impl_try_from_validator!(Unvalidated);
+impl_try_from_u8!(Schemaless);
+impl_try_from_validator!(Schemaless);

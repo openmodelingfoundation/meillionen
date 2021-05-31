@@ -90,10 +90,22 @@ def _(validator):
     return FileResource(validator.to_dict()['ext'])
 
 
-FILE_RESOURCE = 'meillionen::FileResource'
-FEATHER_RESOURCE = 'meillionen::FeatherResource'
-NETCDF_RESOURCE = 'meillionen::NetCDFResource'
-PARQUET_RESOURCE = 'meillionen::ParquetResource'
+def resource_deserializer(deserializer_lookups):
+    def deserialize(type_name, payload):
+        resource_class = deserializer_lookups[type_name]
+        return resource_class.deserialize(payload)
+    return deserialize
+
+
+DEFAULT_RESOURCE_DESERIALIZER = resource_deserializer({
+    resource.name: resource for resource in
+    [
+        _FileResource,
+        _FeatherResource,
+        _NetCDFResource,
+        _ParquetResource,
+    ]
+})
 
 
 RESOURCES = {

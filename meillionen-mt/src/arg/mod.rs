@@ -1,3 +1,3 @@
 pub mod resource;
-pub mod validation;
+pub mod schema;
 mod base;

@@ -122,11 +122,7 @@ sinks = {
 ```
 
 ```{code-cell} ipython3
-s = run_simple_crop.run(sources=sources, sinks=sinks)
-```
-
-```{code-cell} ipython3
-s['tempdir'].to_dict()
+run_simple_crop.run(sources=sources, sinks=sinks)
 ```
 
 ```{code-cell} ipython3
@@ -171,7 +167,7 @@ simplecrop = ClientFunctionModel.from_path(
 ```
 
 ```{code-cell} ipython3
-class DailyRainfallUpdater(ResourceBuilder):
+class DailyRainfallCreator(ResourceBuilder):
     def __init__(self, settings, partitioning, validator):
         self.handler = PandasHandler(validator)
         super().__init__(name='daily', settings=settings, partitioning=partitioning)
@@ -186,7 +182,7 @@ class DailyRainfallUpdater(ResourceBuilder):
 daily_df = pd.read_feather(os.path.join(trial.sources.base_path, 'daily.feather'))
 yearly = FeatherResource().build(settings=trial.sources, name='yearly')
         
-daily_rainfall_updater = DailyRainfallUpdater(
+daily_rainfall_creator = DailyRainfallCreator(
     settings=trial.sinks,
     partitioning=simplecrop_partitioning,
     validator=simplecrop.source('daily')
@@ -215,9 +211,8 @@ def chunkify_soil_water_infiltration_depth(swid):
 @task()
 def simplecrop_process_chunk(data):
     soil_water_infiltration__depth = data['soil_water_infiltration__depth']
-    x = data['x']
-    y = data['y']
-    daily = daily_rainfall_updater.save(
+    x, y = data['x'], data['y']
+    daily = daily_rainfall_creator.save(
         daily_df,
         soil_water_infiltration__depth,
         partition=dict(x=x, y=y))
@@ -238,5 +233,8 @@ flow.run()
 ```
 
 ```{code-cell} ipython3
+from pyarrow.dataset import dataset
 
+plant_df = dataset(os.path.join(OUTPUT_DIR, 'simplecrop-parallelism/plant'), partitioning=simplecrop_partitioning)
+plant_df.to_table().to_pandas()
 ```
