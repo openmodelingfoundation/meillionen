@@ -4,7 +4,7 @@ import pathlib
 from meillionen.meillionen import server_respond_from_cli
 from meillionen.function import FuncInterfaceServer, FuncRequest
 from meillionen.handlers import PandasHandler
-from meillionen.resource import Unvalidated
+from meillionen.resource import Schemaless
 from .simplecrop_omf import run
 from io import BytesIO
 import pyarrow as pa
@@ -12,10 +12,10 @@ import pandas as pd
 
 
 class MkDirSaver:
-    RESOURCE_TYPES = [Unvalidated]
+    RESOURCE_TYPES = [Schemaless]
 
     def __init__(self):
-        self.validator = Unvalidated("")
+        self.schema = Schemaless("")
 
     def save(self, resource):
         path = resource.to_dict()['path']

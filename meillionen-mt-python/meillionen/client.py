@@ -39,6 +39,20 @@ class ClientFunctionModel:
         self.sinks = sinks
         self.partitioning = partitioning
 
+    def source_schema(self, name):
+        return self.interface.source(name)
+
+    def sink_schema(self, name):
+        return self.interface.sink(name)
+
+    @property
+    def source_names(self):
+        return self.interface.source_names
+
+    @property
+    def sink_names(self):
+        return self.interface.sink_names
+
     def source(self, name):
         return self.interface.source(name)
 

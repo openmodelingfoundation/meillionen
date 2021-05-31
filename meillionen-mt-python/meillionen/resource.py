@@ -11,9 +11,9 @@ from meillionen.meillionen import \
     FileResource as _FileResource, \
     NetCDFResource as _NetCDFResource, \
     ParquetResource as _ParquetResource, \
-    DataFrameValidator, \
-    TensorValidator, \
-    Unvalidated
+    DataFrameSchema, \
+    TensorSchema, \
+    Schemaless
 
 
 class BasePathResource:
@@ -75,17 +75,17 @@ def infer_resource(validator):
     raise NotImplemented()
 
 
-@infer_resource.register(DataFrameValidator)
+@infer_resource.register(DataFrameSchema)
 def _(validator):
     return ParquetResource()
 
 
-@infer_resource.register(TensorValidator)
+@infer_resource.register(TensorSchema)
 def _(validator):
     return NetCDFResource()
 
 
-@infer_resource.register(Unvalidated)
+@infer_resource.register(Schemaless)
 def _(validator):
     return FileResource(validator.to_dict()['ext'])
 
@@ -114,12 +114,16 @@ RESOURCES = {
     [_FileResource, _FeatherResource, _NetCDFResource, _ParquetResource]
 }
 
-DATAFRAME_VALIDATOR = 'meillionen::DataFrameValidator'
-TENSOR_VALIDATOR = 'meillionen::TensorValidator'
-UNVALIDATED = 'meillionen::Unvalidated'
+DATAFRAME_VALIDATOR = DataFrameSchema.name
+TENSOR_VALIDATOR = TensorSchema.name
+UNVALIDATED = Schemaless.name
 
 VALIDATORS = {
-    DATAFRAME_VALIDATOR: DataFrameValidator,
-    TENSOR_VALIDATOR: TensorValidator,
-    UNVALIDATED: Unvalidated,
+    s.name: s
+    for s in
+    [
+        DataFrameSchema,
+        TensorSchema,
+        Schemaless
+    ]
 }

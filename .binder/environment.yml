@@ -9,6 +9,7 @@ dependencies:
   - pandas=1.2.4
   - prefect==0.14.19
   - pyarrow==4.0.0
+  - python-flatbuffers==2.0
   - pip
   - pip:
     - -i https://test.pypi.org/simple/

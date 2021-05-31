@@ -6,8 +6,7 @@ from typing import List, Dict, Any, Union
 import xarray as xr
 
 from landlab.io import read_esri_ascii, write_esri_ascii
-from meillionen.resource import FEATHER_RESOURCE, PARQUET_RESOURCE, NETCDF_RESOURCE, FILE_RESOURCE
-from meillionen.meillionen import DataFrameValidator, TensorValidator, NetCDFResource
+from meillionen.meillionen import DataFrameSchema, TensorSchema, FileResource, FeatherResource, NetCDFResource, ParquetResource
 
 
 def _mkdir_p(path):
@@ -19,8 +18,8 @@ def _mkdir_p(path):
 class DataFrameResourceBase:
     RESOURCE_TYPES = []
 
-    def __init__(self, validator: DataFrameValidator):
-        self.validator = validator
+    def __init__(self, schema: DataFrameSchema):
+        self.schema = schema
 
     @classmethod
     def _normalize_fields(cls, fields: List[Dict[str, Any]]):
@@ -36,27 +35,27 @@ class PandasHandler(DataFrameResourceBase):
     """
     A loader/saver to retrieve and persist a pandas dataframe to the location and format specified by a resource
     """
-    RESOURCE_TYPES = [FEATHER_RESOURCE, PARQUET_RESOURCE]
+    RESOURCE_TYPES = [FeatherResource.name, ParquetResource.name]
 
     PANDAS_LOADERS = {
-        FEATHER_RESOURCE: pd.read_feather,
-        PARQUET_RESOURCE: pd.read_parquet
+        FeatherResource.name: pd.read_feather,
+        ParquetResource.name: pd.read_parquet
     }
 
     PANDAS_SAVERS = {
-        FEATHER_RESOURCE: 'to_feather',
-        PARQUET_RESOURCE: 'to_parquet'
+        FeatherResource.name: 'to_feather',
+        ParquetResource.name: 'to_parquet'
     }
 
     @classmethod
     def from_kwargs(cls, description, columns, resources=None):
         cls._normalize_fields(columns['fields'])
-        validator = DataFrameValidator.from_dict({
+        schema = DataFrameSchema.from_dict({
             'resources': cls.RESOURCE_TYPES if not resources else resources,
             'description': description,
             'columns': columns
         })
-        return cls(validator=validator)
+        return cls(schema=schema)
 
     def load(self, resource):
         """
@@ -81,7 +80,7 @@ class PandasHandler(DataFrameResourceBase):
 
 
 def _netcdf_from_kwargs(cls, description, data_type, dimensions):
-    validator = TensorValidator.from_dict({
+    validator = TensorSchema.from_dict({
         'resources': cls.RESOURCE_TYPES,
         'description': description,
         'dimensions': dimensions,
@@ -90,9 +89,9 @@ def _netcdf_from_kwargs(cls, description, data_type, dimensions):
     return cls(validator)
 
 
-def _netcdf_create_variable(validator, sink, dimensions):
+def _netcdf_create_variable(schema, sink, dimensions):
     sink = sink.to_dict()
-    dimnames = validator.to_dict()['dimensions']
+    dimnames = schema.to_dict()['dimensions']
     _mkdir_p(sink['path'])
     dataset = netCDF4.Dataset(sink['path'], mode='w')
     for dim in dimnames:
@@ -104,14 +103,14 @@ def _netcdf_create_variable(validator, sink, dimensions):
 
 
 class NetCDFHandler:
-    RESOURCE_TYPES = [NETCDF_RESOURCE]
+    RESOURCE_TYPES = [NetCDFResource.name]
 
     NETCDF_SAVERS = {
-        NETCDF_RESOURCE: NetCDFResource
+        NetCDFResource.name: NetCDFResource
     }
 
-    def __init__(self, validator: TensorValidator):
-        self.validator = validator
+    def __init__(self, schema: TensorSchema):
+        self.schema = schema
 
     @classmethod
     def from_kwargs(cls, description, data_type, dimensions):
@@ -129,19 +128,19 @@ class NetCDFHandler:
     def save(self, resource, data: xr.DataArray):
         resource = resource.to_dict()
         data = data.transpose(resource['dimensions'])
-        ds, variable = _netcdf_create_variable(self.validator, sink=resource, dimensions=data.dims)
+        ds, variable = _netcdf_create_variable(self.schema, sink=resource, dimensions=data.dims)
         variable[:] = data
 
 
 class NetCDFSliceHandler:
-    RESOURCE_TYPES = [NETCDF_RESOURCE]
+    RESOURCE_TYPES = [NetCDFResource.name]
 
     NETCDF_SAVERS = {
-        NETCDF_RESOURCE: NetCDFResource
+        NetCDFResource.name: NetCDFResource
     }
 
-    def __init__(self, validator: TensorValidator):
-        self.validator = validator
+    def __init__(self, schema: TensorSchema):
+        self.schema = schema
 
     @classmethod
     def from_kwargs(cls, description, data_type, dimensions):
@@ -155,7 +154,7 @@ class NetCDFSliceHandler:
         return NetCDFSliceLoader(source=resource)
 
     def save(self, resource, dimensions):
-        return NetCDFSliceSaver(validator=self.validator, sink=resource, dimensions=dimensions)
+        return NetCDFSliceSaver(schema=self.schema, sink=resource, dimensions=dimensions)
 
 
 NDSlice = Dict[str, Union[int, slice]]
@@ -175,10 +174,10 @@ class NetCDFSliceLoader:
 
 
 class NetCDFSliceSaver:
-    def __init__(self, validator, sink, dimensions):
-        self.validator = validator
+    def __init__(self, schema, sink, dimensions):
+        self.schema = schema
         self.dataset, self.variable = _netcdf_create_variable(
-            validator=validator,
+            schema=schema,
             sink=sink,
             dimensions=dimensions)
 
@@ -210,20 +209,20 @@ class LandLabGridHandler:
     A loader to load raster files into landlab grid objects
     """
 
-    RESOURCE_TYPES = [FILE_RESOURCE]
+    RESOURCE_TYPES = [FileResource.name]
 
-    def __init__(self, validator):
-        self.validator = validator
+    def __init__(self, schema):
+        self.schema = schema
 
     @classmethod
     def from_kwargs(cls, description, dimensions, data_type):
-        validator = TensorValidator.from_dict({
+        schema = TensorSchema.from_dict({
             'resources': cls.RESOURCE_TYPES,
             'description': description,
             'dimensions': dimensions,
             'data_type': data_type,
         })
-        return cls(validator)
+        return cls(schema)
 
     def load(self, resource):
         """

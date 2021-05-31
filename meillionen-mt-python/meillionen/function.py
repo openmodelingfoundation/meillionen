@@ -1,7 +1,7 @@
 import pyarrow as pa
 from typing import Dict, Any
 
-from meillionen.meillionen import ResourceBuilder, DataFrameValidator, TensorValidator, Unvalidated
+from meillionen.meillionen import ResourceBuilder, DataFrameSchema, TensorSchema, Schemaless
 from meillionen.resource import RESOURCES, VALIDATORS
 
 
@@ -114,6 +114,6 @@ class FuncInterfaceServer(FuncBase):
 
     def _rows(self):
         for (name, sink) in self._sinks.items():
-            yield (sink.validator, {'field': 'sink', 'name': name})
+            yield (sink.schema, {'field': 'sink', 'name': name})
         for (name, source) in self._sources.items():
-            yield (source.validator, {'field': 'source', 'name': name})
+            yield (source.schema, {'field': 'source', 'name': name})
