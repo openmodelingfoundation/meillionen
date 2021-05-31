@@ -244,3 +244,35 @@ plant_df = dataset(
     partitioning=simplecrop_partitioning).to_table().to_pandas()
 plant_df
 ```
+
+## BMI Interface
+
+Simple crop can also be used with an adapter to create a BMI Interface
+
+```{code-cell} ipython3
+from meillionen.pymt import PyMTFunctionModel
+
+simplecrop_bmi = PyMTFunctionModel()
+simplecrop_bmi.initialize(model=simplecrop)
+```
+
+```{code-cell} ipython3
+simplecrop_bmi.get_input_var_names()
+simplecrop_bmi.get_output_var_names()
+
+simplecrop_bmi.set_value('daily', FeatherResource())
+simplecrop_bmi.set_value('yearly', FeatherResource())
+simplecrop_bmi.set_partition({'x': 30, 'y': 30})
+simplecrop_bmi.update()
+plant = simplecrop_bmi.get_value('plant')
+soil = simplecrop_bmi.get_value('soil')
+simplecrop_bmi.finalize()
+```
+
+```{code-cell} ipython3
+plant.to_dict()
+```
+
+```{code-cell} ipython3
+soil.to_dict()
+```
