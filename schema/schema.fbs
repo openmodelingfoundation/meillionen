@@ -1,0 +1,9 @@
+namespace meillionen.interface;
+
+table Schema {
+    name: string;
+    type_name: string;
+    payload: [ubyte];
+}
+
+root_type Schema;

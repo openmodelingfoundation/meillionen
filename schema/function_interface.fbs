@@ -1,0 +1,11 @@
+include "schema.fbs";
+
+namespace meillionen.interface;
+
+table FunctionInterface {
+    name: string;
+    sinks: [Schema];
+    sources: [Schema];
+}
+
+root_type FunctionInterface;

@@ -1,0 +1,9 @@
+include "function_interface.fbs";
+include "class_interface.fbs";
+
+namespace meillionen.interface;
+
+table ModuleInterface {
+    functions: [FunctionInterface];
+    classes: [ClassInterface];
+}
