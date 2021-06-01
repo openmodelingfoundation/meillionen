@@ -1,0 +1,391 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Building a Wrapper for Overland Flow &#8212; Meillionen</title>
+    
+  <link rel="stylesheet" href="../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinx-book-theme.c441f2ba0852f4cabcb80105e3a46ae6.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/togglebutton.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="../_static/sphinx-book-theme.7d483ff0a819d6edff12ce0b1ead3928.js"></script>
+    <script async="async" src="https://unpkg.com/thebelab@latest/lib/index.js"></script>
+    <script >
+        const thebe_selector = ".thebe"
+        const thebe_selector_input = "pre"
+        const thebe_selector_output = ".output"
+    </script>
+    <script async="async" src="../_static/sphinx-thebe.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Combining Overland Flow and Simple Crop" href="overland_simplecrop_workflow.html" />
+    <link rel="prev" title="Examples" href="index.html" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+
+
+
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="../index.html">
+  
+  <img src="../_static/logo.png" class="logo" alt="logo">
+  
+  
+  <h1 class="site-logo" id="site-title">Meillionen</h1>
+  
+</a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../index.html">
+   Introduction
+  </a>
+ </li>
+</ul>
+<ul class="current nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../concepts.html">
+   Concepts
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../api/python.html">
+   Python API
+  </a>
+ </li>
+ <li class="toctree-l1 current active collapsible-parent">
+  <a class="reference internal" href="index.html">
+   Examples
+  </a>
+  <ul class="current collapse-ul">
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     Building a Wrapper for Overland Flow
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="overland_simplecrop_workflow.html">
+     Combining Overland Flow and Simple Crop
+    </a>
+   </li>
+  </ul>
+  <i class="fas fa-chevron-down">
+  </i>
+ </li>
+</ul>
+
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            
+            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../_sources/example/build_overland_flow.md"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.md</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/openmodelingfoundation/meillionen"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/openmodelingfoundation/meillionen/issues/new?title=Issue%20on%20page%20%2Fexample/build_overland_flow.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        <a class="edit-button" href="https://github.com/openmodelingfoundation/meillionen/edit/master/meillionen-docs/example/build_overland_flow.md"><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Edit this page"><i class="fas fa-pencil-alt"></i>suggest edit</button></a>
+    </div>
+</div>
+
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+            <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                    data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                    title="Fullscreen mode"><i
+                        class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show">
+            
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="section" id="building-a-wrapper-for-overland-flow">
+<h1>Building a Wrapper for Overland Flow<a class="headerlink" href="#building-a-wrapper-for-overland-flow" title="Permalink to this headline">¶</a></h1>
+<p>Here is a wrapper for the overland flow model</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">from</span> <span class="nn">landlab.components.overland_flow</span> <span class="kn">import</span> <span class="n">OverlandFlow</span>
+<span class="kn">from</span> <span class="nn">landlab.components</span> <span class="kn">import</span> <span class="n">SoilInfiltrationGreenAmpt</span>
+<span class="kn">from</span> <span class="nn">meillionen.meillionen</span> <span class="kn">import</span> <span class="n">server_respond_from_cli</span>
+<span class="kn">from</span> <span class="nn">meillionen.handlers</span> <span class="kn">import</span> <span class="n">LandLabGridHandler</span><span class="p">,</span> <span class="n">PandasHandler</span><span class="p">,</span> <span class="n">NetCDFSliceHandler</span>
+<span class="kn">from</span> <span class="nn">meillionen.function</span> <span class="kn">import</span> <span class="n">FuncInterfaceServer</span><span class="p">,</span> <span class="n">FuncRequest</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">FuncInterfaceServer</span><span class="p">(</span>
+    <span class="n">sources</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;weather&#39;</span><span class="p">:</span> <span class="n">PandasHandler</span><span class="o">.</span><span class="n">from_kwargs</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Daily weather data for a year&#39;</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;rainfall__depth&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;data_type&quot;</span><span class="p">:</span> <span class="s2">&quot;Float64&quot;</span>
+                    <span class="p">}</span>
+                <span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">),</span>
+        <span class="s1">&#39;elevation&#39;</span><span class="p">:</span> <span class="n">LandLabGridHandler</span><span class="o">.</span><span class="n">from_kwargs</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Elevation model. Each cell is a sq m&#39;</span><span class="p">,</span>
+            <span class="n">data_type</span><span class="o">=</span><span class="s1">&#39;Float64&#39;</span><span class="p">,</span>
+            <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="p">},</span>
+    <span class="n">sinks</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;soil_water_infiltration__depth&#39;</span><span class="p">:</span> <span class="n">NetCDFSliceHandler</span><span class="o">.</span><span class="n">from_kwargs</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Surface water depth at each point in grid for each day in year&#39;</span><span class="p">,</span>
+            <span class="n">data_type</span><span class="o">=</span><span class="s1">&#39;Float64&#39;</span><span class="p">,</span>
+            <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="p">})</span>
+
+
+<span class="c1"># external metadata file with more detailed information</span>
+
+
+<span class="k">def</span> <span class="nf">run_day</span><span class="p">(</span><span class="n">mg</span><span class="p">,</span> <span class="n">precipitation</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">1800</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the mm of water that has infiltrated into soil after a rainfall event.</span>
+<span class="sd">    Rainfall events are assumed to be instantaneous and constant over the model grid.</span>
+
+<span class="sd">    :param dem: model grid</span>
+<span class="sd">    :param precipitation: rainfall in mm/hr</span>
+<span class="sd">    :param duration: seconds of rainfall</span>
+<span class="sd">    :return: mm of water infiltrated into the soil at every coordinate in the grid</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">elapsed_time</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">swd</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">add_zeros</span><span class="p">(</span><span class="s1">&#39;surface_water__depth&#39;</span><span class="p">,</span> <span class="n">at</span><span class="o">=</span><span class="s1">&#39;node&#39;</span><span class="p">,</span> <span class="n">clobber</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">swd</span> <span class="o">+=</span> <span class="n">precipitation</span>
+    <span class="n">swid</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">add_zeros</span><span class="p">(</span><span class="s1">&#39;soil_water_infiltration__depth&#39;</span><span class="p">,</span> <span class="n">at</span><span class="o">=</span><span class="s1">&#39;node&#39;</span><span class="p">,</span> <span class="n">clobber</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">swid</span> <span class="o">+=</span> <span class="mf">1e-6</span>
+    <span class="n">siga</span> <span class="o">=</span> <span class="n">SoilInfiltrationGreenAmpt</span><span class="p">(</span><span class="n">mg</span><span class="p">)</span>
+    <span class="n">of</span> <span class="o">=</span> <span class="n">OverlandFlow</span><span class="p">(</span><span class="n">mg</span><span class="p">,</span> <span class="n">steep_slopes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">elapsed_time</span> <span class="o">&lt;</span> <span class="n">duration</span><span class="p">:</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">of</span><span class="o">.</span><span class="n">calc_time_step</span><span class="p">()</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span> <span class="k">if</span> <span class="n">dt</span> <span class="o">+</span> <span class="n">elapsed_time</span> <span class="o">&lt;</span> <span class="n">duration</span> <span class="k">else</span> <span class="n">duration</span> <span class="o">-</span> <span class="n">elapsed_time</span>
+        <span class="n">of</span><span class="o">.</span><span class="n">run_one_step</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+        <span class="n">siga</span><span class="o">.</span><span class="n">run_one_step</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+        <span class="n">elapsed_time</span> <span class="o">+=</span> <span class="n">dt</span>
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">mg</span><span class="o">.</span><span class="n">at_node</span><span class="p">[</span><span class="s1">&#39;soil_water_infiltration__depth&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">mg</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">run_year</span><span class="p">(</span><span class="n">mg</span><span class="p">,</span> <span class="n">weather</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">swid</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the mm of water that has infiltrated each grid cell for day of the year after a rainfall event</span>
+
+<span class="sd">    :param mg: model grid</span>
+<span class="sd">    :param weather: total rainfall in mm each day of a year</span>
+<span class="sd">    :param swid: reference to data cube with x, y, time dimensions used to incrementally save model results</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">weather</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">infiltration_depth</span> <span class="o">=</span> <span class="n">run_day</span><span class="p">(</span><span class="n">mg</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">rainfall__depth</span><span class="p">)</span>
+        <span class="n">swid</span><span class="o">.</span><span class="n">set</span><span class="p">({</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">t</span><span class="p">},</span> <span class="n">infiltration_depth</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">run_year_cli</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the mm of water that has infiltrated each grid cell for day of the year after a rainfall event</span>
+<span class="sd">    in response to a request on the command line</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rb</span> <span class="o">=</span> <span class="n">server_respond_from_cli</span><span class="p">(</span><span class="s1">&#39;overlandflow&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">to_recordbatch</span><span class="p">(</span><span class="s1">&#39;overlandflow&#39;</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">rb</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()[[</span><span class="s1">&#39;resource&#39;</span><span class="p">,</span> <span class="s1">&#39;payload&#39;</span><span class="p">]])</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">FuncRequest</span><span class="o">.</span><span class="n">from_recordbatch</span><span class="p">(</span><span class="n">rb</span><span class="p">)</span>
+    <span class="n">weather</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">(</span><span class="s1">&#39;weather&#39;</span><span class="p">)</span>
+    <span class="n">elevation</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">(</span><span class="s1">&#39;elevation&#39;</span><span class="p">)</span>
+    <span class="n">surface_water_infiltation__depth</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">sink</span><span class="p">(</span><span class="s1">&#39;soil_water_infiltration__depth&#39;</span><span class="p">)</span>
+
+    <span class="n">model_grid</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">source</span><span class="p">(</span><span class="s1">&#39;elevation&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">elevation</span><span class="p">)</span>
+    <span class="n">weather</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">source</span><span class="p">(</span><span class="s1">&#39;weather&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">weather</span><span class="p">)</span>
+    <span class="n">swid_size</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">model_grid</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">model_grid</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">weather</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]}</span>
+    <span class="k">with</span> <span class="n">model</span><span class="o">.</span><span class="n">sink</span><span class="p">(</span><span class="s1">&#39;soil_water_infiltration__depth&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">surface_water_infiltation__depth</span><span class="p">,</span> <span class="n">swid_size</span><span class="p">)</span> <span class="k">as</span> <span class="n">swid</span><span class="p">:</span>
+        <span class="n">run_year</span><span class="p">(</span>
+            <span class="n">mg</span><span class="o">=</span><span class="n">model_grid</span><span class="p">,</span>
+            <span class="n">weather</span><span class="o">=</span><span class="n">weather</span><span class="p">,</span>
+            <span class="n">swid</span><span class="o">=</span><span class="n">swid</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">run_year_cli</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>There are few things to take note of:</p>
+<ol class="simple">
+<li><p>The interface definition. It describes the schemas that sinks and sources must conform to. For the overland flow this means access to a rainfall dataframe with a column called <code class="docutils literal notranslate"><span class="pre">rainfall__depth</span></code> that is the miilimeters of daily precipitation</p></li>
+</ol>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./example"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+        
+        <div class='prev-next-bottom'>
+            
+    <a class='left-prev' id="prev-link" href="index.html" title="previous page">Examples</a>
+    <a class='right-next' id="next-link" href="overland_simplecrop_workflow.html" title="next page">Combining Overland Flow and Simple Crop</a>
+
+        </div>
+        
+        </div>
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Open Modeling Foundation<br/>
+        
+            &copy; Copyright 2020.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+
+    
+  <script src="../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    
+  </body>
+</html>
