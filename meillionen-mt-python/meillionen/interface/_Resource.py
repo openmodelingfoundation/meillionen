@@ -6,39 +6,39 @@ import flatbuffers
 from flatbuffers.compat import import_numpy
 np = import_numpy()
 
-class Resource(object):
+class _Resource(object):
     __slots__ = ['_tab']
 
     @classmethod
     def GetRootAs(cls, buf, offset=0):
         n = flatbuffers.encode.Get(flatbuffers.packer.uoffset, buf, offset)
-        x = Resource()
+        x = _Resource()
         x.Init(buf, n + offset)
         return x
 
     @classmethod
-    def GetRootAsResource(cls, buf, offset=0):
+    def GetRootAs_Resource(cls, buf, offset=0):
         """This method is deprecated. Please switch to GetRootAs."""
         return cls.GetRootAs(buf, offset)
-    # Resource
+    # _Resource
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
 
-    # Resource
+    # _Resource
     def Name(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
         if o != 0:
             return self._tab.String(o + self._tab.Pos)
         return None
 
-    # Resource
+    # _Resource
     def TypeName(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
         if o != 0:
             return self._tab.String(o + self._tab.Pos)
         return None
 
-    # Resource
+    # _Resource
     def Payload(self, j):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
@@ -46,46 +46,46 @@ class Resource(object):
             return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
         return 0
 
-    # Resource
+    # _Resource
     def PayloadAsNumpy(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
             return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
         return 0
 
-    # Resource
+    # _Resource
     def PayloadLength(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
-    # Resource
+    # _Resource
     def PayloadIsNone(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         return o == 0
 
 def Start(builder): builder.StartObject(3)
-def ResourceStart(builder):
+def _ResourceStart(builder):
     """This method is deprecated. Please switch to Start."""
     return Start(builder)
 def AddName(builder, name): builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(name), 0)
-def ResourceAddName(builder, name):
+def _ResourceAddName(builder, name):
     """This method is deprecated. Please switch to AddName."""
     return AddName(builder, name)
 def AddTypeName(builder, typeName): builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(typeName), 0)
-def ResourceAddTypeName(builder, typeName):
+def _ResourceAddTypeName(builder, typeName):
     """This method is deprecated. Please switch to AddTypeName."""
     return AddTypeName(builder, typeName)
 def AddPayload(builder, payload): builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(payload), 0)
-def ResourceAddPayload(builder, payload):
+def _ResourceAddPayload(builder, payload):
     """This method is deprecated. Please switch to AddPayload."""
     return AddPayload(builder, payload)
 def StartPayloadVector(builder, numElems): return builder.StartVector(1, numElems, 1)
-def ResourceStartPayloadVector(builder, numElems):
+def _ResourceStartPayloadVector(builder, numElems):
     """This method is deprecated. Please switch to Start."""
     return StartPayloadVector(builder, numElems)
 def End(builder): return builder.EndObject()
-def ResourceEnd(builder):
+def _ResourceEnd(builder):
     """This method is deprecated. Please switch to End."""
     return End(builder)

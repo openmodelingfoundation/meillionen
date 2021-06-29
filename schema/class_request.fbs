@@ -2,11 +2,11 @@ include "resource.fbs";
 
 namespace meillionen.interface;
 
-table MethodRequest {
+table _MethodRequest {
     class_name: string;
     method_name: string;
-    sources: [Resource];
-    sinks: [Resource];
+    sources: [_Resource];
+    sinks: [_Resource];
 }
 
-root_type MethodRequest;
+root_type _MethodRequest;

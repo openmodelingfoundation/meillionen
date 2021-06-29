@@ -247,7 +247,7 @@ plant_df
 
 ## BMI Interface
 
-Simple crop can also be used with an adapter to create a BMI Interface
+Simple crop can also be used with an adapter to create a BMI Interface (with the additional `set_partition` method
 
 ```{code-cell} ipython3
 from meillionen.pymt import PyMTFunctionModel
@@ -275,4 +275,8 @@ plant.to_dict()
 
 ```{code-cell} ipython3
 soil.to_dict()
+```
+
+```{code-cell} ipython3
+
 ```

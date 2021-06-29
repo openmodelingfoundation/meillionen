@@ -3,7 +3,8 @@ include "class_interface.fbs";
 
 namespace meillionen.interface;
 
-table ModuleInterface {
-    functions: [FunctionInterface];
-    classes: [ClassInterface];
+table _ModuleInterface {
+    classes: [_ClassInterface];
 }
+
+root_type _ModuleInterface;

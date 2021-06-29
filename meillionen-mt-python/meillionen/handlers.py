@@ -1,3 +1,4 @@
+import flatbuffers
 import netCDF4
 import numpy as np
 import pandas as pd
@@ -6,13 +7,38 @@ from typing import List, Dict, Any, Union
 import xarray as xr
 
 from landlab.io import read_esri_ascii, write_esri_ascii
+from meillionen.interface.bytesio import Resource, Schema
+import meillionen.interface.Schema as schema
 from meillionen.meillionen import DataFrameSchema, TensorSchema, FileResource, FeatherResource, NetCDFResource, ParquetResource
+
+
+def _serialize(handler, builder: flatbuffers.Builder, name):
+    n_off = builder.CreateString(name)
+    t_off = builder.CreateString(handler.schema.name)
+    p_off = builder.CreateByteVector(handler.schema.to_json().encode('utf-8'))
+
+    rtype_offsets = []
+    for resource_type in handler.RESOURCE_TYPES:
+        rtype_offset = builder.CreateString(resource_type)
+        rtype_offsets.append(rtype_offset)
+
+    schema.StartResourceNamesVector(builder, len(handler.RESOURCE_TYPES))
+    for rtype_offset in rtype_offsets:
+        builder.PrependUOffsetTRelative(rtype_offset)
+    resource_types_off = builder.EndVector()
+
+    schema.Start(builder)
+    schema.AddName(builder, n_off)
+    schema.AddTypeName(builder, t_off)
+    schema.AddPayload(builder, p_off)
+    schema.AddResourceNames(builder, resource_types_off)
+    s_off = schema.End(builder)
+    return s_off
 
 
 def _mkdir_p(path):
     p = pathlib.Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-
 
 
 class DataFrameResourceBase:
@@ -56,6 +82,17 @@ class PandasHandler(DataFrameResourceBase):
             'columns': columns
         })
         return cls(schema=schema)
+
+    def serialize(self, builder: flatbuffers.Builder, name):
+        return _serialize(self, builder, name)
+
+    @classmethod
+    def from_class(cls, s: schema.Schema):
+        s.TypeName()
+
+    @classmethod
+    def deserialize(cls, buffer):
+        return schema.Schema.GetRootAs(buffer, 0)
 
     def load(self, resource):
         """
@@ -120,6 +157,9 @@ class NetCDFHandler:
             data_type=data_type,
             dimensions=dimensions)
 
+    def serialize(self, builder: flatbuffers.Builder, name):
+        return _serialize(self, builder, name)
+
     def load(self, resource):
         resource = resource.to_dict()
         ds = netCDF4.Dataset(resource['path'])
@@ -149,6 +189,9 @@ class NetCDFSliceHandler:
             description=description,
             data_type=data_type,
             dimensions=dimensions)
+
+    def serialize(self, builder: flatbuffers.Builder, name):
+        return _serialize(self, builder, name)
 
     def load(self, resource):
         return NetCDFSliceLoader(source=resource)

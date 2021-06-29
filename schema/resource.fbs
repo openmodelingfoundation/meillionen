@@ -1,9 +1,9 @@
 namespace meillionen.interface;
 
-table Resource {
+table _Resource {
     name: string;
     type_name: string;
     payload: [ubyte];
 }
 
-root_type Resource;
+root_type _Resource;

@@ -2,10 +2,10 @@ include "function_interface.fbs";
 
 namespace meillionen.interface;
 
-table ClassInterface {
+table _ClassInterface {
     name: string;
     type_name: string;
-    methods: [FunctionInterface];
+    methods: [_FunctionInterface];
 }
 
-root_type ClassInterface;
+root_type _ClassInterface;

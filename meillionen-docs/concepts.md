@@ -14,6 +14,16 @@ All models in meillionen currently have a function interface definition. Functio
 
 Invocation of the interface subcommand returns json that is interpreted by other programs with the meillionen libraries to facilitate data validation of inputs. For dataframe like data this means describing what names and data types columns in the dataframe should have. For tensor like data information on what dimension labels the tensor has as well as the tensor's element type.
 
+Resources
+---------
+
+A resource describes the location of data and how to access it.
+
+Schemas
+-------
+
+A schema describes the shape of data.
+
 Request
 -------
 

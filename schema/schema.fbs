@@ -1,9 +1,10 @@
 namespace meillionen.interface;
 
-table Schema {
+table _Schema {
     name: string;
     type_name: string;
     payload: [ubyte];
+    resource_names: [string];
 }
 
-root_type Schema;
+root_type _Schema;

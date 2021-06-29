@@ -8,14 +8,6 @@
   :members:
 ```
 
-## Loaders and Savers
-
-```{eval-rst}
-.. currentmodule:: meillionen.io
-.. automodule:: meillionen.io
-  :members:
-```
-
 ## Function Interface
 
 ```{eval-rst}

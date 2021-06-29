@@ -2,10 +2,10 @@ include "schema.fbs";
 
 namespace meillionen.interface;
 
-table FunctionInterface {
+table _FunctionInterface {
     name: string;
-    sinks: [Schema];
-    sources: [Schema];
+    sinks: [_Schema];
+    sources: [_Schema];
 }
 
-root_type FunctionInterface;
+root_type _FunctionInterface;
