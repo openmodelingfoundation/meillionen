@@ -40,7 +40,7 @@ parquet = "4.0.0"
 paste = "1.0.5"
 pyo3 = "0.13.2"
 serde = "1.0.124"
-pythonize = "0.13.0"
+pythonize = "0.14.0"
 serde_json = "1.0"
 
 [lib]
