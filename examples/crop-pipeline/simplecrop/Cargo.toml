@@ -38,7 +38,7 @@ arrow = "4.0.0"
 itertools = "0.10.0"
 libc = "0.2.93"
 meillionen-mt = { path = "../../../meillionen-mt", version = "0.1.0" }
-pyo3 = "0.13.2"
+pyo3 = "0.14.1"
 serde = "1.0"
 serde_json = "1.0.64"
 stable-eyre = "0.2.2"
