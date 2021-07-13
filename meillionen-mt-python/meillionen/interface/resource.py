@@ -98,7 +98,7 @@ def deserialize_resource(resource: _Resource):
     try:
         return _RESOURCE_CLASSES[type_name].deserialize(buffer)
     except KeyError as e:
-        return ResourceNotFound(*e.args)
+        raise ResourceNotFound() from e
 
 
 def clear_resource_classes():

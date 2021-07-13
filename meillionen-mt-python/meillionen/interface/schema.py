@@ -1,11 +1,25 @@
+import functools
 import io
+import json
+import pathlib
+from typing import Union, Dict
 
 import flatbuffers
+import netCDF4
+import numpy as np
+import pandas as pd
 import pyarrow as pa
+import xarray as xr
+from landlab.io import read_esri_ascii, write_esri_ascii
 
 from . import _Schema as s
 from .base import field_to_bytesio, serialize_list
-from .resource import get_resource_class
+from .resource import get_resource_class, Feather, Parquet, NetCDF, OtherFile
+
+
+def _mkdir_p(path):
+    p = pathlib.Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
 
 
 class DataFrameSchema:
@@ -24,7 +38,17 @@ class DataFrameSchema:
 
 
 class TensorSchema:
-    pass
+    def __init__(self, data_type: str):
+        self.data_type = data_type
+
+    @classmethod
+    def deserialize(cls, buffer: io.BytesIO):
+        data = json.load(buffer)
+        return cls(data['data_type'])
+
+    def serialize(self, builder: flatbuffers.Builder):
+        data = json.dumps({'data_type': self.data_type})
+        return builder.CreateByteVector(data)
 
 
 class Schemaless:
@@ -88,7 +112,7 @@ class Schema:
         return schema_off
 
     @classmethod
-    def from_schema(cls, schema: _Schema):
+    def from_class(cls, schema: _Schema):
         name = schema.Name()
         payload_class = get_schema_class(schema.TypeName())
         payload = payload_class.deserialize(schema.PayloadAsBytesIO())
@@ -97,4 +121,171 @@ class Schema:
             resource_name = schema.ResourceNames(i)
             resource_class = get_resource_class(resource_name)
             resource_classes.append(resource_class)
-        cls(name=name, schema=payload, resource_classes=resource_classes)
+        return cls(name=name, schema=payload, resource_classes=resource_classes)
+
+
+class PandasHandler:
+    def __init__(self, name: str, s: pa.Schema):
+        self.schema = Schema(name=name, schema=DataFrameSchema(s), resource_classes=[Feather.name, Parquet.name])
+
+    def serialize(self, builder: flatbuffers.Builder):
+        return self.schema.serialize(builder)
+
+    @functools.singledispatchmethod
+    def load(self, resource):
+        raise NotImplemented()
+
+    @load.register
+    def _load(self, resource: Feather):
+        return pd.read_feather(resource.path)
+
+    @load.register
+    def _load(self, resource: Parquet):
+        return pd.read_parquet(resource.path)
+
+    @functools.singledispatchmethod
+    def save(self, resource, data):
+        raise NotImplemented()
+
+    @save.register
+    def _save(self, resource: Feather, data: pd.DataFrame):
+        return data.to_feather(resource.path)
+
+    @save.register
+    def _save(self, resource: Parquet, data: pd.DataFrame):
+        return data.to_parquet(resource.path)
+
+
+class NetCDF4Handler:
+    def __init__(self, name: str, s):
+        self.schema = Schema(name=name, schema=s, resource_classes=[NetCDF.name])
+
+    def serialize(self, builder: flatbuffers.Builder):
+        return self.schema.serialize(builder)
+
+    @functools.singledispatchmethod
+    def load(self, resource):
+        raise NotImplemented()
+
+    @load.register
+    def _load(self, resource: NetCDF):
+        ds = netCDF4.Dataset(resource.path)
+        return ds[resource.dataset]
+
+    @functools.singledispatchmethod
+    def save(self, resource, data):
+        raise NotImplemented()
+
+    @save.register
+    def _save(self, resource: NetCDF, data: xr.DataArray):
+        ds, variable = _netcdf_create_variable(self.schema, sink=resource, dimensions=data.dims)
+
+
+def _netcdf_create_variable(schema, sink, dimensions):
+    dimnames = schema.dimensions
+    _mkdir_p(sink.path)
+    dataset = netCDF4.Dataset(sink['path'], mode='w')
+    for dim in dimnames:
+        size = dimensions[dim]
+        print((dim, size))
+        dataset.createDimension(dim, size)
+    variable = dataset.createVariable(sink.variable, 'f4', dimnames)
+    return dataset, variable
+
+
+class NetCDFSliceHandler:
+    def __init__(self, name: str, data_type: str):
+        self.schema = Schema(name=name, schema=TensorSchema(data_type=data_type), resource_classes=[NetCDF.name])
+
+    def serialize(self, builder: flatbuffers.Builder):
+        return self.schema.serialize(builder)
+
+    @functools.singledispatchmethod
+    def load(self, resource):
+        raise NotImplemented()
+
+    @load.register
+    def _load(self, resource: NetCDF):
+        return NetCDFSliceLoader(source=resource)
+
+    @functools.singledispatchmethod
+    def save(self, resource, data):
+        raise NotImplemented()
+
+    @save.register
+    def _save(self, resource: NetCDF, data):
+        return NetCDFSliceSaver(schema=self.schema, sink=resource, dimensions=data)
+
+
+NDSlice = Dict[str, Union[int, slice]]
+
+
+class NetCDFSliceLoader:
+    def __init__(self, source):
+        self.source = source
+        source = source.to_dict()
+        self.dataset = netCDF4.Dataset(source['path'], mode='r')
+        self.variable = self.dataset[source['variable']]
+
+    def get(self, slices: NDSlice):
+        vdims = self.variable.dimensions
+        xs = tuple(slices[d] if d in slices else slice(None) for d in vdims)
+        return self.variable[xs]
+
+
+class NetCDFSliceSaver:
+    def __init__(self, schema, sink, dimensions):
+        self.schema = schema
+        self.dataset, self.variable = _netcdf_create_variable(
+            schema=schema,
+            sink=sink,
+            dimensions=dimensions)
+
+    def set(self, slices: Dict[str, Union[int, slice]], array: xr.DataArray):
+        """
+        Save an array to a slice of a NetCDF variable
+
+        :param array: A dimensioned array
+        :param slices: Where to save the dimensioned array to. Dimensions of array passed in
+          and NetCDF variable names must match
+        """
+        vdims = self.variable.dimensions
+        xs = tuple(slices[d] if d in slices else slice(None) for d in vdims)
+        vdims_remaining = [v for v in vdims if v not in slices.keys()]
+        self.variable[xs] = array.transpose(*vdims_remaining)
+
+    def _close(self):
+        self.dataset.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._close()
+
+
+class LandLabGridHandler:
+    def __init__(self, name: str):
+        self.schema = Schema(name=name, schema=Schemaless(), resource_classes=[OtherFile.name])
+
+    def serialize(self, builder: flatbuffers.Builder):
+        return self.schema.serialize(builder)
+
+    @functools.singledispatchmethod
+    def load(self, resource):
+        raise NotImplemented()
+
+    @load.register
+    def _load(self, resource: OtherFile):
+        mg, z = read_esri_ascii(resource.path, name='topographic__elevation')
+        mg.status_at_node[mg.nodes_at_right_edge] = mg.BC_NODE_IS_FIXED_VALUE
+        mg.status_at_node[np.isclose(z, -9999)] = mg.BC_NODE_IS_CLOSED
+        return mg
+
+    @functools.singledispatchmethod
+    def save(self, resource, data):
+        raise NotImplemented()
+
+    @save.register
+    def _save(self, resource: OtherFile, data):
+        write_esri_ascii(resource.path, data)

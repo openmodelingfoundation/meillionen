@@ -23,11 +23,11 @@ class MethodInterface:
     def from_interface(cls, interface: fi._FunctionInterface):
         name = interface.Name()
         sinks = deserialize_to_dict(
-            constructor=Schema.from_schema,
+            constructor=Schema.from_class,
             getter=interface.Sinks,
             n=interface.SinksLength())
         sources = deserialize_to_dict(
-            constructor=Schema.from_schema,
+            constructor=Schema.from_class,
             getter=interface.Sources,
             n=interface.SourcesLength())
         return cls(
