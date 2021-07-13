@@ -65,19 +65,19 @@ class Feather:
 class NetCDF:
     name = 'meillionen::resource::NetCDF'
 
-    def __init__(self, path, dataset):
+    def __init__(self, path, variable):
         self.path = path
-        self.dataset = dataset
+        self.variable = variable
 
     @classmethod
     def deserialize(cls, buffer):
         data = json.load(buffer)
         path = data['path']
-        dataset = data['path']
-        return cls(path=path, dataset=dataset)
+        variable = data['variable']
+        return cls(path=path, variable=variable)
 
     def serialize(self, builder: flatbuffers.Builder):
-        data = json.dumps({'path': self.path, 'dataset': self.dataset})
+        data = json.dumps({'path': self.path, 'variable': self.variable})
         return builder.CreateByteVector(data)
 
 
@@ -93,7 +93,7 @@ _RESOURCE_CLASSES = {
 
 
 def deserialize_resource(resource: _Resource):
-    type_name = resource.TypeName()
+    type_name = resource.TypeName().decode('utf-8')
     buffer = resource.PayloadAsBytesIO()
     try:
         return _RESOURCE_CLASSES[type_name].deserialize(buffer)

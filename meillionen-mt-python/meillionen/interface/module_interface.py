@@ -2,11 +2,22 @@ from typing import Dict
 
 import flatbuffers
 
-from .base import deserialize_to_dict, serialize_list
-from .class_interface import ClassInterface
+from .base import deserialize_to_dict, serialize_dict, FlatbufferMixin
+from .class_interface import ClassInterface, _ClassInterface
 from .method_request import MethodRequest
 from . import _ModuleInterface as mi
 from meillionen.exceptions import ClassNotFound
+
+
+class _ModuleInterface(mi._ModuleInterface, FlatbufferMixin):
+    CLASS_OFFSET = 4
+
+    @classmethod
+    def GetRootAs(cls, buf, offset=0):
+        return cls.get_root_as(buf, offset)
+
+    def Classes(self, j):
+        return self._get_resource(j, self.CLASS_OFFSET, _ClassInterface)
 
 
 class ModuleInterface:
@@ -24,7 +35,7 @@ class ModuleInterface:
 
     @classmethod
     def deserialize(cls, buffer):
-        interface = mi._ModuleInterface.GetRootAs(buffer, 0)
+        interface = _ModuleInterface.GetRootAs(buffer, 0)
         classes = deserialize_to_dict(
             constructor=ClassInterface.from_interface,
             getter=interface.Classes,
@@ -32,7 +43,7 @@ class ModuleInterface:
         return cls(classes=classes)
 
     def serialize(self, builder: flatbuffers.Builder):
-        class_off = serialize_list(
+        class_off = serialize_dict(
             builder=builder,
             vector_builder=mi.StartClassesVector,
             xs=self.classes
@@ -44,6 +55,4 @@ class ModuleInterface:
     def handle(self, req: MethodRequest):
         klass = self.classes[req.class_name]
         method = klass._methods[req.method_name]
-        return {
-            'method': method
-        }
+        return method

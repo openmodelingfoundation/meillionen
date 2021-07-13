@@ -2,7 +2,7 @@ import functools
 import io
 import json
 import pathlib
-from typing import Union, Dict
+from typing import Union, Dict, List, Any
 
 import flatbuffers
 import netCDF4
@@ -23,6 +23,8 @@ def _mkdir_p(path):
 
 
 class DataFrameSchema:
+    name = 'meillionen::schema::DataFrameSchema'
+
     def __init__(self, arrow_schema: pa.Schema):
         self.arrow_schema = arrow_schema
 
@@ -38,20 +40,25 @@ class DataFrameSchema:
 
 
 class TensorSchema:
-    def __init__(self, data_type: str):
+    name = 'meillionen::schema::TensorSchema'
+
+    def __init__(self, data_type: str, dimensions: List[str]):
         self.data_type = data_type
+        self.dimensions = dimensions
 
     @classmethod
     def deserialize(cls, buffer: io.BytesIO):
         data = json.load(buffer)
-        return cls(data['data_type'])
+        return cls(data_type=data['data_type'], dimensions=data['dimensions'])
 
     def serialize(self, builder: flatbuffers.Builder):
-        data = json.dumps({'data_type': self.data_type})
+        data = json.dumps({'data_type': self.data_type, 'dimensions': self.dimensions})
         return builder.CreateByteVector(data)
 
 
 class Schemaless:
+    name = 'meillionen::schema::Schemaless'
+
     @classmethod
     def deserialize(cls, buffer: io.BytesIO):
         return cls()
@@ -64,6 +71,7 @@ _SCHEMA_CLASSES = {
     s.name: s for s in
     [
         DataFrameSchema,
+        TensorSchema,
         Schemaless
     ]
 }
@@ -84,6 +92,13 @@ def get_schema_class(name):
 class _Schema(s._Schema):
     PAYLOAD_OFFSET = 8
 
+    @classmethod
+    def GetRootAs(cls, buf, offset=0):
+        n = flatbuffers.encode.Get(flatbuffers.packer.uoffset, buf, offset)
+        x = cls()
+        x.Init(buf, n + offset)
+        return x
+
     def PayloadAsBytesIO(self):
         return field_to_bytesio(tab=self._tab, field_offset=self.PAYLOAD_OFFSET)
 
@@ -94,15 +109,19 @@ class Schema:
         self.schema = schema
         self.resource_classes = resource_classes
 
+    def _serialize_resource_names(self, builder: flatbuffers.Builder, resource_classes: List[Any]):
+        n = len(resource_classes)
+        offsets = [builder.CreateString(resource_classes[i].name) for i in range(n)]
+        s.StartResourceNamesVector(builder, n)
+        for i in range(n):
+            builder.PrependUOffsetTRelative(offsets[i])
+        return builder.EndVector()
+
     def serialize(self, builder: flatbuffers.Builder):
         name_off = builder.CreateString(self.name)
         type_name_off = builder.CreateString(self.schema.name)
         payload_off = self.schema.serialize(builder)
-        resource_names_off = serialize_list(
-            builder=builder,
-            vector_builder=s.StartResourceNamesVector,
-            xs=self.resource_classes
-        )
+        resource_names_off = self._serialize_resource_names(builder, self.resource_classes)
         s.Start(builder)
         s.AddName(builder, name_off)
         s.AddTypeName(builder, type_name_off)
@@ -113,12 +132,12 @@ class Schema:
 
     @classmethod
     def from_class(cls, schema: _Schema):
-        name = schema.Name()
-        payload_class = get_schema_class(schema.TypeName())
+        name = schema.Name().decode('utf-8')
+        payload_class = get_schema_class(schema.TypeName().decode('utf-8'))
         payload = payload_class.deserialize(schema.PayloadAsBytesIO())
         resource_classes = []
         for i in range(schema.ResourceNamesLength()):
-            resource_name = schema.ResourceNames(i)
+            resource_name = schema.ResourceNames(i).decode('utf-8')
             resource_class = get_resource_class(resource_name)
             resource_classes.append(resource_class)
         return cls(name=name, schema=payload, resource_classes=resource_classes)
@@ -126,7 +145,7 @@ class Schema:
 
 class PandasHandler:
     def __init__(self, name: str, s: pa.Schema):
-        self.schema = Schema(name=name, schema=DataFrameSchema(s), resource_classes=[Feather.name, Parquet.name])
+        self.schema = Schema(name=name, schema=DataFrameSchema(s), resource_classes=[Feather, Parquet])
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
@@ -157,8 +176,17 @@ class PandasHandler:
 
 
 class NetCDF4Handler:
-    def __init__(self, name: str, s):
-        self.schema = Schema(name=name, schema=s, resource_classes=[NetCDF.name])
+    def __init__(self, name: str, data_type: str, dimensions: List[str]):
+        ts = TensorSchema(data_type=data_type, dimensions=dimensions)
+        self.schema = Schema(name=name, schema=ts, resource_classes=[NetCDF])
+
+    @property
+    def data_type(self):
+        return self.schema.schema.data_type
+
+    @property
+    def dimensions(self):
+        return self.schema.schema.dimensions
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
@@ -170,7 +198,7 @@ class NetCDF4Handler:
     @load.register
     def _load(self, resource: NetCDF):
         ds = netCDF4.Dataset(resource.path)
-        return ds[resource.dataset]
+        return ds[resource.variable]
 
     @functools.singledispatchmethod
     def save(self, resource, data):
@@ -178,13 +206,15 @@ class NetCDF4Handler:
 
     @save.register
     def _save(self, resource: NetCDF, data: xr.DataArray):
-        ds, variable = _netcdf_create_variable(self.schema, sink=resource, dimensions=data.dims)
+        data = data.transpose(self.dimensions)
+        ds, variable = _netcdf_create_variable(self.schema.schema, sink=resource, dimensions=data.dims)
+        variable[:] = data
 
 
 def _netcdf_create_variable(schema, sink, dimensions):
     dimnames = schema.dimensions
     _mkdir_p(sink.path)
-    dataset = netCDF4.Dataset(sink['path'], mode='w')
+    dataset = netCDF4.Dataset(sink.path, mode='w')
     for dim in dimnames:
         size = dimensions[dim]
         print((dim, size))
@@ -195,7 +225,7 @@ def _netcdf_create_variable(schema, sink, dimensions):
 
 class NetCDFSliceHandler:
     def __init__(self, name: str, data_type: str):
-        self.schema = Schema(name=name, schema=TensorSchema(data_type=data_type), resource_classes=[NetCDF.name])
+        self.schema = Schema(name=name, schema=TensorSchema(data_type=data_type), resource_classes=[NetCDF])
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
@@ -221,11 +251,10 @@ NDSlice = Dict[str, Union[int, slice]]
 
 
 class NetCDFSliceLoader:
-    def __init__(self, source):
+    def __init__(self, source: NetCDF):
         self.source = source
-        source = source.to_dict()
-        self.dataset = netCDF4.Dataset(source['path'], mode='r')
-        self.variable = self.dataset[source['variable']]
+        self.dataset = netCDF4.Dataset(source.path, mode='r')
+        self.variable = self.dataset[source.variable]
 
     def get(self, slices: NDSlice):
         vdims = self.variable.dimensions
@@ -234,7 +263,7 @@ class NetCDFSliceLoader:
 
 
 class NetCDFSliceSaver:
-    def __init__(self, schema, sink, dimensions):
+    def __init__(self, schema, sink: NetCDF, dimensions):
         self.schema = schema
         self.dataset, self.variable = _netcdf_create_variable(
             schema=schema,
@@ -265,8 +294,10 @@ class NetCDFSliceSaver:
 
 
 class LandLabGridHandler:
-    def __init__(self, name: str):
-        self.schema = Schema(name=name, schema=Schemaless(), resource_classes=[OtherFile.name])
+    def __init__(self, name: str, data_type: str):
+        dimensions = ['x', 'y']
+        ts = TensorSchema(data_type=data_type, dimensions=dimensions)
+        self.schema = Schema(name=name, schema=ts, resource_classes=[OtherFile.name])
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)

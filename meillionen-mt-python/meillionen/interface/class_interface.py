@@ -1,19 +1,36 @@
+from typing import Dict
+
 import flatbuffers
 
 from . import _ClassInterface as ci
-from .function_interface import MethodInterface
-from .base import serialize_list
+from .method_interface import MethodInterface, _MethodInterface
+from .base import serialize_list, serialize_dict, FlatbufferMixin
 from meillionen.exceptions import MethodNotFound
 
 
+class _ClassInterface(ci._ClassInterface, FlatbufferMixin):
+    METHOD_OFFSET = 8
+
+    @classmethod
+    def GetRootAs(cls, buf, offset=0):
+        return cls.get_root_as(buf, offset)
+
+    def Methods(self, j):
+        return self._get_resource(j, self.METHOD_OFFSET, _MethodInterface)
+
+
 class ClassInterface:
-    def __init__(self, name, methods):
+    def __init__(self, name, methods: Dict[str, MethodInterface]):
         self._name = name
         self._methods = methods
 
+    @property
+    def name(self):
+        return self._name
+
     @classmethod
-    def from_interface(cls, interface: ci._ClassInterface):
-        name = interface.Name()
+    def from_interface(cls, interface: _ClassInterface):
+        name = interface.Name().decode('utf-8')
         methods = {}
         for i in range(interface.MethodsLength()):
             method = MethodInterface.from_interface(interface.Methods(i))
@@ -22,12 +39,12 @@ class ClassInterface:
 
     @classmethod
     def deserialize(cls, buffer):
-        interface = ci._ClassInterface.GetRootAs(buffer, 0)
+        interface = _ClassInterface.GetRootAs(buffer, 0)
         return cls.from_interface(interface)
 
     def serialize(self, builder: flatbuffers.Builder):
         name_off = builder.CreateString(self._name)
-        methods_off = serialize_list(
+        methods_off = serialize_dict(
             builder=builder,
             vector_builder=ci.StartMethodsVector,
             xs=self._methods
