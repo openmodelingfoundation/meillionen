@@ -13,7 +13,7 @@ import xarray as xr
 from landlab.io import read_esri_ascii, write_esri_ascii
 
 from . import _Schema as s
-from .base import field_to_bytesio, serialize_list
+from .base import field_to_bytesio
 from .resource import get_resource_class, Feather, Parquet, NetCDF, OtherFile
 
 
@@ -175,7 +175,7 @@ class PandasHandler:
         return data.to_parquet(resource.path)
 
 
-class NetCDF4Handler:
+class NetCDFHandler:
     def __init__(self, name: str, data_type: str, dimensions: List[str]):
         ts = TensorSchema(data_type=data_type, dimensions=dimensions)
         self.schema = Schema(name=name, schema=ts, resource_classes=[NetCDF])
@@ -224,8 +224,12 @@ def _netcdf_create_variable(schema, sink, dimensions):
 
 
 class NetCDFSliceHandler:
-    def __init__(self, name: str, data_type: str):
-        self.schema = Schema(name=name, schema=TensorSchema(data_type=data_type), resource_classes=[NetCDF])
+    def __init__(self, name: str, data_type: str, dimensions: List[str]):
+        self.schema = Schema(
+            name=name,
+            schema=TensorSchema(data_type=data_type, dimensions=dimensions),
+            resource_classes=[NetCDF]
+        )
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
@@ -266,7 +270,7 @@ class NetCDFSliceSaver:
     def __init__(self, schema, sink: NetCDF, dimensions):
         self.schema = schema
         self.dataset, self.variable = _netcdf_create_variable(
-            schema=schema,
+            schema=schema.schema,
             sink=sink,
             dimensions=dimensions)
 

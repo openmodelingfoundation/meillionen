@@ -1,26 +1,24 @@
 import netCDF4
 import numpy as np
-from meillionen.meillionen import Schemaless
-from meillionen.handlers import NetCDFHandler, PandasHandler
-from meillionen.resource import FeatherResource, NetCDFResource
-import pytest
+import pyarrow as pa
+from meillionen.interface.schema import PandasHandler, NetCDFSliceHandler
+from meillionen.interface.resource import Feather, NetCDF
 import xarray as xr
 
 
 def test_load_feather():
-    source = FeatherResource.from_dict({"path": "../examples/crop-pipeline/simplecrop/data/yearly.feather"})
-    df = PandasHandler(Schemaless()).load(source)
+    source = Feather(path="../examples/crop-pipeline/workflows/inputs/yearly.feather")
+    df = PandasHandler(name='daily', s=pa.schema([])).load(source)
     assert df.shape == (1, 26)
 
 
 def test_save_netcdf():
-    sink = NetCDFResource(
+    sink = NetCDF(
         path='data/swid.nc',
-        variable='soil_water_infiltration__depth',
-        dimensions=['x', 'y', 'time']
+        variable='soil_water_infiltration__depth'
     )
-    swid_schema = [('x', 6), ('y', 11), ('time', 365)]
-    with NetCDFHandler(Schemaless()).save(sink, swid_schema) as swid:
+    swid_schema = {'x': 6, 'y': 11, 'time': 365}
+    with NetCDFSliceHandler(name='daily', data_type='f4', dimensions=['x', 'y', 'time']).save(sink, swid_schema) as swid:
         xs = xr.DataArray(np.array(range(6*11)).reshape((6, 11)), dims=('x', 'y'))
         swid.set({'time': 5}, xs)
     with netCDF4.Dataset('data/swid.nc', 'r') as swid:
