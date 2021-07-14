@@ -1,3 +1,5 @@
+from typing import Any, List
+
 import flatbuffers
 
 from . import _FunctionInterface as fi
@@ -25,10 +27,10 @@ class _MethodInterface(fi._FunctionInterface, FlatbufferMixin):
 
 
 class MethodInterface:
-    def __init__(self, name, sinks, sources, handler=default_handler):
+    def __init__(self, name, sinks: List[Any], sources: List[Any], handler=default_handler):
         self.name = name
-        self.sinks = sinks
-        self.sources = sources
+        self.sinks = {s.name: s for s in sinks} if not hasattr(sinks, 'values') else sinks
+        self.sources = {s.name: s for s in sources} if not hasattr(sources, 'values') else sources
         self.handler = handler
 
     def __call__(self, sources, sinks):

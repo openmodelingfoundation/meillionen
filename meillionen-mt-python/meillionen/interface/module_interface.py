@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 import flatbuffers
 
@@ -21,8 +21,8 @@ class _ModuleInterface(mi._ModuleInterface, FlatbufferMixin):
 
 
 class ModuleInterface:
-    def __init__(self, classes: Dict[str, ClassInterface]):
-        self.classes = classes
+    def __init__(self, classes: List[ClassInterface]):
+        self.classes = {c.name: c for c in classes} if not hasattr(classes, 'values') else classes
 
     def __call__(self, req: MethodRequest):
         try:

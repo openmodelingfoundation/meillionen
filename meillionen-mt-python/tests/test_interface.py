@@ -12,8 +12,8 @@ from meillionen.interface.schema import PandasHandler
 
 mi = MethodInterface(
     'run',
-    sources={
-        'daily': PandasHandler(
+    sources=[
+        PandasHandler(
             name='daily',
             s=pa.schema([
                 ('irrigation', pa.float32()),
@@ -21,23 +21,23 @@ mi = MethodInterface(
                 ('temp_min', pa.float32())
             ])
         ),
-        'yearly': PandasHandler(
+        PandasHandler(
             name='yearly',
             s=pa.schema([
                 ('plant_leaves_max_number', pa.float32()),
                 ('plant_nb', pa.float32())
             ])
         )
-    },
-    sinks={
-        'soil': PandasHandler(
+    ],
+    sinks=[
+        PandasHandler(
             name='soil',
             s=pa.schema([
                 ('day_of_year', pa.float32()),
                 ('soil_daily_runoff', pa.float32())
             ])
         )
-    })
+    ])
 
 ci = ClassInterface(
     'simplecrop',
@@ -46,9 +46,9 @@ ci = ClassInterface(
     }
 )
 
-mi = ModuleInterface({
-    c.name: c for c in [ci]
-})
+mi = ModuleInterface([
+    ci
+])
 
 
 def test_module_interface_round_trip():

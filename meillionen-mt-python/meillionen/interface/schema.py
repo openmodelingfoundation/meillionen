@@ -147,6 +147,10 @@ class PandasHandler:
     def __init__(self, name: str, s: pa.Schema):
         self.schema = Schema(name=name, schema=DataFrameSchema(s), resource_classes=[Feather, Parquet])
 
+    @property
+    def name(self):
+        return self.schema.name
+
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
 
@@ -179,6 +183,10 @@ class NetCDFHandler:
     def __init__(self, name: str, data_type: str, dimensions: List[str]):
         ts = TensorSchema(data_type=data_type, dimensions=dimensions)
         self.schema = Schema(name=name, schema=ts, resource_classes=[NetCDF])
+
+    @property
+    def name(self):
+        return self.schema.name
 
     @property
     def data_type(self):
@@ -230,6 +238,10 @@ class NetCDFSliceHandler:
             schema=TensorSchema(data_type=data_type, dimensions=dimensions),
             resource_classes=[NetCDF]
         )
+
+    @property
+    def name(self):
+        return self.schema.name
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
@@ -302,6 +314,10 @@ class LandLabGridHandler:
         dimensions = ['x', 'y']
         ts = TensorSchema(data_type=data_type, dimensions=dimensions)
         self.schema = Schema(name=name, schema=ts, resource_classes=[OtherFile.name])
+
+    @property
+    def name(self):
+        return self.schema.name
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)

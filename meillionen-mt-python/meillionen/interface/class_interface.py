@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List, Union
 
 import flatbuffers
 
@@ -20,9 +20,9 @@ class _ClassInterface(ci._ClassInterface, FlatbufferMixin):
 
 
 class ClassInterface:
-    def __init__(self, name, methods: Dict[str, MethodInterface]):
+    def __init__(self, name, methods: Union[List[MethodInterface], Dict[str, MethodInterface]]):
         self._name = name
-        self._methods = methods
+        self._methods = {m.name: m for m in methods} if not hasattr(methods, 'values') else methods
 
     @property
     def name(self):
