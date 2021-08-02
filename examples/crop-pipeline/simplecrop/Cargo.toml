@@ -34,7 +34,7 @@ simplecrop_omf = "simplecrop_omf:run_cli"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-arrow = "4.0.0"
+arrow = "5.1.0"
 itertools = "0.10.0"
 libc = "0.2.93"
 meillionen-mt = { path = "../../../meillionen-mt", version = "0.1.0" }
