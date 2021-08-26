@@ -2,6 +2,8 @@ name: Test Meillionen Packages
 
 on:
   push:
+    branches:
+      - main
     paths-ignore:
     - 'notebooks/**'
 
