@@ -138,4 +138,4 @@ app = App(overlandflow_module)
 
 if __name__ == '__main__':
     # handles cli request, prints help or handles requests using some other communication method
-    app.run()
+    app.cli()

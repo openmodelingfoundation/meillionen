@@ -2,6 +2,7 @@ import argparse
 import json
 import sys
 
+from meillionen.interface.method_request import MethodRequest
 from meillionen.interface.module_interface import ModuleInterface
 
 
@@ -22,7 +23,8 @@ class App:
         json.dump(self.module.classes[class_name].metadata, sys.stdout)
 
     def _run(self, kwargs):
-        pass
+        req = MethodRequest.deserialize(sys.stdin)
+        self.module(req)
 
     def _build_cli(self):
         p = argparse.ArgumentParser()
