@@ -20,6 +20,7 @@ class App:
         json.dump(list(self.module.classes.keys()), sys.stdout)
 
     def _describe_detail(self, class_name: str):
+        # Not Implemented Yet
         json.dump(self.module.classes[class_name].metadata, sys.stdout)
 
     def _run(self, kwargs):

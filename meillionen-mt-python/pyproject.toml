@@ -1,3 +1,20 @@
+[tool.poetry]
+name = "meillionen"
+version = "0.1.0"
+description = "A model interface serialization and rpc framework"
+authors = ["Calvin Pritchard <calvin.pritchard@asu.edu>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+flatbuffers = "^2.0"
+pyarrow = "^5.0.0"
+pydantic = "^1.8.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "pyre"
+pyre-check = "^0.9.3"
+
 [build-system]
-requires = ["maturin>=0.10,<0.11"]
-build-backend = "maturin"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

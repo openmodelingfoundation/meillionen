@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from landlab.components.overland_flow import OverlandFlow
 from landlab.components import SoilInfiltrationGreenAmpt
-from meillionen.server import App
+from meillionen.app import App
 from meillionen.interface.method_interface import MethodInterface
 from meillionen.interface.class_interface import ClassInterface
 from meillionen.interface.module_interface import ModuleInterface
@@ -9,63 +9,6 @@ from meillionen.interface.schema import PandasHandler, LandLabGridHandler, NetCD
 import pyarrow as pa
 import pandas as pd
 import xarray as xr
-
-
-settings = PandasHandler(
-    name='settings',
-    s=pa.schema([
-        pa.field(name='soil_type', type=pa.string(), bool_nullable=False)
-    ])
-)
-
-
-run = MethodInterface(
-    name='run',
-    sources=[
-        PandasHandler(
-            name='weather',
-            s=pa.schema([
-                pa.field(name='rainfall__depth', type=pa.float64(), bool_nullable=False)
-            ])
-        ),
-        LandLabGridHandler(
-            name='elevation',
-            data_type='f8'
-        ),
-        settings
-    ],
-    sinks=[
-        NetCDFSliceHandler(
-            name='soil_water_infiltration__depth',
-            data_type='f8',
-            dimensions=['x', 'y', 'time']
-        )
-    ],
-    handler=run_year_handler
-)
-
-
-default_settings = MethodInterface(
-    name='default_settings',
-    sinks=[
-        settings
-    ]
-)
-
-
-overlandflow_module = ModuleInterface(
-    classes=[
-        ClassInterface(
-            name='simplecrop',
-            methods=[
-                run,
-                default_settings
-            ]
-        )
-    ]
-)
-
-# external metadata file with more detailed information
 
 
 def run_day(mg, precipitation: float, duration=1800):
@@ -131,6 +74,64 @@ def run_year_handler(sinks, sources):
             weather=weather,
             swid=swid,
         )
+
+
+settings = PandasHandler(
+    name='settings',
+    s=pa.schema([
+        pa.field(name='soil_type', type=pa.string(), bool_nullable=False)
+    ])
+)
+
+
+run = MethodInterface(
+    name='run',
+    sources=[
+        PandasHandler(
+            name='weather',
+            s=pa.schema([
+                pa.field(name='rainfall__depth', type=pa.float64(), bool_nullable=False)
+            ])
+        ),
+        LandLabGridHandler(
+            name='elevation',
+            data_type='f8'
+        ),
+        settings
+    ],
+    sinks=[
+        NetCDFSliceHandler(
+            name='soil_water_infiltration__depth',
+            data_type='f8',
+            dimensions=['x', 'y', 'time']
+        )
+    ],
+    handler=run_year_handler
+)
+
+
+default_settings = MethodInterface(
+    name='default_settings',
+    sources=[],
+    sinks=[
+        settings
+    ]
+)
+
+
+overlandflow_module = ModuleInterface(
+    classes=[
+        ClassInterface(
+            name='simplecrop',
+            methods=[
+                run,
+                default_settings
+            ]
+        )
+    ]
+)
+
+# external metadata file with more detailed information
 
 
 app = App(overlandflow_module)
