@@ -32,7 +32,7 @@ classifier = [
 ]
 
 [dependencies]
-arrow = "4.0.0"
+arrow = "5.3.0"
 indoc = "1.0.3"
 libc = "0.2.93"
 meillionen-mt = { path = "../meillionen-mt", version = "0.1.0" }
