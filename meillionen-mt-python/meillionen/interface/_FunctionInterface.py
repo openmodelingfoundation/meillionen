@@ -32,7 +32,7 @@ class _FunctionInterface(object):
         return None
 
     # _FunctionInterface
-    def Sinks(self, j):
+    def Args(self, j):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
         if o != 0:
             x = self._tab.Vector(o)
@@ -45,43 +45,18 @@ class _FunctionInterface(object):
         return None
 
     # _FunctionInterface
-    def SinksLength(self):
+    def ArgsLength(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # _FunctionInterface
-    def SinksIsNone(self):
+    def ArgsIsNone(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
         return o == 0
 
-    # _FunctionInterface
-    def Sources(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
-        if o != 0:
-            x = self._tab.Vector(o)
-            x += flatbuffers.number_types.UOffsetTFlags.py_type(j) * 4
-            x = self._tab.Indirect(x)
-            from meillionen.interface._Schema import _Schema
-            obj = _Schema()
-            obj.Init(self._tab.Bytes, x)
-            return obj
-        return None
-
-    # _FunctionInterface
-    def SourcesLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
-        if o != 0:
-            return self._tab.VectorLen(o)
-        return 0
-
-    # _FunctionInterface
-    def SourcesIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
-        return o == 0
-
-def Start(builder): builder.StartObject(3)
+def Start(builder): builder.StartObject(2)
 def _FunctionInterfaceStart(builder):
     """This method is deprecated. Please switch to Start."""
     return Start(builder)
@@ -89,22 +64,14 @@ def AddName(builder, name): builder.PrependUOffsetTRelativeSlot(0, flatbuffers.n
 def _FunctionInterfaceAddName(builder, name):
     """This method is deprecated. Please switch to AddName."""
     return AddName(builder, name)
-def AddSinks(builder, sinks): builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(sinks), 0)
-def _FunctionInterfaceAddSinks(builder, sinks):
-    """This method is deprecated. Please switch to AddSinks."""
-    return AddSinks(builder, sinks)
-def StartSinksVector(builder, numElems): return builder.StartVector(4, numElems, 4)
-def _FunctionInterfaceStartSinksVector(builder, numElems):
+def AddArgs(builder, args): builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(args), 0)
+def _FunctionInterfaceAddArgs(builder, args):
+    """This method is deprecated. Please switch to AddArgs."""
+    return AddArgs(builder, args)
+def StartArgsVector(builder, numElems): return builder.StartVector(4, numElems, 4)
+def _FunctionInterfaceStartArgsVector(builder, numElems):
     """This method is deprecated. Please switch to Start."""
-    return StartSinksVector(builder, numElems)
-def AddSources(builder, sources): builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(sources), 0)
-def _FunctionInterfaceAddSources(builder, sources):
-    """This method is deprecated. Please switch to AddSources."""
-    return AddSources(builder, sources)
-def StartSourcesVector(builder, numElems): return builder.StartVector(4, numElems, 4)
-def _FunctionInterfaceStartSourcesVector(builder, numElems):
-    """This method is deprecated. Please switch to Start."""
-    return StartSourcesVector(builder, numElems)
+    return StartArgsVector(builder, numElems)
 def End(builder): return builder.EndObject()
 def _FunctionInterfaceEnd(builder):
     """This method is deprecated. Please switch to End."""

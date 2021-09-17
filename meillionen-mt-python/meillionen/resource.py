@@ -6,11 +6,12 @@ import functools
 import os
 from typing import Optional
 
-from meillionen.meillionen import \
-    FeatherResource as _FeatherResource, \
-    FileResource as _FileResource, \
-    NetCDFResource as _NetCDFResource, \
-    ParquetResource as _ParquetResource, \
+from meillionen.interface.resource import \
+    Feather, \
+    OtherFile, \
+    NetCDF, \
+    Parquet
+from meillionen.interface.schema import \
     DataFrameSchema, \
     TensorSchema, \
     Schemaless
@@ -41,18 +42,18 @@ class BasePathResource:
 
 
 class FeatherResource(BasePathResource):
-    resource_class = _FeatherResource
+    resource_class = Feather
 
     def __init__(self, base_path: Optional[str] = None, name: Optional[str] = None):
         super().__init__('.feather', base_path=base_path, name=name)
 
 
 class FileResource(BasePathResource):
-    resource_class = _FileResource
+    resource_class = OtherFile
 
 
 class NetCDFResource(BasePathResource):
-    resource_class = _NetCDFResource
+    resource_class = NetCDF
 
     def __init__(self, base_path: Optional[str] = None, name: Optional[str] = None):
         super().__init__('.nc', base_path=base_path, name=name)
@@ -64,7 +65,7 @@ class NetCDFResource(BasePathResource):
 
 
 class ParquetResource(BasePathResource):
-    resource_class = _ParquetResource
+    resource_class = Parquet
 
     def __init__(self, base_path: Optional[str] = None, name: Optional[str] = None):
         super().__init__('.parquet', base_path=base_path, name=name)
@@ -100,10 +101,10 @@ def resource_deserializer(deserializer_lookups):
 DEFAULT_RESOURCE_DESERIALIZER = resource_deserializer({
     resource.name: resource for resource in
     [
-        _FileResource,
-        _FeatherResource,
-        _NetCDFResource,
-        _ParquetResource,
+        OtherFile,
+        Feather,
+        NetCDF,
+        Parquet,
     ]
 })
 
@@ -111,7 +112,7 @@ DEFAULT_RESOURCE_DESERIALIZER = resource_deserializer({
 RESOURCES = {
     r.name: r
     for r in
-    [_FileResource, _FeatherResource, _NetCDFResource, _ParquetResource]
+    [OtherFile, Feather, NetCDF, Parquet]
 }
 
 DATAFRAME_VALIDATOR = DataFrameSchema.name

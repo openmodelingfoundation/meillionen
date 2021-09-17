@@ -4,8 +4,7 @@ namespace meillionen.interface;
 
 table _FunctionInterface {
     name: string;
-    sinks: [_Schema];
-    sources: [_Schema];
+    args: [_Schema];
 }
 
 root_type _FunctionInterface;

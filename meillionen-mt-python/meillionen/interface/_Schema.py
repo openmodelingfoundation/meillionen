@@ -39,8 +39,15 @@ class _Schema(object):
         return None
 
     # _Schema
-    def Payload(self, j):
+    def Mutability(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
+        if o != 0:
+            return self._tab.Get(flatbuffers.number_types.Int8Flags, o + self._tab.Pos)
+        return 0
+
+    # _Schema
+    def Payload(self, j):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
@@ -48,26 +55,26 @@ class _Schema(object):
 
     # _Schema
     def PayloadAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         if o != 0:
             return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
         return 0
 
     # _Schema
     def PayloadLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # _Schema
     def PayloadIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         return o == 0
 
     # _Schema
     def ResourceNames(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.String(a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 4))
@@ -75,17 +82,17 @@ class _Schema(object):
 
     # _Schema
     def ResourceNamesLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # _Schema
     def ResourceNamesIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         return o == 0
 
-def Start(builder): builder.StartObject(4)
+def Start(builder): builder.StartObject(5)
 def _SchemaStart(builder):
     """This method is deprecated. Please switch to Start."""
     return Start(builder)
@@ -97,7 +104,11 @@ def AddTypeName(builder, typeName): builder.PrependUOffsetTRelativeSlot(1, flatb
 def _SchemaAddTypeName(builder, typeName):
     """This method is deprecated. Please switch to AddTypeName."""
     return AddTypeName(builder, typeName)
-def AddPayload(builder, payload): builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(payload), 0)
+def AddMutability(builder, mutability): builder.PrependInt8Slot(2, mutability, 0)
+def _SchemaAddMutability(builder, mutability):
+    """This method is deprecated. Please switch to AddMutability."""
+    return AddMutability(builder, mutability)
+def AddPayload(builder, payload): builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(payload), 0)
 def _SchemaAddPayload(builder, payload):
     """This method is deprecated. Please switch to AddPayload."""
     return AddPayload(builder, payload)
@@ -105,7 +116,7 @@ def StartPayloadVector(builder, numElems): return builder.StartVector(1, numElem
 def _SchemaStartPayloadVector(builder, numElems):
     """This method is deprecated. Please switch to Start."""
     return StartPayloadVector(builder, numElems)
-def AddResourceNames(builder, resourceNames): builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(resourceNames), 0)
+def AddResourceNames(builder, resourceNames): builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(resourceNames), 0)
 def _SchemaAddResourceNames(builder, resourceNames):
     """This method is deprecated. Please switch to AddResourceNames."""
     return AddResourceNames(builder, resourceNames)

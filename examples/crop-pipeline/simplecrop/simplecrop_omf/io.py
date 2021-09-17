@@ -58,6 +58,10 @@ def _write_soil_fwf(path, df: pd.DataFrame):
     fmt = '     %5.2f     %5.2f     %5.2f     %7.2f     %5.2f     %5.2f     %5.2f'
     with open(path, 'w') as f:
         np.savetxt(f, df.values, fmt=fmt)
+        f.writelines([
+            '       WPp       FCp       STp          DP      DRNp        CN        SWC',
+            '  (cm3/cm3) (cm3/cm3) (cm3/cm3)        (cm)  (frac/d)        -       (mm)'
+        ])
 
 
 def _write_irrig_fwf(path, df: pd.DataFrame):
@@ -69,15 +73,11 @@ def _write_irrig_fwf(path, df: pd.DataFrame):
     fmt = '%5d %2.1f'
     with open(path, 'w') as f:
         np.savetxt(f, df.values, fmt=fmt)
-        f.writelines([
-            '       WPp       FCp       STp          DP      DRNp        CN        SWC',
-            '  (cm3/cm3) (cm3/cm3) (cm3/cm3)        (cm)  (frac/d)        -       (mm)'
-        ])
 
 
 def _write_weather_fwf(path, df: pd.DataFrame):
     colnames = [
-        'day_of_year'
+        'day_of_year',
         'energy_flux',
         'temp_max',
         'temp_min',
@@ -132,12 +132,14 @@ def run_one_year(sources, sinks):
     yearly = sources['yearly']
     plant_handler = sinks['plant']
     soil_handler = sinks['soil']
-    tempdir = sinks['tempdir']
-    inputdir = os.path.join(tempdir, 'input')
+    raw = sinks['raw']
+    inputdir = os.path.join(raw.path, 'input')
     os.makedirs(inputdir, exist_ok=True)
-    outputdir = os.path.join(tempdir, 'output')
+    outputdir = os.path.join(raw.path, 'output')
     os.makedirs(outputdir, exist_ok=True)
 
+    yearly_df = yearly.load()
+    daily_df = daily.load()
     _write_plant_fwf(os.path.join(inputdir, 'plant.inp'), yearly)
     _write_soil_fwf(os.path.join(inputdir, 'soil.inp'), yearly)
     _write_simctrl_fwf(os.path.join(inputdir, 'simctrl.inp'), yearly)
@@ -145,7 +147,7 @@ def run_one_year(sources, sinks):
     _write_weather_fwf(os.path.join(inputdir, 'weather.inp'), daily)
 
     simplecrop = sh.Command('simplecrop')
-    simplecrop(_cwd=tempdir)
+    simplecrop(_cwd=raw)
 
     plant = _read_plant_fwf(os.path.join(outputdir, 'plant.out'))
     soil = _read_soil_fwf(os.path.join(outputdir, 'soil.out'))

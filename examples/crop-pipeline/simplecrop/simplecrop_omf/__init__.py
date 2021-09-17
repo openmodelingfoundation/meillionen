@@ -11,11 +11,12 @@ from .io import run_one_year
 import pyarrow as pa
 
 
-class MkDirSaver:
+class DirHandler:
     RESOURCE_TYPES = [Schemaless]
 
-    def __init__(self):
-        self.schema = Schemaless("")
+    def __init__(self, name: str):
+        self.schema = Schemaless()
+        self.name = name
 
     def save(self, resource):
         path = resource.to_dict()['path']
@@ -26,11 +27,11 @@ class MkDirSaver:
 
 _run_one_year = MethodInterface(
     name='run',
-    sources=[
+    args=[
         PandasHandler(
             name='daily',
             s=pa.schema([
-                pa.field(name=name, type=pa.float32(), bool_nullable=False)
+                pa.field(name=name, type=pa.float32(), nullable=False)
                 for name in [
                     'irrigation',
                     'temp_max',
@@ -43,7 +44,7 @@ _run_one_year = MethodInterface(
         PandasHandler(
             name='yearly',
             s=pa.schema([
-                pa.field(name=name, type=pa.float32(), bool_nullable=False)
+                pa.field(name=name, type=pa.float32(), nullable=False)
                 for name in [
                     'plant_leaves_max_number',
                     'plant_emp2',
@@ -70,18 +71,17 @@ _run_one_year = MethodInterface(
                     'soil_drainage_daily_percent',
                     'soil_runoff_curve_number',
                     'soil_water_storage'
-                ] + [
-                    pa.field(name='day_of_planting', type=pa.int32(), bool_nullable=False),
-                    pa.field(name='printout_freq', type=pa.int32(), bool_nullable=False)
                 ]
-            ])
-        )
-    ],
-    sinks=[
+            ] + [
+                    pa.field(name='day_of_planting', type=pa.int32(), nullable=False),
+                    pa.field(name='printout_freq', type=pa.int32(), nullable=False)
+                ]
+            )
+        ),
         PandasHandler(
             name='plant',
             s=pa.schema([
-                pa.field(name=name, type=pa.float32(), bool_nullable=False)
+                pa.field(name=name, type=pa.float32(), nullable=False)
                 for name in
                 [
                     'day_of_year',
@@ -98,7 +98,7 @@ _run_one_year = MethodInterface(
         PandasHandler(
             name='soil',
             s=pa.schema([
-                pa.field(name=name, type=pa.float32(), bool_nullable=False)
+                pa.field(name=name, type=pa.float32(), nullable=False)
                 for name in
                 [
                     'day_of_year',
@@ -115,7 +115,7 @@ _run_one_year = MethodInterface(
                 ]
             ])
         ),
-        MkDirSaver(name='tempdir')
+        DirHandler(name='raw')
     ],
     handler=run_one_year
 )

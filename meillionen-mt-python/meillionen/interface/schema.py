@@ -90,7 +90,7 @@ def get_schema_class(name):
 
 
 class _Schema(s._Schema):
-    PAYLOAD_OFFSET = 8
+    PAYLOAD_OFFSET = 10
 
     @classmethod
     def GetRootAs(cls, buf, offset=0):
