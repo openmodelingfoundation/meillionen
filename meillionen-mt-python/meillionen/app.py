@@ -23,8 +23,11 @@ class App:
         # Not Implemented Yet
         json.dump(self.module.classes[class_name].metadata, sys.stdout)
 
-    def _run(self, kwargs):
+    def _run(self):
         req = MethodRequest.deserialize(sys.stdin)
+        self.run(req)
+
+    def run(self, req: MethodRequest):
         self.module(req)
 
     def _build_cli(self):

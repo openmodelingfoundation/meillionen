@@ -7,9 +7,9 @@ from typing import List, Dict, Any, Union
 import xarray as xr
 
 from landlab.io import read_esri_ascii, write_esri_ascii
-from meillionen.interface.bytesio import Resource, Schema
-import meillionen.interface.Schema as schema
-from meillionen.meillionen import DataFrameSchema, TensorSchema, FileResource, FeatherResource, NetCDFResource, ParquetResource
+from meillionen.interface.schema import Schema, _Schema
+from meillionen.interface import _Schema as schema
+from meillionen.resource import DataFrameSchema, TensorSchema, FileResource, FeatherResource, NetCDFResource, ParquetResource
 
 
 def _serialize(handler, builder: flatbuffers.Builder, name):
@@ -87,12 +87,12 @@ class PandasHandler(DataFrameResourceBase):
         return _serialize(self, builder, name)
 
     @classmethod
-    def from_class(cls, s: schema.Schema):
+    def from_class(cls, s: _Schema):
         s.TypeName()
 
     @classmethod
     def deserialize(cls, buffer):
-        return schema.Schema.GetRootAs(buffer, 0)
+        return Schema.GetRootAs(buffer, 0)
 
     def load(self, resource):
         """

@@ -5,11 +5,10 @@ from .resource import deserialize_resource
 
 
 class MethodRequest:
-    def __init__(self, class_name, method_name, sinks, sources):
+    def __init__(self, class_name, method_name, kwargs):
         self.class_name = class_name
         self.method_name = method_name
-        self.sinks = sinks
-        self.sources = sources
+        self.kwargs = kwargs
 
     @staticmethod
     def _serialize_resources(builder: flatbuffers.Builder, resources):
@@ -31,23 +30,20 @@ class MethodRequest:
         req = mr._MethodRequest.GetRootAs(buffer, 0)
         class_name = req.ClassName()
         method_name = req.MethodName()
-        sinks = cls._deserialize_resources(getter=req.Sinks, n=req.SinksLength())
-        sources = cls._deserialize_resources(getter=req.Sources, n=req.SourcesLength())
+        kwargs = cls._deserialize_resources(getter=req.Args, n=req.SinksLength())
         return cls(
             class_name=class_name,
             method_name=method_name,
-            sinks=sinks,
-            sources=sources
+            kwargs=kwargs
         )
 
     def serialize(self, builder: flatbuffers.Builder):
         cls_off = builder.CreateString(self.class_name)
         method_off = builder.CreateString(self.method_name)
-        sinks_off = self._serialize_resources(builder, self.sinks)
+        args_off = self._serialize_resources(builder, self.args)
         sources_off = self._serialize_resources(builder, self.sources)
         mr.Start(builder)
         mr.AddMethodName(builder, cls_off)
         mr.AddMethodName(builder, method_off)
-        mr.AddSinks(builder, sinks_off)
-        mr.AddSources(builder, sources_off)
+        mr.AddArgs(builder, args_off)
         return mr.End(builder)

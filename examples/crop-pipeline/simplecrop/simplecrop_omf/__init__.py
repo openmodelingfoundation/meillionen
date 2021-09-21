@@ -5,24 +5,11 @@ from meillionen.interface.module_interface import ModuleInterface
 from meillionen.app import App
 from meillionen.interface.class_interface import ClassInterface
 from meillionen.interface.method_interface import MethodInterface
+from meillionen.interface.mutability import Mutability
 from meillionen.interface.schema import PandasHandler, LandLabGridHandler, NetCDFSliceHandler
 from meillionen.resource import Schemaless
-from .io import run_one_year
+from .io import run_one_year, DirHandler
 import pyarrow as pa
-
-
-class DirHandler:
-    RESOURCE_TYPES = [Schemaless]
-
-    def __init__(self, name: str):
-        self.schema = Schemaless()
-        self.name = name
-
-    def save(self, resource):
-        path = resource.to_dict()['path']
-        p = pathlib.Path(path)
-        p.mkdir(parents=True, exist_ok=True)
-        return path
 
 
 _run_one_year = MethodInterface(
@@ -40,7 +27,9 @@ _run_one_year = MethodInterface(
                     'photosynthetic_energy_flux',
                     'energy_flux'
                 ]
-            ])),
+            ]),
+            mutability=Mutability.read
+        ),
         PandasHandler(
             name='yearly',
             s=pa.schema([
@@ -76,7 +65,8 @@ _run_one_year = MethodInterface(
                     pa.field(name='day_of_planting', type=pa.int32(), nullable=False),
                     pa.field(name='printout_freq', type=pa.int32(), nullable=False)
                 ]
-            )
+            ),
+            mutability=Mutability.read
         ),
         PandasHandler(
             name='plant',
@@ -93,7 +83,8 @@ _run_one_year = MethodInterface(
                     'plant_matter_root',
                     'plant_leaf_area_index'
                 ]
-            ])
+            ]),
+            mutability=Mutability.write
         ),
         PandasHandler(
             name='soil',
@@ -113,7 +104,8 @@ _run_one_year = MethodInterface(
                     'soil_water_deficit_stress',
                     'soil_water_excess_stress'
                 ]
-            ])
+            ]),
+            mutability=Mutability.write
         ),
         DirHandler(name='raw')
     ],

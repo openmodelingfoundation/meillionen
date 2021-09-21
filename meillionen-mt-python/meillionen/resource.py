@@ -40,6 +40,10 @@ class BasePathResource:
         kwargs = self.build_kwargs(settings=settings, partition=partition, name=name)
         return self.resource_class(**kwargs)
 
+    @property
+    def name(self):
+        return self._name
+
 
 class FeatherResource(BasePathResource):
     resource_class = Feather

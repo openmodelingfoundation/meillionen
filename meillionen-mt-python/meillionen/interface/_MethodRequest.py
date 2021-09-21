@@ -39,7 +39,7 @@ class _MethodRequest(object):
         return None
 
     # _MethodRequest
-    def Sources(self, j):
+    def Args(self, j):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
             x = self._tab.Vector(o)
@@ -52,43 +52,18 @@ class _MethodRequest(object):
         return None
 
     # _MethodRequest
-    def SourcesLength(self):
+    def ArgsLength(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # _MethodRequest
-    def SourcesIsNone(self):
+    def ArgsIsNone(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         return o == 0
 
-    # _MethodRequest
-    def Sinks(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
-        if o != 0:
-            x = self._tab.Vector(o)
-            x += flatbuffers.number_types.UOffsetTFlags.py_type(j) * 4
-            x = self._tab.Indirect(x)
-            from meillionen.interface._Resource import _Resource
-            obj = _Resource()
-            obj.Init(self._tab.Bytes, x)
-            return obj
-        return None
-
-    # _MethodRequest
-    def SinksLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
-        if o != 0:
-            return self._tab.VectorLen(o)
-        return 0
-
-    # _MethodRequest
-    def SinksIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
-        return o == 0
-
-def Start(builder): builder.StartObject(4)
+def Start(builder): builder.StartObject(3)
 def _MethodRequestStart(builder):
     """This method is deprecated. Please switch to Start."""
     return Start(builder)
@@ -100,22 +75,14 @@ def AddMethodName(builder, methodName): builder.PrependUOffsetTRelativeSlot(1, f
 def _MethodRequestAddMethodName(builder, methodName):
     """This method is deprecated. Please switch to AddMethodName."""
     return AddMethodName(builder, methodName)
-def AddSources(builder, sources): builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(sources), 0)
-def _MethodRequestAddSources(builder, sources):
-    """This method is deprecated. Please switch to AddSources."""
-    return AddSources(builder, sources)
-def StartSourcesVector(builder, numElems): return builder.StartVector(4, numElems, 4)
-def _MethodRequestStartSourcesVector(builder, numElems):
+def AddArgs(builder, args): builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(args), 0)
+def _MethodRequestAddArgs(builder, args):
+    """This method is deprecated. Please switch to AddArgs."""
+    return AddArgs(builder, args)
+def StartArgsVector(builder, numElems): return builder.StartVector(4, numElems, 4)
+def _MethodRequestStartArgsVector(builder, numElems):
     """This method is deprecated. Please switch to Start."""
-    return StartSourcesVector(builder, numElems)
-def AddSinks(builder, sinks): builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(sinks), 0)
-def _MethodRequestAddSinks(builder, sinks):
-    """This method is deprecated. Please switch to AddSinks."""
-    return AddSinks(builder, sinks)
-def StartSinksVector(builder, numElems): return builder.StartVector(4, numElems, 4)
-def _MethodRequestStartSinksVector(builder, numElems):
-    """This method is deprecated. Please switch to Start."""
-    return StartSinksVector(builder, numElems)
+    return StartArgsVector(builder, numElems)
 def End(builder): return builder.EndObject()
 def _MethodRequestEnd(builder):
     """This method is deprecated. Please switch to End."""

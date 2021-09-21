@@ -5,8 +5,7 @@ namespace meillionen.interface;
 table _MethodRequest {
     class_name: string;
     method_name: string;
-    sources: [_Resource];
-    sinks: [_Resource];
+    args: [_Resource];
 }
 
 root_type _MethodRequest;

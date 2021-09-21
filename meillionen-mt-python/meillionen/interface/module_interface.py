@@ -31,7 +31,8 @@ class ModuleInterface:
             raise ClassNotFound() from e
 
         method = klass.get_method(req.method_name)
-        return method(sinks=req.sinks, sources=req.sources)
+        kwargs = method.process_kwargs(req.kwargs)
+        return method(**kwargs)
 
     @classmethod
     def deserialize(cls, buffer):

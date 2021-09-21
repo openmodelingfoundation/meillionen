@@ -12,6 +12,7 @@ import pyarrow as pa
 import xarray as xr
 from landlab.io import read_esri_ascii, write_esri_ascii
 
+from ._Mutability import _Mutability
 from . import _Schema as s
 from .base import field_to_bytesio
 from .resource import get_resource_class, Feather, Parquet, NetCDF, OtherFile
@@ -64,7 +65,8 @@ class Schemaless:
         return cls()
 
     def serialize(self, builder: flatbuffers.Builder):
-        return
+        data = json.dumps('')
+        return builder.CreateByteVector(data)
 
 
 _SCHEMA_CLASSES = {
@@ -104,10 +106,11 @@ class _Schema(s._Schema):
 
 
 class Schema:
-    def __init__(self, name, schema, resource_classes):
+    def __init__(self, name, schema, resource_classes, mutability: Mutability):
         self.name = name
         self.schema = schema
         self.resource_classes = resource_classes
+        self.mutability = mutability
 
     def _serialize_resource_names(self, builder: flatbuffers.Builder, resource_classes: List[Any]):
         n = len(resource_classes)
@@ -125,6 +128,7 @@ class Schema:
         s.Start(builder)
         s.AddName(builder, name_off)
         s.AddTypeName(builder, type_name_off)
+        s.AddMutability(builder, self.mutability.serialize())
         s.AddPayload(builder, payload_off)
         s.AddResourceNames(builder, resource_names_off)
         schema_off = s.End(builder)
@@ -133,6 +137,7 @@ class Schema:
     @classmethod
     def from_class(cls, schema: _Schema):
         name = schema.Name().decode('utf-8')
+        mutability = Mutability(schema.Mutability())
         payload_class = get_schema_class(schema.TypeName().decode('utf-8'))
         payload = payload_class.deserialize(schema.PayloadAsBytesIO())
         resource_classes = []
@@ -140,12 +145,16 @@ class Schema:
             resource_name = schema.ResourceNames(i).decode('utf-8')
             resource_class = get_resource_class(resource_name)
             resource_classes.append(resource_class)
-        return cls(name=name, schema=payload, resource_classes=resource_classes)
+        return cls(name=name, schema=payload, resource_classes=resource_classes, mutability=mutability)
 
 
 class PandasHandler:
-    def __init__(self, name: str, s: pa.Schema):
-        self.schema = Schema(name=name, schema=DataFrameSchema(s), resource_classes=[Feather, Parquet])
+    def __init__(self, name: str, s: pa.Schema, mutability: Mutability):
+        self.schema = Schema(
+            name=name,
+            schema=DataFrameSchema(s),
+            resource_classes=[Feather, Parquet],
+            mutability=mutability)
 
     @property
     def name(self):
@@ -180,9 +189,9 @@ class PandasHandler:
 
 
 class NetCDFHandler:
-    def __init__(self, name: str, data_type: str, dimensions: List[str]):
+    def __init__(self, name: str, data_type: str, dimensions: List[str], mutability: Mutability):
         ts = TensorSchema(data_type=data_type, dimensions=dimensions)
-        self.schema = Schema(name=name, schema=ts, resource_classes=[NetCDF])
+        self.schema = Schema(name=name, schema=ts, resource_classes=[NetCDF], mutability=mutability)
 
     @property
     def name(self):
@@ -310,10 +319,10 @@ class NetCDFSliceSaver:
 
 
 class LandLabGridHandler:
-    def __init__(self, name: str, data_type: str):
+    def __init__(self, name: str, data_type: str, mutability: Mutability):
         dimensions = ['x', 'y']
         ts = TensorSchema(data_type=data_type, dimensions=dimensions)
-        self.schema = Schema(name=name, schema=ts, resource_classes=[OtherFile.name])
+        self.schema = Schema(name=name, schema=ts, resource_classes=[OtherFile.name], mutability=mutability.serialize())
 
     @property
     def name(self):

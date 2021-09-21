@@ -62,3 +62,13 @@ class MethodInterface:
         fi.AddName(builder, name_off)
         fi.AddArgs(builder, args_off)
         return fi.End(builder)
+
+    def process_kwargs(self, kwargs: Dict[str, Any]):
+        result = {}
+        for name, resource in kwargs.items():
+            handler = self.args[name]
+            if handler.mutability == Mutability.read:
+                result[name] = handler.load(resourse)
+            elif handler.mutability == Mutability.write:
+                result[name] = (handler, resource)
+        return result

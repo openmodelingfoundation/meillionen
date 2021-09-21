@@ -1,8 +1,27 @@
 import os
+import pathlib
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 import sh
+from meillionen.handlers import PandasHandler
+from meillionen.interface.resource import Feather, OtherFile
+from meillionen.interface.schema import Schemaless
+
+
+class DirHandler:
+    RESOURCE_TYPES = [Schemaless]
+
+    def __init__(self, name: str):
+        self.schema = Schemaless()
+        self.name = name
+
+    def save(self, resource):
+        path = resource.to_dict()['path']
+        p = pathlib.Path(path)
+        p.mkdir(parents=True, exist_ok=True)
+        return path
 
 
 def _write_plant_fwf(path, df: pd.DataFrame):
@@ -32,7 +51,7 @@ def _write_plant_fwf(path, df: pd.DataFrame):
         f.write('   Lfmax    EMP2    EMP1      PD      nb      rm      fc      tb   intot       n     lai       w      wr      wc      p1      f1    sla')
 
 
-def _write_simctrl_fwf(path, df: pd.Series):
+def _write_simctrl_fwf(path, df: pd.DataFrame):
     colnames = [
         'day_of_planting',
         'printout_freq'
@@ -127,19 +146,15 @@ def _read_soil_fwf(path):
     return df.loc[:, [c for c in colnames if not c.startswith('_')]]
 
 
-def run_one_year(sources, sinks):
-    daily = sources['daily']
-    yearly = sources['yearly']
-    plant_handler = sinks['plant']
-    soil_handler = sinks['soil']
-    raw = sinks['raw']
-    inputdir = os.path.join(raw.path, 'input')
+def run_one_year(daily: pd.DataFrame, yearly: pd.DataFrame, plant: Tuple[PandasHandler, Feather], soil: Tuple[PandasHandler, Feather], raw: Tuple[DirHandler, OtherFile]):
+    plant_handler, plant_resource = plant
+    soil_handler, soil_resource = soil
+    raw_handler, raw_resource = raw
+    inputdir = os.path.join(raw_resource.path, 'input')
     os.makedirs(inputdir, exist_ok=True)
-    outputdir = os.path.join(raw.path, 'output')
+    outputdir = os.path.join(raw_resource.path, 'output')
     os.makedirs(outputdir, exist_ok=True)
 
-    yearly_df = yearly.load()
-    daily_df = daily.load()
     _write_plant_fwf(os.path.join(inputdir, 'plant.inp'), yearly)
     _write_soil_fwf(os.path.join(inputdir, 'soil.inp'), yearly)
     _write_simctrl_fwf(os.path.join(inputdir, 'simctrl.inp'), yearly)
@@ -147,10 +162,10 @@ def run_one_year(sources, sinks):
     _write_weather_fwf(os.path.join(inputdir, 'weather.inp'), daily)
 
     simplecrop = sh.Command('simplecrop')
-    simplecrop(_cwd=raw)
+    simplecrop(_cwd=raw_resource.path)
 
     plant = _read_plant_fwf(os.path.join(outputdir, 'plant.out'))
     soil = _read_soil_fwf(os.path.join(outputdir, 'soil.out'))
 
-    plant_handler.save(plant)
-    soil_handler.save(soil)
+    plant_handler.save(plant_resource, plant)
+    soil_handler.save(soil_resource, soil)
