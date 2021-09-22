@@ -20,6 +20,15 @@ Settings
 A model has settings. Settings provide conventions about where to save file resources to, provide default resource types
 for method arguments and where to keep and runtime errors.
 
+```python
+import pyarrow as pa
+from meillionen.client import Experiment
+
+partition = Partition(pa.schema([pa.field('x', pa.float32(), nullable=False), pa.field('y', pa.float32(), nullable=False)]))
+exp = Experiment.from_cli('simplecrop', partition=partition)
+exp.run('run', partition=[('x', 3), ('y', 5)], kwargs={'yearly': Feather('yearly.feather'), 'daily': Feather('daily.feather')})
+```
+
 Resources
 ---------
 
