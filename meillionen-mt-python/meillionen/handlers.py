@@ -111,7 +111,7 @@ class PandasHandler(DataFrameResourceBase):
         :param sink_resource: metadata describing the location and format to save a dataset to
         :param data: the data to be saved
         """
-        path = resource.to_dict()['path']
+        path = resource.path
         _mkdir_p(path)
         getattr(data, self.PANDAS_SAVERS[resource.name])(path)
 
