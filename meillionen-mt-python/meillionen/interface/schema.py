@@ -161,6 +161,10 @@ class PandasHandler:
     def name(self):
         return self.schema.name
 
+    @property
+    def mutability(self):
+        return self.schema.mutability
+
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
 

@@ -1,13 +1,14 @@
-from typing import Any, List
+from typing import Any, List, Dict
 
 import flatbuffers
 
 from . import _FunctionInterface as fi
 from .schema import Schema, _Schema
 from .base import deserialize_to_dict, serialize_dict, FlatbufferMixin
+from meillionen.interface.mutability import Mutability
 
 
-def default_handler(sources, sinks):
+def default_handler(**kwargs):
     raise NotImplemented()
 
 
@@ -28,11 +29,8 @@ class MethodInterface:
         self.args = {s.name: s for s in args} if not hasattr(args, 'values') else args
         self.handler = handler
 
-    def __call__(self, args):
-        for name, resource in args.items():
-            handler = self.args[name]
-
-        return self.handler(**self.args)
+    def __call__(self, **kwargs):
+        return self.handler(**kwargs)
 
     @classmethod
     def from_interface(cls, interface: _MethodInterface):
@@ -68,7 +66,7 @@ class MethodInterface:
         for name, resource in kwargs.items():
             handler = self.args[name]
             if handler.mutability == Mutability.read:
-                result[name] = handler.load(resourse)
+                result[name] = handler.load(resource)
             elif handler.mutability == Mutability.write:
                 result[name] = (handler, resource)
         return result

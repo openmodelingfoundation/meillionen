@@ -7,35 +7,37 @@ from meillionen.interface.method_request import MethodRequest
 from meillionen.interface.class_interface import  ClassInterface
 from meillionen.interface.method_interface import  MethodInterface
 from meillionen.interface.module_interface import ModuleInterface
+from meillionen.interface.mutability import Mutability
 from meillionen.interface.schema import PandasHandler
 
 
 mi = MethodInterface(
     'run',
-    sources=[
+    args=[
         PandasHandler(
             name='daily',
             s=pa.schema([
                 ('irrigation', pa.float32()),
                 ('temp_max', pa.float32()),
                 ('temp_min', pa.float32())
-            ])
+            ]),
+            mutability=Mutability.read
         ),
         PandasHandler(
             name='yearly',
             s=pa.schema([
                 ('plant_leaves_max_number', pa.float32()),
                 ('plant_nb', pa.float32())
-            ])
-        )
-    ],
-    sinks=[
+            ]),
+            mutability=Mutability.read
+        ),
         PandasHandler(
             name='soil',
             s=pa.schema([
                 ('day_of_year', pa.float32()),
                 ('soil_daily_runoff', pa.float32())
-            ])
+            ]),
+            mutability=Mutability.write
         )
     ])
 
@@ -52,7 +54,7 @@ mi = ModuleInterface([
 
 
 def test_module_interface_round_trip():
-    mr = MethodRequest(class_name='simplecrop', method_name='run', sinks={}, sources={})
+    mr = MethodRequest(class_name='simplecrop', method_name='run', kwargs={})
     m = mi.handle(mr)
     assert m.name == 'run'
 

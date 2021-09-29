@@ -30,12 +30,13 @@ class SchemaRegistry:
     def register(self, schemas: List):
         for schema in schemas:
             self._schemas.append(schema)
+            self._schema_lookups[schema.name] = schema
 
     def deserialize(self, schema: Schema):
         name = schema.Name()
         type_name = schema.TypeName()
         payload = schema.PayloadAsBytesIO()
-        r = self._resource_lookups[type_name].deserialize(payload)
+        r = self._schema_lookups[type_name].deserialize(payload)
         return name, r
 
 

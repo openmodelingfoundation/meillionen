@@ -1,13 +1,9 @@
-import os
-import pathlib
-
 from meillionen.interface.module_interface import ModuleInterface
 from meillionen.server import Server
 from meillionen.interface.class_interface import ClassInterface
 from meillionen.interface.method_interface import MethodInterface
 from meillionen.interface.mutability import Mutability
-from meillionen.interface.schema import PandasHandler, LandLabGridHandler, NetCDFSliceHandler
-from meillionen.resource import Schemaless
+from meillionen.interface.schema import PandasHandler
 from .io import run_one_year, DirHandler
 import pyarrow as pa
 
