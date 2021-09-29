@@ -1,3 +1,7 @@
+"""
+Handlers provide a constent interface to load and save data in meiillionen
+"""
+
 import flatbuffers
 import netCDF4
 import numpy as np

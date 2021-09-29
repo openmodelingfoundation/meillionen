@@ -14,6 +14,7 @@ from landlab.io import read_esri_ascii, write_esri_ascii
 
 from ._Mutability import _Mutability
 from . import _Schema as s
+from .mutability import Mutability
 from .base import field_to_bytesio
 from .resource import get_resource_class, Feather, Parquet, NetCDF, OtherFile
 
@@ -241,11 +242,12 @@ def _netcdf_create_variable(schema, sink, dimensions):
 
 
 class NetCDFSliceHandler:
-    def __init__(self, name: str, data_type: str, dimensions: List[str]):
+    def __init__(self, name: str, data_type: str, dimensions: List[str], mutability: Mutability):
         self.schema = Schema(
             name=name,
             schema=TensorSchema(data_type=data_type, dimensions=dimensions),
-            resource_classes=[NetCDF]
+            resource_classes=[NetCDF],
+            mutability=mutability
         )
 
     @property

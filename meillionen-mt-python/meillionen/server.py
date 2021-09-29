@@ -6,7 +6,7 @@ from meillionen.interface.method_request import MethodRequest
 from meillionen.interface.module_interface import ModuleInterface
 
 
-class App:
+class Server:
     def __init__(self, module: ModuleInterface):
         self.module = module
 

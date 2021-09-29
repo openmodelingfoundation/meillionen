@@ -2,7 +2,7 @@ import os
 import pathlib
 
 from meillionen.interface.module_interface import ModuleInterface
-from meillionen.app import App
+from meillionen.server import Server
 from meillionen.interface.class_interface import ClassInterface
 from meillionen.interface.method_interface import MethodInterface
 from meillionen.interface.mutability import Mutability
@@ -122,8 +122,8 @@ crops = ModuleInterface(
         simplecrop
     ]
 )
-app = App(crops)
+server = Server(crops)
 
 
 if __name__ == '__main__':
-    app.cli()
+    server.cli()

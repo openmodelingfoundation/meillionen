@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 from landlab.components.overland_flow import OverlandFlow
 from landlab.components import SoilInfiltrationGreenAmpt
-from meillionen.app import App
+from meillionen.server import Server
 from meillionen.interface.method_interface import MethodInterface
 from meillionen.interface.class_interface import ClassInterface
 from meillionen.interface.module_interface import ModuleInterface
+from meillionen.interface.mutability import Mutability
 from meillionen.interface.schema import PandasHandler, LandLabGridHandler, NetCDFSliceHandler
 import pyarrow as pa
 import pandas as pd
@@ -80,30 +81,32 @@ settings = PandasHandler(
     name='settings',
     s=pa.schema([
         pa.field(name='soil_type', type=pa.string(), bool_nullable=False)
-    ])
+    ]),
+    mutability=Mutability.read
 )
 
 
 run = MethodInterface(
     name='run',
-    sources=[
+    args=[
         PandasHandler(
             name='weather',
             s=pa.schema([
                 pa.field(name='rainfall__depth', type=pa.float64(), bool_nullable=False)
-            ])
+            ]),
+            mutability=Mutability.read
         ),
         LandLabGridHandler(
             name='elevation',
-            data_type='f8'
+            data_type='f8',
+            mutability=Mutability.read
         ),
-        settings
-    ],
-    sinks=[
+        settings,
         NetCDFSliceHandler(
             name='soil_water_infiltration__depth',
             data_type='f8',
-            dimensions=['x', 'y', 'time']
+            dimensions=['x', 'y', 'time'],
+            mutability=Mutability.write
         )
     ],
     handler=run_year_handler
@@ -112,8 +115,7 @@ run = MethodInterface(
 
 default_settings = MethodInterface(
     name='default_settings',
-    sources=[],
-    sinks=[
+    args=[
         settings
     ]
 )
@@ -134,7 +136,7 @@ overlandflow_module = ModuleInterface(
 # external metadata file with more detailed information
 
 
-app = App(overlandflow_module)
+app = Server(overlandflow_module)
 
 
 if __name__ == '__main__':

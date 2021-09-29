@@ -16,6 +16,8 @@ class _Resource(r._Resource):
 
 
 class OtherFile:
+
+    """A file resource"""
     name = 'meillionen::resource::OtherFile'
 
     def __init__(self, path):
@@ -31,6 +33,8 @@ class OtherFile:
 
 
 class Parquet:
+    """A Parquet file resource"""
+
     name = 'meillionen::resource::Parquet'
 
     def __init__(self, path):
@@ -47,6 +51,8 @@ class Parquet:
 
 
 class Feather:
+    """A Feather file resource"""
+
     name = 'meillionen::resource::Feather'
 
     def __init__(self, path):
@@ -63,6 +69,8 @@ class Feather:
 
 
 class NetCDF:
+    """A NetCDF file resource"""
+
     name = 'meillionen::resource::NetCDF'
 
     def __init__(self, path, variable):
