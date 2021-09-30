@@ -77,7 +77,7 @@ def test_call_method():
 
     server = Server(mod_int)
     builder = flatbuffers.Builder()
-    mr.serialize(builder)
+    builder.Finish(mr.serialize(builder))
     fd = builder.Output()
     server._run(fd=fd)
 

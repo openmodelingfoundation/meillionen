@@ -4,6 +4,30 @@ from . import _MethodRequest as mr
 from .resource import deserialize_resource_payload, Resource
 
 
+class _MethodRequest(mr._MethodRequest):
+    ARGS_OFFSET = 8
+
+    @classmethod
+    def GetRootAs(cls, buf, offset=0):
+        n = flatbuffers.encode.Get(flatbuffers.packer.uoffset, buf, offset)
+        x = cls()
+        x.Init(buf, n + offset)
+        return x
+
+    # _MethodRequest
+    def Args(self, j):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(self.ARGS_OFFSET))
+        if o != 0:
+            x = self._tab.Vector(o)
+            x += flatbuffers.number_types.UOffsetTFlags.py_type(j) * 4
+            x = self._tab.Indirect(x)
+            from meillionen.interface.resource import _Resource
+            obj = _Resource()
+            obj.Init(self._tab.Bytes, x)
+            return obj
+        return None
+
+
 class MethodRequest:
     def __init__(self, class_name, method_name, kwargs):
         self.class_name = class_name
@@ -33,9 +57,9 @@ class MethodRequest:
 
     @classmethod
     def deserialize(cls, buffer):
-        req = mr._MethodRequest.GetRootAs(buffer, 0)
-        class_name = req.ClassName()
-        method_name = req.MethodName()
+        req = _MethodRequest.GetRootAs(buffer, 0)
+        class_name = req.ClassName().decode('utf-8')
+        method_name = req.MethodName().decode('utf-8')
         kwargs = cls._deserialize_resources(getter=req.Args, n=req.ArgsLength())
         return cls(
             class_name=class_name,

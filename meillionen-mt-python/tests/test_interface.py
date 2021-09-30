@@ -8,6 +8,7 @@ from meillionen.interface.class_interface import  ClassInterface
 from meillionen.interface.method_interface import  MethodInterface
 from meillionen.interface.module_interface import ModuleInterface
 from meillionen.interface.mutability import Mutability
+from meillionen.interface.resource import Feather
 from meillionen.interface.schema import PandasHandler
 
 
@@ -52,9 +53,18 @@ mi = ModuleInterface([
     ci
 ])
 
+mr = MethodRequest(
+    class_name='simplecrop',
+    method_name='run',
+    kwargs={
+        'daily': Feather('daily.feather'),
+        'yearly': Feather('yearly.feather'),
+        'soil': Feather('soil.feather')
+    }
+)
+
 
 def test_module_interface_round_trip():
-    mr = MethodRequest(class_name='simplecrop', method_name='run', kwargs={})
     m = mi.handle(mr)
     assert m.name == 'run'
 
@@ -64,3 +74,12 @@ def test_module_interface_round_trip():
     mi2 = ModuleInterface.deserialize(data)
     m = mi.handle(mr)
     assert m.name == 'run'
+
+
+def test_method_request_round_trip():
+    builder = Builder()
+    builder.Finish(mr.serialize(builder))
+    data = builder.Output()
+    mr2 = MethodRequest.deserialize(data)
+    assert mr2.class_name == mr.class_name
+    assert mr2.method_name == mr.method_name
