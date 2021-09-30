@@ -2,9 +2,10 @@ import flatbuffers
 import io
 import json
 import numpy as np
+import os.path
 
 from . import _Resource as r
-from .base import field_to_bytesio
+from .base import field_to_bytesio, MethodRequestArg
 from meillionen.exceptions import ResourceNotFound
 
 
@@ -47,6 +48,28 @@ class Resource:
         return r.End(builder)
 
 
+class PartialResource:
+    def __init__(self, resource_payload_class, kwargs):
+        self.resource_payload_class = resource_payload_class
+        self.kwargs = kwargs
+
+    def complete(self, settings, mra: MethodRequestArg, partition=None):
+        return self.resource_payload_class.from_kwargs(
+            kwargs=self.kwargs,
+            settings=settings,
+            mra=mra,
+            partition=partition)
+
+
+def build_path(settings, mra: MethodRequestArg, ext, partition=None):
+    base_path = os.path.join(settings.base_path, mra.class_name, mra.method_name, mra.arg_name)
+    if partition:
+        path = os.path.join(base_path, *partition, f'data.{ext}')
+    else:
+        path = f'{base_path}.{ext}'
+    return path
+
+
 class OtherFile:
 
     """A file payload resource
@@ -56,6 +79,20 @@ class OtherFile:
 
     def __init__(self, path):
         self.path = path
+
+    @classmethod
+    def partial(cls, ext):
+        return PartialResource(cls, {'ext': ext})
+
+    @classmethod
+    def from_kwargs(cls, kwargs, settings, mra: MethodRequestArg, partition):
+        path = build_path(
+            settings=settings,
+            mra=mra,
+            partition=partition,
+            ext=kwargs['ext']
+        )
+        return cls(path=path)
 
     @classmethod
     def deserialize(cls, buffer):
@@ -70,9 +107,26 @@ class Parquet:
     """A Parquet file resource payload"""
 
     name = 'meillionen::resource::Parquet'
+    ext = 'parquet'
 
     def __init__(self, path):
         self.path = path
+
+    @classmethod
+    def partial(cls):
+        return PartialResource(cls, {})
+
+    @classmethod
+    def from_kwargs(cls, kwargs, settings, mra: MethodRequestArg, partition=None):
+        path = build_path(
+            settings=settings,
+            class_name=class_name,
+            method_name=method_name,
+            name=name,
+            partition=partition,
+            ext=cls.ext
+        )
+        return cls(path=path)
 
     @classmethod
     def deserialize(cls, buffer):
@@ -88,9 +142,25 @@ class Feather:
     """A Feather file resource payload"""
 
     name = 'meillionen::resource::Feather'
+    ext = 'feather'
 
     def __init__(self, path):
         self.path = path
+
+    @classmethod
+    def partial(cls):
+        return PartialResource(cls, {})
+
+    @classmethod
+    def from_kwargs(cls, kwargs, settings, mra: MethodRequestArg, partition=None):
+        path = build_path(
+            cls,
+            settings=settings,
+            mra=mra,
+            ext=cls.ext,
+            partition=partition
+        )
+        return cls(path=path)
 
     @classmethod
     def deserialize(cls, buffer):
@@ -110,6 +180,21 @@ class NetCDF:
     def __init__(self, path, variable):
         self.path = path
         self.variable = variable
+
+    @classmethod
+    def partial(cls, variable):
+        return PartialResource(cls, {'variable': variable})
+
+    @classmethod
+    def from_kwargs(cls, kwargs, settings, mra: MethodRequestArg, partition=None):
+        path = build_path(
+            cls,
+            settings=settings,
+            mra=mra,
+            ext=cls.ext,
+            partition=partition
+        )
+        return cls(path=path, variable=kwargs['variable'])
 
     @classmethod
     def deserialize(cls, buffer):

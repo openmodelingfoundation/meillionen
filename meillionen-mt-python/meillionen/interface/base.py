@@ -64,3 +64,10 @@ class FlatbufferMixin:
             obj.Init(self._tab.Bytes, x)
             return obj
         return None
+
+
+class MethodRequestArg:
+    def __init__(self, class_name: str, method_name: str, arg_name: str):
+        self.class_name = class_name
+        self.method_name = method_name
+        self.arg_name = arg_name

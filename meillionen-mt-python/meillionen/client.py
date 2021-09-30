@@ -1,5 +1,3 @@
-import pathlib
-
 import flatbuffers
 import sh
 from typing import Any, Dict, Optional
@@ -10,13 +8,7 @@ from pyarrow import dataset
 
 from .resource import infer_resource
 from .interface.module_interface import ModuleInterface
-
-settings = Settings(base_path='output')
-simplecrop_omf = Client.from_cli('simplecrop-omf', settings=settings, partitioning=partititioning)
-
-
-class Settings(BaseModel):
-    base_path: str
+from .interface.method_request import MethodRequest
 
 
 class CLIRef:
@@ -55,11 +47,11 @@ class Client:
     def run_simple(self, mr: MethodRequest):
         return self.module_ref.handle(mr)
 
-    def run(self, class_name, method_name, resources, partition=None):
+    def run(self, class_name, method_name, resource_payloads, partition=None):
         mr = MethodRequest.from_partial(
             class_name=class_name,
             method_name=method_name,
-            resources=resources,
+            resource_payloads=resource_payloads,
             partition=partition,
             settings=self.settings,
             partitioning=self.partitioning

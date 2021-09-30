@@ -1,4 +1,4 @@
-from common import mod_int, mr
+from .common import mod_int, mr
 from flatbuffers import Builder
 
 from meillionen.interface.method_request import MethodRequest

@@ -1,4 +1,5 @@
 import flatbuffers
+from meillionen.interface.base import MethodRequestArg
 
 from . import _MethodRequest as mr
 from .resource import deserialize_resource_payload, Resource
@@ -31,6 +32,17 @@ class MethodRequest:
         self.class_name = class_name
         self.method_name = method_name
         self.kwargs = kwargs
+
+    @classmethod
+    def from_partial(cls, settings, class_name, method_name, resource_payloads, partition):
+        kwargs = {}
+        for name, resource_payload in resource_payloads.items():
+            mra = MethodRequestArg(class_name=class_name, method_name=method_name, arg_name=name)
+            if hasattr(resource_payload, 'complete'):
+                kwargs[name] = resource_payload.complete(settings=settings, mra=mra, partition=partition)
+            else:
+                kwargs[name] = resource_payload
+        return cls(class_name=class_name, method_name=method_name, kwargs=kwargs)
 
     @staticmethod
     def _serialize_resources(builder: flatbuffers.Builder, resources):
@@ -74,3 +86,6 @@ class MethodRequest:
         mr.AddMethodName(builder, method_off)
         mr.AddArgs(builder, kwargs_off)
         return mr.End(builder)
+
+    def get_arg(self, name):
+        return MethodRequestArg(class_name=self.class_name, method_name=self.method_name, arg_name=self.kwargs[name])
