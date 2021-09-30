@@ -1,5 +1,6 @@
 from typing import Tuple
 
+import flatbuffers
 import netCDF4
 import numpy as np
 import pandas as pd
@@ -12,6 +13,7 @@ from meillionen.interface.mutability import Mutability
 from meillionen.interface.schema import PandasHandler, NetCDFSliceHandler
 from meillionen.interface.resource import Feather, NetCDF
 import xarray as xr
+from meillionen.server import Server
 
 
 def test_call_method():
@@ -72,6 +74,12 @@ def test_call_method():
     mod_int(mr)
     yields_result_df = yields_handler.load(yields_resource)
     assert yields_result_df.equals(yields_df)
+
+    server = Server(mod_int)
+    builder = flatbuffers.Builder()
+    mr.serialize(builder)
+    fd = builder.Output()
+    server._run(fd=fd)
 
 
 def test_load_feather():

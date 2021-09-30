@@ -23,8 +23,8 @@ class Server:
         # Not Implemented Yet
         json.dump(self.module.classes[class_name].metadata, sys.stdout)
 
-    def _run(self):
-        req = MethodRequest.deserialize(sys.stdin)
+    def _run(self, fd = sys.stdin):
+        req = MethodRequest.deserialize(fd)
         self.run(req)
 
     def run(self, req: MethodRequest):

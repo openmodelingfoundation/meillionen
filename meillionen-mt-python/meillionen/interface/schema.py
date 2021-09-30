@@ -16,7 +16,7 @@ from ._Mutability import _Mutability
 from . import _Schema as s
 from .mutability import Mutability
 from .base import field_to_bytesio
-from .resource import get_resource_class, Feather, Parquet, NetCDF, OtherFile
+from .resource import get_resource_payload_class, Feather, Parquet, NetCDF, OtherFile
 
 
 def _mkdir_p(path):
@@ -144,7 +144,7 @@ class Schema:
         resource_classes = []
         for i in range(schema.ResourceNamesLength()):
             resource_name = schema.ResourceNames(i).decode('utf-8')
-            resource_class = get_resource_class(resource_name)
+            resource_class = get_resource_payload_class(resource_name)
             resource_classes.append(resource_class)
         return cls(name=name, schema=payload, resource_classes=resource_classes, mutability=mutability)
 
