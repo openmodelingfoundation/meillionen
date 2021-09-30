@@ -1,13 +1,70 @@
 import pathlib
+
+import flatbuffers
+import sh
 from typing import Any, Dict, Optional
+
 
 import pyarrow as pa
 from pyarrow import dataset
 
-from .function import FuncInterfaceClient, FuncRequest
 from .resource import infer_resource
-from meillionen.meillionen import client_create_interface_from_cli, client_call_cli, FileResource, ParquetResource, \
-    FeatherResource
+from .interface.module_interface import ModuleInterface
+
+settings = Settings(base_path='output')
+simplecrop_omf = Client.from_cli('simplecrop-omf', settings=settings, partitioning=partititioning)
+
+
+class Settings(BaseModel):
+    base_path: str
+
+
+class CLIRef:
+    def __init__(self, path):
+        self.command = sh.Command(path)
+
+    def get_interface(self) -> ModuleInterface:
+        interface = self.command('interface')
+        module = ModuleInterface.deserialize(interface.stdout)
+        return module
+
+    def handle(self, mr: MethodRequest):
+        builder = flatbuffers.Builder()
+        builder.Finish(mr.serialize(builder))
+        msg = builder.Output()
+        self.command('run')
+
+
+class ServerRef:
+    def __init__(self, server: Server):
+        self.server = server
+
+    def get_interface(self) -> ModuleInterface:
+        return self.server.module
+
+    def handle(self, mr: MethodRequest):
+        self.server.run(mr)
+
+
+class Client:
+    def __init__(self, module_ref, partitioning=None, settings=None):
+        self.module_ref = module_ref
+        self.partitioning = partitioning
+        self.settings = settings
+
+    def run_simple(self, mr: MethodRequest):
+        return self.module_ref.handle(mr)
+
+    def run(self, class_name, method_name, resources, partition=None):
+        mr = MethodRequest.from_partial(
+            class_name=class_name,
+            method_name=method_name,
+            resources=resources,
+            partition=partition,
+            settings=self.settings,
+            partitioning=self.partitioning
+        )
+        return self.run_simple(mr)
 
 
 class ResourceBuilder:

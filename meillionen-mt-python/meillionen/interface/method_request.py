@@ -2,17 +2,15 @@ import flatbuffers
 
 from . import _MethodRequest as mr
 from .resource import deserialize_resource_payload, Resource
+from .base import FlatbufferMixin
 
 
-class _MethodRequest(mr._MethodRequest):
+class _MethodRequest(mr._MethodRequest, FlatbufferMixin):
     ARGS_OFFSET = 8
 
     @classmethod
     def GetRootAs(cls, buf, offset=0):
-        n = flatbuffers.encode.Get(flatbuffers.packer.uoffset, buf, offset)
-        x = cls()
-        x.Init(buf, n + offset)
-        return x
+        return cls.get_root_as(buf, offset)
 
     # _MethodRequest
     def Args(self, j):
