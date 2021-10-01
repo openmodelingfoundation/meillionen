@@ -54,7 +54,7 @@ class TensorSchema:
         return cls(data_type=data['data_type'], dimensions=data['dimensions'])
 
     def serialize(self, builder: flatbuffers.Builder):
-        data = json.dumps({'data_type': self.data_type, 'dimensions': self.dimensions})
+        data = json.dumps({'data_type': self.data_type, 'dimensions': self.dimensions}).encode('utf-8')
         return builder.CreateByteVector(data)
 
 
@@ -328,7 +328,7 @@ class LandLabGridHandler:
     def __init__(self, name: str, data_type: str, mutability: Mutability):
         dimensions = ['x', 'y']
         ts = TensorSchema(data_type=data_type, dimensions=dimensions)
-        self.schema = Schema(name=name, schema=ts, resource_classes=[OtherFile.name], mutability=mutability.serialize())
+        self.schema = Schema(name=name, schema=ts, resource_classes=[OtherFile], mutability=mutability)
 
     @property
     def name(self):

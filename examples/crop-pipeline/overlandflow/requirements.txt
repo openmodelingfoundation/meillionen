@@ -1,3 +1,0 @@
-landlab
-netCDF4
-numpy

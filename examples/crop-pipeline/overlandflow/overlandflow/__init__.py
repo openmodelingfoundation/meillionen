@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
+from typing import Tuple
+
 from landlab.components.overland_flow import OverlandFlow
 from landlab.components import SoilInfiltrationGreenAmpt
+from meillionen.interface.resource import NetCDF
 from meillionen.server import Server
 from meillionen.interface.method_interface import MethodInterface
 from meillionen.interface.class_interface import ClassInterface
@@ -52,24 +55,18 @@ def run_year(mg, weather: pd.DataFrame, swid):
         swid.set({'time': t}, infiltration_depth)
 
 
-def run_year_handler(sinks, sources):
+def run_year_handler(elevation, weather, surface_water_infiltation__depth: Tuple[NetCDFSliceHandler, NetCDF]):
     """
     Calculates the mm of water that has infiltrated each grid cell for day of the year after a rainfall event
     in response to a request on the command line
     """
 
-    # sinks need to be written to manually by their handlers since we need to decide what data to write
-    surface_water_infiltation__depth = sinks['surface_water_infiltation__depth']
-
-    # sources are already processed by their handlers
-    elevation = sources['elevation']
-    weather = sources['weather']
-
     # determine the size of the spatial daily infiltration array
     swid_size = {'x': elevation.shape[0], 'y': elevation.shape[1], 'time': weather.shape[0]}
 
+    swid_handler, swid_resource = surface_water_infiltation__depth
     # write to the spatial daily infiltration netcdf array
-    with surface_water_infiltation__depth.save(swid_size) as swid:
+    with swid_handler.save(swid_resource, swid_size) as swid:
         run_year(
             mg=elevation,
             weather=weather,
@@ -80,7 +77,7 @@ def run_year_handler(sinks, sources):
 settings = PandasHandler(
     name='settings',
     s=pa.schema([
-        pa.field(name='soil_type', type=pa.string(), bool_nullable=False)
+        pa.field(name='soil_type', type=pa.string(), nullable=False)
     ]),
     mutability=Mutability.read
 )
@@ -92,7 +89,7 @@ run = MethodInterface(
         PandasHandler(
             name='weather',
             s=pa.schema([
-                pa.field(name='rainfall__depth', type=pa.float64(), bool_nullable=False)
+                pa.field(name='rainfall__depth', type=pa.float64(), nullable=False)
             ]),
             mutability=Mutability.read
         ),
@@ -101,7 +98,6 @@ run = MethodInterface(
             data_type='f8',
             mutability=Mutability.read
         ),
-        settings,
         NetCDFSliceHandler(
             name='soil_water_infiltration__depth',
             data_type='f8',
@@ -127,7 +123,7 @@ overlandflow_module = ModuleInterface(
             name='simplecrop',
             methods=[
                 run,
-                default_settings
+                # default_settings
             ]
         )
     ]
@@ -136,9 +132,9 @@ overlandflow_module = ModuleInterface(
 # external metadata file with more detailed information
 
 
-app = Server(overlandflow_module)
+server = Server(overlandflow_module)
 
 
-if __name__ == '__main__':
-    # handles cli request, prints help or handles requests using some other communication method
-    app.cli()
+def main():
+    server.cli()
+
