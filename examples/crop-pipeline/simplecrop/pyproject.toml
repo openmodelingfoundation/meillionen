@@ -34,6 +34,9 @@ meillionen = { path = "../../../meillionen-mt-python", develop = true }
 pytest = "^6.2.5"
 ipython = "^7.27.0"
 
+[tool.poetry.scripts]
+simplecrop-omf = 'simplecrop_omf:main'
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
