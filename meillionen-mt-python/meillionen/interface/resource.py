@@ -156,7 +156,6 @@ class Feather:
     @classmethod
     def from_kwargs(cls, kwargs, settings, mra: MethodRequestArg, partition=None):
         path = build_path(
-            cls,
             settings=settings,
             mra=mra,
             ext=cls.ext,
@@ -178,6 +177,7 @@ class NetCDF:
     """A NetCDF file resource payload"""
 
     name = 'meillionen::resource::NetCDF'
+    ext = 'nc'
 
     def __init__(self, path, variable):
         self.path = path
@@ -190,7 +190,6 @@ class NetCDF:
     @classmethod
     def from_kwargs(cls, kwargs, settings, mra: MethodRequestArg, partition=None):
         path = build_path(
-            cls,
             settings=settings,
             mra=mra,
             ext=cls.ext,

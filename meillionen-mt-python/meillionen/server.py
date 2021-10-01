@@ -1,4 +1,5 @@
 import argparse
+import io
 import json
 import sys
 
@@ -30,8 +31,8 @@ class Server:
         # Not Implemented Yet
         json.dump(self.module.classes[class_name].metadata, sys.stdout)
 
-    def _run(self, fd = sys.stdin):
-        req = MethodRequest.deserialize(fd)
+    def _run(self, kwargs, fd: io.BytesIO = sys.stdin.buffer):
+        req = MethodRequest.deserialize(fd.read())
         self.run(req)
 
     def run(self, req: MethodRequest):
@@ -56,6 +57,7 @@ class Server:
         describe_detail_p.add_argument('class_name')
 
         run_p = sp.add_parser('run')
+        run_p.set_defaults(command='run')
 
         return p
 

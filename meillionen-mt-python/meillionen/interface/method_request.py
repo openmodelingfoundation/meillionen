@@ -1,3 +1,5 @@
+import io
+
 import flatbuffers
 from meillionen.interface.base import MethodRequestArg
 
@@ -70,7 +72,7 @@ class MethodRequest:
         return resources
 
     @classmethod
-    def deserialize(cls, buffer):
+    def deserialize(cls, buffer: io.BytesIO):
         req = _MethodRequest.GetRootAs(buffer, 0)
         class_name = req.ClassName().decode('utf-8')
         method_name = req.MethodName().decode('utf-8')

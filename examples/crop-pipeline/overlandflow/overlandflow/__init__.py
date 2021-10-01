@@ -55,7 +55,7 @@ def run_year(mg, weather: pd.DataFrame, swid):
         swid.set({'time': t}, infiltration_depth)
 
 
-def run_year_handler(elevation, weather, surface_water_infiltation__depth: Tuple[NetCDFSliceHandler, NetCDF]):
+def run_year_handler(elevation, weather, soil_water_infiltration__depth: Tuple[NetCDFSliceHandler, NetCDF]):
     """
     Calculates the mm of water that has infiltrated each grid cell for day of the year after a rainfall event
     in response to a request on the command line
@@ -64,7 +64,7 @@ def run_year_handler(elevation, weather, surface_water_infiltation__depth: Tuple
     # determine the size of the spatial daily infiltration array
     swid_size = {'x': elevation.shape[0], 'y': elevation.shape[1], 'time': weather.shape[0]}
 
-    swid_handler, swid_resource = surface_water_infiltation__depth
+    swid_handler, swid_resource = soil_water_infiltration__depth
     # write to the spatial daily infiltration netcdf array
     with swid_handler.save(swid_resource, swid_size) as swid:
         run_year(
@@ -120,7 +120,7 @@ default_settings = MethodInterface(
 overlandflow_module = ModuleInterface(
     classes=[
         ClassInterface(
-            name='simplecrop',
+            name='overlandflow',
             methods=[
                 run,
                 # default_settings

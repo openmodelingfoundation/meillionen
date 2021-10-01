@@ -203,6 +203,10 @@ class NetCDFHandler:
         return self.schema.name
 
     @property
+    def mutability(self):
+        return self.schema.mutability
+
+    @property
     def data_type(self):
         return self.schema.schema.data_type
 
@@ -257,6 +261,10 @@ class NetCDFSliceHandler:
     @property
     def name(self):
         return self.schema.name
+
+    @property
+    def mutability(self):
+        return self.schema.mutability
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
@@ -333,6 +341,10 @@ class LandLabGridHandler:
     @property
     def name(self):
         return self.schema.name
+
+    @property
+    def mutability(self):
+        return self.schema.mutability
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
