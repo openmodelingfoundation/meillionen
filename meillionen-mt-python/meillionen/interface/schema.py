@@ -66,7 +66,7 @@ class Schemaless:
         return cls()
 
     def serialize(self, builder: flatbuffers.Builder):
-        data = json.dumps('')
+        data = json.dumps('').encode('utf-8')
         return builder.CreateByteVector(data)
 
 

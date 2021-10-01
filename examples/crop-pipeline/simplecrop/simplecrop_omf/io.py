@@ -2,12 +2,12 @@ import os
 import pathlib
 from typing import Tuple
 
+import flatbuffers
 import numpy as np
 import pandas as pd
 import sh
-from meillionen.handlers import PandasHandler
 from meillionen.interface.resource import Feather, OtherFile
-from meillionen.interface.schema import Schemaless
+from meillionen.interface.schema import Schemaless, PandasHandler
 
 
 class DirHandler:
@@ -16,6 +16,9 @@ class DirHandler:
     def __init__(self, name: str):
         self.schema = Schemaless()
         self.name = name
+
+    def serialize(self, builder: flatbuffers.Builder):
+        return self.schema.serialize(builder)
 
     def save(self, resource):
         path = resource.to_dict()['path']

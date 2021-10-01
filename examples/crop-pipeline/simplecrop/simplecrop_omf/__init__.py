@@ -121,5 +121,5 @@ crops = ModuleInterface(
 server = Server(crops)
 
 
-if __name__ == '__main__':
+def main():
     server.cli()
