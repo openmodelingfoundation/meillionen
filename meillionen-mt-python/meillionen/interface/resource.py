@@ -3,7 +3,9 @@ import io
 import json
 import numpy as np
 import os.path
+import pyarrow as pa
 
+from ..settings import Partition, Partitioning
 from . import _Resource as r
 from .base import field_to_bytesio, MethodRequestArg
 from meillionen.exceptions import ResourceNotFound
@@ -64,7 +66,7 @@ class PartialResource:
 def build_path(settings, mra: MethodRequestArg, ext, partition=None):
     base_path = os.path.join(settings.base_path, mra.class_name, mra.method_name, mra.arg_name)
     if partition:
-        path = os.path.join(base_path, *partition, f'data.{ext}')
+        path = os.path.join(base_path, partition.to_path(), f'data.{ext}')
     else:
         path = f'{base_path}.{ext}'
     return path

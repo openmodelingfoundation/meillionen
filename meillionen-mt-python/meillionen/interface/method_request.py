@@ -1,6 +1,7 @@
 import flatbuffers
 from meillionen.interface.base import MethodRequestArg
 
+from ..settings import Settings
 from . import _MethodRequest as mr
 from .resource import deserialize_resource_payload, Resource
 from .base import FlatbufferMixin
@@ -34,7 +35,10 @@ class MethodRequest:
         self.kwargs = kwargs
 
     @classmethod
-    def from_partial(cls, settings, class_name, method_name, resource_payloads, partition):
+    def from_partial(cls, settings: Settings, class_name: str, method_name: str, resource_payloads, partition):
+        """
+        settings:
+        """
         kwargs = {}
         for name, resource_payload in resource_payloads.items():
             mra = MethodRequestArg(class_name=class_name, method_name=method_name, arg_name=name)

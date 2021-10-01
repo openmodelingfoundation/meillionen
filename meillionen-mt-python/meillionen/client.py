@@ -47,14 +47,13 @@ class Client:
     def run_simple(self, mr: MethodRequest):
         return self.module_ref.handle(mr)
 
-    def run(self, class_name, method_name, resource_payloads, partition=None):
+    def run(self, class_name, method_name, resource_payloads, partition: Optional[Partition]=None):
         mr = MethodRequest.from_partial(
             class_name=class_name,
             method_name=method_name,
             resource_payloads=resource_payloads,
             partition=partition,
-            settings=self.settings,
-            partitioning=self.partitioning
+            settings=self.settings
         )
         return self.run_simple(mr)
 
