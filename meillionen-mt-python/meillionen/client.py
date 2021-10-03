@@ -24,9 +24,12 @@ class CLIRef:
 
     def run(self, mr: MethodRequest):
         builder = flatbuffers.Builder()
-        builder.Finish(mr.serialize(builder))
+        # need to prefix the message by the size
+        # so that calling program knows how much of
+        # stdin is needed to interpret the MethodRequest
+        builder.FinishSizePrefixed(mr.serialize(builder))
         msg = builder.Output()
-        self.command('run', _in=msg)
+        self.command('run', _in=bytes(msg))
 
 
 class ServerRef:

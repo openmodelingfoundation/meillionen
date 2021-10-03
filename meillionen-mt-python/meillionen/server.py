@@ -1,6 +1,7 @@
 import argparse
 import io
 import json
+import struct
 import sys
 
 import flatbuffers
@@ -32,7 +33,10 @@ class Server:
         json.dump(self.module.classes[class_name].metadata, sys.stdout)
 
     def _run(self, kwargs, fd: io.BytesIO = sys.stdin.buffer):
-        req = MethodRequest.deserialize(fd.read())
+        size_s = fd.read(4)
+        size = struct.unpack('<I', size_s)[0]
+        buffer = fd.read(size)
+        req = MethodRequest.deserialize(buffer)
         self.run(req)
 
     def run(self, req: MethodRequest):

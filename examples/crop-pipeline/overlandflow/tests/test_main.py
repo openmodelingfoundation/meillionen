@@ -16,7 +16,7 @@ def test_cli():
         method_name='run',
         resource_payloads={
             'weather': Feather('../workflows/inputs/weather.feather'),
-            'elevation': OtherFile('../workflows/inputs/elevation.asc'), 
+            'elevation': OtherFile('../workflows/inputs/elevation.asc'),
             'soil_water_infiltration__depth': NetCDF.partial(variable='swid')
         }
     )
