@@ -103,7 +103,7 @@ _run_one_year = MethodInterface(
             ]),
             mutability=Mutability.write
         ),
-        DirHandler(name='raw')
+        DirHandler(name='raw', mutability=Mutability.write)
     ],
     handler=run_one_year
 )

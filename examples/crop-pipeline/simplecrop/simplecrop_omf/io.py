@@ -1,3 +1,4 @@
+import functools
 import os
 import pathlib
 from typing import Tuple
@@ -6,22 +7,37 @@ import flatbuffers
 import numpy as np
 import pandas as pd
 import sh
+from meillionen.interface.mutability import Mutability
 from meillionen.interface.resource import Feather, OtherFile
-from meillionen.interface.schema import Schemaless, PandasHandler
+from meillionen.interface.schema import Schemaless, PandasHandler, Schema
 
 
 class DirHandler:
-    RESOURCE_TYPES = [Schemaless]
+    def __init__(self, name: str, mutability: Mutability):
+        self.schema = Schema(
+            name=name,
+            schema=Schemaless(),
+            resource_classes=[OtherFile],
+            mutability=mutability)
 
-    def __init__(self, name: str):
-        self.schema = Schemaless()
-        self.name = name
+    @property
+    def name(self):
+        return self.schema.name
+
+    @property
+    def mutability(self):
+        return self.schema.mutability
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
 
+    @functools.singledispatchmethod
     def save(self, resource):
-        path = resource.to_dict()['path']
+        raise NotImplemented()
+
+    @save.register
+    def _save(self, resource: OtherFile):
+        path = resource.path
         p = pathlib.Path(path)
         p.mkdir(parents=True, exist_ok=True)
         return path
@@ -153,7 +169,7 @@ def run_one_year(daily: pd.DataFrame, yearly: pd.DataFrame, plant: Tuple[PandasH
     plant_handler, plant_resource = plant
     soil_handler, soil_resource = soil
     raw_handler, raw_resource = raw
-    inputdir = os.path.join(raw_resource.path, 'input')
+    inputdir = os.path.join(raw_resource.path, 'data')
     os.makedirs(inputdir, exist_ok=True)
     outputdir = os.path.join(raw_resource.path, 'output')
     os.makedirs(outputdir, exist_ok=True)
