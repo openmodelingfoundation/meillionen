@@ -1,3 +1,5 @@
+import os.path
+
 import flatbuffers
 import sh
 from typing import Any, Dict, Optional
@@ -16,6 +18,12 @@ from .response import Response
 
 
 class CLIRef:
+    """
+    A CLI reference to a model
+
+    The cli program must conform to the Meillionen cli interface
+    """
+
     def __init__(self, path):
         self.command = sh.Command(path)
 
@@ -34,7 +42,41 @@ class CLIRef:
         self.command('run', _in=bytes(msg))
 
 
+class DockerImageRef:
+    """
+    A Docker Image reference to a model
+
+    The docker image must have an entrypoint of a Meillionen cli program and
+    have a working directory of `/code` in order to work
+    """
+
+    def __init__(self, image_name: str):
+        # FIXME: support additional docker volume mounts for data that is not
+        #  available in the directory the model is currently running in
+        self.image_name = image_name
+        curdir = os.getcwd()
+        self.command(f'docker run -it --rm -v {curdir}:/code {image_name}')
+
+    def get_interface(self) -> ModuleInterface:
+        self.command('interface')
+        module = ModuleInterface.deserialize(interface.stdout)
+        return module
+
+    def run(self, mr: MethodRequest):
+        builder = flatbuffers.Builder()
+        builder.FinishSizePrefixed(mr.serialize(builder))
+        msg = builder.Output()
+        self.command('run', _in=bytes(msg))
+
+
 class ServerRef:
+    """
+    A server reference to a model
+
+    This allows running a model in the same Python process.
+
+    Mostly suited for interactive experimentation and model testing.
+    """
     def __init__(self, server: Server):
         self.server = server
 
@@ -46,10 +88,12 @@ class ServerRef:
 
 
 class Client:
-    def __init__(self, module_ref, partitioning=None, settings=None):
+    """
+    A client to execute and inspect Meillionen models
+    """
+    def __init__(self, module_ref, settings=None):
         self.module_ref = module_ref
         self.module: ModuleInterface = module_ref.get_interface()
-        self.partitioning = partitioning
         self.settings = settings
 
     def run_simple(self, mr: MethodRequest):
