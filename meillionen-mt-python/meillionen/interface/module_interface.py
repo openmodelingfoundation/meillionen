@@ -4,6 +4,7 @@ import flatbuffers
 
 from .base import deserialize_to_dict, serialize_dict, FlatbufferMixin
 from .class_interface import ClassInterface, _ClassInterface
+from .method_interface import MethodInterface
 from .method_request import MethodRequest
 from . import _ModuleInterface as mi
 from meillionen.exceptions import ClassNotFound
@@ -53,7 +54,7 @@ class ModuleInterface:
         mi.AddClasses(builder, class_off)
         return mi.End(builder)
 
-    def handle(self, req: MethodRequest):
+    def get_method(self, req: MethodRequest) -> MethodInterface:
         klass = self.classes[req.class_name]
         method = klass._methods[req.method_name]
         return method

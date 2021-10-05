@@ -9,6 +9,9 @@ from pydantic import BaseModel
 class Settings(BaseModel):
     base_path: str
 
+    def trial(self, name: str):
+        return self.__class__(base_path=os.path.join(self.base_path, name))
+
 
 class Partitioning:
     def __init__(self, schema: pa.Schema):

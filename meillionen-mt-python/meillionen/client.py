@@ -11,6 +11,8 @@ from .server import Server
 from .settings import Partition
 from .interface.module_interface import ModuleInterface
 from .interface.method_request import MethodRequest
+from .interface.schema import get_handlers
+from .response import Response
 
 
 class CLIRef:
@@ -46,12 +48,16 @@ class ServerRef:
 class Client:
     def __init__(self, module_ref, partitioning=None, settings=None):
         self.module_ref = module_ref
-        self.module = module_ref.get_interface()
+        self.module: ModuleInterface = module_ref.get_interface()
         self.partitioning = partitioning
         self.settings = settings
 
     def run_simple(self, mr: MethodRequest):
         self.module_ref.run(mr)
+        method = self.module.get_method(mr)
+        resources = mr.kwargs
+        handlers = get_handlers(resources=resources, schemas=method.args)
+        return Response(handlers=handlers, resources=resources)
 
     def run(self, class_name, method_name, resource_payloads, partition: Optional[Partition]=None):
         mr = MethodRequest.from_partial(
@@ -61,5 +67,4 @@ class Client:
             partition=partition,
             settings=self.settings
         )
-        self.run_simple(mr)
-        return mr.kwargs
+        return self.run_simple(mr)

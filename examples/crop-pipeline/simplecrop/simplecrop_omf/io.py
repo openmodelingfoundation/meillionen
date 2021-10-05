@@ -9,38 +9,7 @@ import pandas as pd
 import sh
 from meillionen.interface.mutability import Mutability
 from meillionen.interface.resource import Feather, OtherFile
-from meillionen.interface.schema import Schemaless, PandasHandler, Schema
-
-
-class DirHandler:
-    def __init__(self, name: str, mutability: Mutability):
-        self.schema = Schema(
-            name=name,
-            schema=Schemaless(),
-            resource_classes=[OtherFile],
-            mutability=mutability)
-
-    @property
-    def name(self):
-        return self.schema.name
-
-    @property
-    def mutability(self):
-        return self.schema.mutability
-
-    def serialize(self, builder: flatbuffers.Builder):
-        return self.schema.serialize(builder)
-
-    @functools.singledispatchmethod
-    def save(self, resource):
-        raise NotImplemented()
-
-    @save.register
-    def _save(self, resource: OtherFile):
-        path = resource.path
-        p = pathlib.Path(path)
-        p.mkdir(parents=True, exist_ok=True)
-        return path
+from meillionen.interface.schema import PandasHandler, DirHandler
 
 
 def _write_plant_fwf(path, df: pd.DataFrame):

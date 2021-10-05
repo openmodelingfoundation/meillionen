@@ -66,9 +66,9 @@ class PartialResource:
 def build_path(settings, mra: MethodRequestArg, ext, partition=None):
     base_path = os.path.join(settings.base_path, mra.class_name, mra.method_name, mra.arg_name)
     if partition:
-        path = os.path.join(base_path, partition.to_path(), f'data.{ext}')
+        path = os.path.join(base_path, partition.to_path(), f'data{ext}')
     else:
-        path = f'{base_path}.{ext}'
+        path = f'{base_path}{ext}'
     return path
 
 
@@ -109,7 +109,7 @@ class Parquet:
     """A Parquet file resource payload"""
 
     name = 'meillionen::resource::Parquet'
-    ext = 'parquet'
+    ext = '.parquet'
 
     def __init__(self, path):
         self.path = path
@@ -144,7 +144,7 @@ class Feather:
     """A Feather file resource payload"""
 
     name = 'meillionen::resource::Feather'
-    ext = 'feather'
+    ext = '.feather'
 
     def __init__(self, path):
         self.path = path
@@ -177,7 +177,7 @@ class NetCDF:
     """A NetCDF file resource payload"""
 
     name = 'meillionen::resource::NetCDF'
-    ext = 'nc'
+    ext = '.nc'
 
     def __init__(self, path, variable):
         self.path = path

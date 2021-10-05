@@ -1,6 +1,7 @@
 import functools
 import io
 import json
+import os.path
 import pathlib
 from typing import Union, Dict, List, Any
 
@@ -16,6 +17,7 @@ from ._Mutability import _Mutability
 from . import _Schema as s
 from .mutability import Mutability
 from .base import field_to_bytesio
+from ..exceptions import HandlerNotFound, ExtensionHandlerNotFound
 from .resource import get_resource_payload_class, Feather, Parquet, NetCDF, OtherFile
 
 
@@ -80,15 +82,15 @@ _SCHEMA_CLASSES = {
 }
 
 
-def clear_schema_classes():
+def clear_schema_payload_classes():
     _SCHEMA_CLASSES.clear()
 
 
-def register_schema_class(cls):
+def register_schema_payload_class(cls):
     _SCHEMA_CLASSES[cls.name] = cls
 
 
-def get_schema_class(name):
+def get_schema_payload_class(name):
     return _SCHEMA_CLASSES[name]
 
 
@@ -139,7 +141,7 @@ class Schema:
     def from_class(cls, schema: _Schema):
         name = schema.Name().decode('utf-8')
         mutability = Mutability(schema.Mutability())
-        payload_class = get_schema_class(schema.TypeName().decode('utf-8'))
+        payload_class = get_schema_payload_class(schema.TypeName().decode('utf-8'))
         payload = payload_class.deserialize(schema.PayloadAsBytesIO())
         resource_classes = []
         for i in range(schema.ResourceNamesLength()):
@@ -149,14 +151,7 @@ class Schema:
         return cls(name=name, schema=payload, resource_classes=resource_classes, mutability=mutability)
 
 
-class PandasHandler:
-    def __init__(self, name: str, s: pa.Schema, mutability: Mutability):
-        self.schema = Schema(
-            name=name,
-            schema=DataFrameSchema(s),
-            resource_classes=[Feather, Parquet],
-            mutability=mutability)
-
+class SchemaProxy:
     @property
     def name(self):
         return self.schema.name
@@ -164,6 +159,29 @@ class PandasHandler:
     @property
     def mutability(self):
         return self.schema.mutability
+
+    @property
+    def resource_classes(self):
+        return self.schema.resource_classes
+
+
+class PandasHandler(SchemaProxy):
+    RESOURCE_CLASSES = [Feather, Parquet]
+
+    def __init__(self, name: str, s: pa.Schema, mutability: Mutability):
+        self.schema = Schema(
+            name=name,
+            schema=DataFrameSchema(s),
+            resource_classes=self.RESOURCE_CLASSES,
+            mutability=mutability)
+
+    @classmethod
+    def from_schema(cls, schema: Schema):
+        return cls(
+            name=schema.name,
+            s=schema.schema.arrow_schema,
+            mutability=schema.mutability
+        )
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
@@ -193,18 +211,16 @@ class PandasHandler:
         return data.to_parquet(resource.path)
 
 
-class NetCDFHandler:
+class NetCDFHandler(SchemaProxy):
+    RESOURCE_CLASSES = [NetCDF]
+
     def __init__(self, name: str, data_type: str, dimensions: List[str], mutability: Mutability):
         ts = TensorSchema(data_type=data_type, dimensions=dimensions)
-        self.schema = Schema(name=name, schema=ts, resource_classes=[NetCDF], mutability=mutability)
-
-    @property
-    def name(self):
-        return self.schema.name
-
-    @property
-    def mutability(self):
-        return self.schema.mutability
+        self.schema = Schema(
+            name=name,
+            schema=ts,
+            resource_classes=self.RESOURCE_CLASSES,
+            mutability=mutability)
 
     @property
     def data_type(self):
@@ -249,22 +265,25 @@ def _netcdf_create_variable(schema, sink, dimensions):
     return dataset, variable
 
 
-class NetCDFSliceHandler:
+class NetCDFSliceHandler(SchemaProxy):
+    RESOURCE_CLASSES = [NetCDF]
+
     def __init__(self, name: str, data_type: str, dimensions: List[str], mutability: Mutability):
         self.schema = Schema(
             name=name,
             schema=TensorSchema(data_type=data_type, dimensions=dimensions),
-            resource_classes=[NetCDF],
+            resource_classes=self.RESOURCE_CLASSES,
             mutability=mutability
         )
 
-    @property
-    def name(self):
-        return self.schema.name
-
-    @property
-    def mutability(self):
-        return self.schema.mutability
+    @classmethod
+    def from_schema(cls, schema: Schema):
+        return cls(
+            name=schema.name,
+            data_type=schema.schema.data_type,
+            dimensions=schema.schema.dimensions,
+            mutability=schema.mutability
+        )
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
@@ -332,19 +351,21 @@ class NetCDFSliceSaver:
         self._close()
 
 
-class LandLabGridHandler:
+class LandLabGridHandler(SchemaProxy):
+    RESOURCE_CLASSES = [OtherFile]
+
     def __init__(self, name: str, data_type: str, mutability: Mutability):
         dimensions = ['x', 'y']
         ts = TensorSchema(data_type=data_type, dimensions=dimensions)
-        self.schema = Schema(name=name, schema=ts, resource_classes=[OtherFile], mutability=mutability)
+        self.schema = Schema(name=name, schema=ts, resource_classes=self.RESOURCE_CLASSES, mutability=mutability)
 
-    @property
-    def name(self):
-        return self.schema.name
-
-    @property
-    def mutability(self):
-        return self.schema.mutability
+    @classmethod
+    def from_schema(cls, schema: Schema):
+        return cls(
+            name=schema.name,
+            data_type=schema.schema.data_type,
+            dimensions=schema.schema.dimensions,
+            mutability=schema.mutability)
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
@@ -367,3 +388,95 @@ class LandLabGridHandler:
     @save.register
     def _save(self, resource: OtherFile, data):
         write_esri_ascii(resource.path, data)
+
+
+class DirHandler(SchemaProxy):
+    RESOURCE_CLASSES = [OtherFile]
+
+    def __init__(self, name: str, mutability: Mutability):
+        self.schema = Schema(
+            name=name,
+            schema=Schemaless(),
+            resource_classes=self.RESOURCE_CLASSES,
+            mutability=mutability)
+
+    @classmethod
+    def from_schema(cls, schema: Schema):
+        return cls(
+            name=schema.name,
+            mutability=schema.mutability)
+
+    def serialize(self, builder: flatbuffers.Builder):
+        return self.schema.serialize(builder)
+
+    @functools.singledispatchmethod
+    def save(self, resource):
+        raise NotImplemented()
+
+    @save.register
+    def _save(self, resource: OtherFile):
+        path = resource.path
+        p = pathlib.Path(path)
+        p.mkdir(parents=True, exist_ok=True)
+        return path
+
+
+class PassthroughHandlerMapper:
+    def __init__(self, handler_cls):
+        self.handler_cls = handler_cls
+
+    def to_handler(self, resource, schema):
+        return self.handler_cls.from_schema(schema)
+
+
+class FileExtensionHandlerMapper:
+    def __init__(self):
+        self.ext_map = {}
+
+    def register_ext(self, ext: str, handler_cls):
+        self.ext_map[ext] = handler_cls
+
+    def to_handler(self, resource: OtherFile, schema: Schema):
+        ext = os.path.splitext(resource.path)[1]
+        try:
+            handler_cls = self.ext_map[ext]
+        except KeyError as e:
+            raise ExtensionHandlerNotFound(ext) from e
+        return handler_cls.from_schema(schema)
+
+FILE_EXT_HANDLER_MAPPER = FileExtensionHandlerMapper()
+FILE_EXT_HANDLER_MAPPER.register_ext('.asc', LandLabGridHandler)
+FILE_EXT_HANDLER_MAPPER.register_ext('', DirHandler)
+
+_RESOURCE_HANDLER_MAPPER = {
+    OtherFile: FILE_EXT_HANDLER_MAPPER,
+    Feather: PassthroughHandlerMapper(PandasHandler),
+    Parquet: PassthroughHandlerMapper(PandasHandler),
+    NetCDF: PassthroughHandlerMapper(NetCDFHandler),
+}
+
+
+def clear_handler_classes():
+    _RESOURCE_HANDLER_MAPPER.clear()
+
+
+def register_resource_handler_mapper(resource_cls, handler_mapper):
+    _RESOURCE_HANDLER_MAPPER[resource_cls] = handler_mapper
+
+
+def all_resource_handler_mappers(name):
+    return _RESOURCE_HANDLER_MAPPER
+
+
+def get_handler(resource, schema: Schema):
+    handler_mapper = _RESOURCE_HANDLER_MAPPER[type(resource)]
+    return handler_mapper.to_handler(resource, schema)
+
+
+def get_handlers(resources, schemas: Dict[str, Schema]):
+    handlers = {}
+    for name, schema in schemas.items():
+        resource = resources[name]
+        handler = get_handler(resource, schema)
+        handlers[name] = handler
+    return handlers

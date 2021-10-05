@@ -6,7 +6,7 @@ jupytext:
     format_version: 0.13
     jupytext_version: 1.10.3
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
   language: python
   name: python3
 ---
@@ -25,35 +25,25 @@ import os.path
 import netCDF4
 from meillionen.client import ClientFunctionModel
 
-from meillionen.experiment import Experiment, PathSettings, Trial
-from meillionen.handlers import NetCDFHandler, PandasHandler
-from meillionen.resource import \
-    FileResource, FeatherResource, NetCDFResource, ParquetResource
+from meillionen.interface.resource import Feather, NetCDF, OtherFile, Parquet
+from meillionen.interface.schema import PandasHandler, NetCDFHandler
+from meillionen.settings import Settings, Partitioning
+from meillionen.clienti import Client, CLIRef
 from prefect import task, Flow
 
-os.environ['SIMPLECROP'] = 'simplecrop'
-os.environ['RUST_BACKTRACE'] = '1'
 BASE_DIR = '../../examples/crop-pipeline'
-
-
 INPUT_DIR = os.path.join(BASE_DIR, 'workflows/inputs')
 OUTPUT_DIR = os.path.join(BASE_DIR, 'workflows/outputs')
 
-experiment = Experiment(
-    sinks=PathSettings(base_path=OUTPUT_DIR),
-    sources=PathSettings(base_path=INPUT_DIR)
+settings = Settings(
+    base_path=OUTPUT_DIR
 )
-trial = experiment.trial("2021-05-26")
 ```
 
 and build a request to call our model with.
 
 ```{code-cell} ipython3
-overlandflow = ClientFunctionModel.from_path(
-    name='overlandflow', 
-    path=os.path.join(BASE_DIR, 'overlandflow/model.py'),
-    trial=trial
-)
+overlandflow = Client(CLIRef('overlandflow'), settings=settings)
 ```
 
  We also need to create sources and sinks to describe our data
@@ -72,11 +62,15 @@ sources = {
 Then call the overland flow model with our request (which will create files on the file system)
 
 ```{code-cell} ipython3
-sinks = overlandflow.run(sources=sources)
-```
-
-```{code-cell} ipython3
-sinks['soil_water_infiltration__depth'].to_dict()
+overland_payloads = overlandflow.run(
+    class_name='overlandflow',
+    method_name='run',
+    resource_payloads={
+        'elevation': OtherFile(os.path.join(INPUT_DIR, 'elevation.asc')),
+        'weather': Feather(os.path.join(INPUT_DIR, 'weather.feather')),
+        'soil_water_infiltration__depth': NetCDF.partial('swid')
+    }
+)
 ```
 
 ## Running Simple Crop on its Own
@@ -98,35 +92,26 @@ sinks['soil_water_infiltration__depth'].to_dict()
 In order to wrap this model in an interface that allows you to run the model without manually building those input files and manually converting the output files into a format conducive to analysis we need to have a construct the input files and parse the output files. Fortunately we have such a model wrapper already.
 
 ```{code-cell} ipython3
-from meillionen.client import ClientFunctionModel
 import pandas as pd
 
-run_simple_crop = ClientFunctionModel.from_path(
-    name='simplecrop', 
-    path='simplecrop_omf',
-    trial=trial
-)
+simple_crop = Client(CLIRef('simplecrop-omf'), settings=settings)
 ```
 
 ```{code-cell} ipython3
-sources = {
-    'daily': FeatherResource(),
-    'yearly': FeatherResource()
-}
-
-sinks = {
-    'plant': FeatherResource(),
-    'soil': FeatherResource(),
-    'tempdir': FileResource(ext="", name='tmp')
-}
+s = simple_crop.run(
+    class_name='simplecrop',
+    method_name='run',
+    resource_payloads={
+        'daily': Feather(),
+        'yearly': Feather(),
+        'plant': Feather.partial(),
+        'soil': Feather.partial(),
+        'tempdir': OtherFile.partial(ext='')
+    })
 ```
 
 ```{code-cell} ipython3
-s = run_simple_crop.run(sources=sources, sinks=sinks)
-```
-
-```{code-cell} ipython3
-soil_df = PandasHandler(run_simple_crop.sink('soil')).load(s['soil'])
+soil_df = PandasHandler(s['soil']).load(s['soil'])
 soil_df
 ```
 
@@ -138,36 +123,27 @@ Now we'll combine overlandflow with simplecrop. This will require an adapter to 
 
 ```{code-cell} ipython3
 from meillionen.client import ResourceBuilder
-from pyarrow.dataset import partitioning
 import pyarrow as pa
 import pandas as pd
 import pathlib
 
-trial = experiment.trial("simplecrop-parallelism")
+trial = settings.trial("simplecrop-parallelism")
 
-overlandflow_sources = {
-  'elevation': FileResource(ext='.asc'),
-  'weather': FeatherResource()
+overlandflow_payloads = {
+  'elevation': OtherFile.partial(ext='.asc'),
+  'weather': Feather()
 }
 
-overlandflow = ClientFunctionModel.from_path(
-  name='overlandflow', 
-  path=os.path.join(BASE_DIR, 'overlandflow/model.py'),
-  trial=trial)
+overlandflow = Client(CLIRef('overlandflow'), settings=trial)
 
 simplecrop_sinks = {
   'tempdir': FileResource(ext="", name="tmp")
 }
 
-simplecrop_partitioning = partitioning(
+simplecrop_partitioning = Partitioning(
     pa.schema([("x", pa.int32()), ("y", pa.int32())]))
 
-simplecrop = ClientFunctionModel.from_path(
-  name='simplecrop_omf', 
-  path='simplecrop_omf',
-  sinks=simplecrop_sinks,
-  trial=trial,
-  partitioning=simplecrop_partitioning)
+simple_crop = Client(CLIRef('simplecrop-omf'), settings=trial)
 ```
 
 ```{code-cell} ipython3
@@ -275,8 +251,4 @@ plant.to_dict()
 
 ```{code-cell} ipython3
 soil.to_dict()
-```
-
-```{code-cell} ipython3
-
 ```

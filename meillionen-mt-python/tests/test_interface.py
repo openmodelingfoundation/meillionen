@@ -6,14 +6,14 @@ from meillionen.interface.module_interface import ModuleInterface
 
 
 def test_module_interface_round_trip():
-    m = mod_int.handle(mr)
+    m = mod_int.get_method(mr)
     assert m.name == 'run'
 
     builder = Builder()
     builder.Finish(mod_int.serialize(builder))
     data = builder.Output()
     mi2 = ModuleInterface.deserialize(data)
-    m = mi2.handle(mr)
+    m = mi2.get_method(mr)
     assert m.name == 'run'
 
 
