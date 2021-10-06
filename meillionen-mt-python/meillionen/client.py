@@ -13,7 +13,8 @@ from .server import Server
 from .settings import Partition
 from .interface.module_interface import ModuleInterface
 from .interface.method_request import MethodRequest
-from .interface.schema import get_handlers
+from .interface.schema import get_handlers, get_handler
+from .interface.base import MethodRequestArg
 from .response import Response
 
 
@@ -112,3 +113,12 @@ class Client:
             settings=self.settings
         )
         return self.run_simple(mr)
+
+    def save(self, mra: MethodRequestArg, resource, data, partition=None):
+        if hasattr(resource, 'complete'):
+            resource = resource.complete(settings=self.settings, mra=mra, partition=partition)
+        method = self.module.get_method(mra)
+        schema = method.args[mra.arg_name]
+        handler = get_handler(resource=resource, schema=schema)
+        handler.save(resource, data)
+        return resource

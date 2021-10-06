@@ -204,10 +204,12 @@ class PandasHandler(SchemaProxy):
 
     @save.register
     def _save(self, resource: Feather, data: pd.DataFrame):
+        _mkdir_p(resource.path)
         return data.to_feather(resource.path)
 
     @save.register
     def _save(self, resource: Parquet, data: pd.DataFrame):
+        _mkdir_p(resource.path)
         return data.to_parquet(resource.path)
 
 
@@ -221,6 +223,14 @@ class NetCDFHandler(SchemaProxy):
             schema=ts,
             resource_classes=self.RESOURCE_CLASSES,
             mutability=mutability)
+
+    @classmethod
+    def from_schema(cls, schema: Schema):
+        return cls(
+            name=schema.name,
+            data_type=schema.schema.data_type,
+            dimensions=schema.schema.dimensions,
+            mutability=schema.mutability)
 
     @property
     def data_type(self):
@@ -240,7 +250,11 @@ class NetCDFHandler(SchemaProxy):
     @load.register
     def _load(self, resource: NetCDF):
         ds = netCDF4.Dataset(resource.path)
-        return ds[resource.variable]
+        try:
+            return ds[resource.variable][:]
+        finally:
+            if ds.isopen():
+                ds.close()
 
     @functools.singledispatchmethod
     def save(self, resource, data):
@@ -249,19 +263,23 @@ class NetCDFHandler(SchemaProxy):
     @save.register
     def _save(self, resource: NetCDF, data: xr.DataArray):
         data = data.transpose(self.dimensions)
-        ds, variable = _netcdf_create_variable(self.schema.schema, sink=resource, dimensions=data.dims)
-        variable[:] = data
+        ds, variable = _netcdf_create_variable(self.schema.schema, resource=resource, dimensions=data.dims)
+        try:
+            variable[:] = data
+        finally:
+            if ds.isopen():
+                ds.close()
 
 
-def _netcdf_create_variable(schema, sink, dimensions):
+def _netcdf_create_variable(schema, resource, dimensions):
     dimnames = schema.dimensions
-    _mkdir_p(sink.path)
-    dataset = netCDF4.Dataset(sink.path, mode='w')
+    _mkdir_p(resource.path)
+    dataset = netCDF4.Dataset(resource.path, mode='w')
     for dim in dimnames:
         size = dimensions[dim]
         print((dim, size))
         dataset.createDimension(dim, size)
-    variable = dataset.createVariable(sink.variable, 'f4', dimnames)
+    variable = dataset.createVariable(resource.variable, 'f4', dimnames)
     return dataset, variable
 
 
@@ -302,15 +320,15 @@ class NetCDFSliceHandler(SchemaProxy):
 
     @save.register
     def _save(self, resource: NetCDF, data):
-        return NetCDFSliceSaver(schema=self.schema, sink=resource, dimensions=data)
+        return NetCDFSliceSaver(schema=self.schema, resource=resource, dimensions=data)
 
 
 NDSlice = Dict[str, Union[int, slice]]
 
 
 class NetCDFSliceLoader:
-    def __init__(self, source: NetCDF):
-        self.source = source
+    def __init__(self, resource: NetCDF):
+        self.resource = resource
         self.dataset = netCDF4.Dataset(source.path, mode='r')
         self.variable = self.dataset[source.variable]
 
@@ -321,11 +339,11 @@ class NetCDFSliceLoader:
 
 
 class NetCDFSliceSaver:
-    def __init__(self, schema, sink: NetCDF, dimensions):
+    def __init__(self, schema, resource: NetCDF, dimensions):
         self.schema = schema
         self.dataset, self.variable = _netcdf_create_variable(
             schema=schema.schema,
-            sink=sink,
+            resource=resource,
             dimensions=dimensions)
 
     def set(self, slices: Dict[str, Union[int, slice]], array: xr.DataArray):
@@ -364,7 +382,6 @@ class LandLabGridHandler(SchemaProxy):
         return cls(
             name=schema.name,
             data_type=schema.schema.data_type,
-            dimensions=schema.schema.dimensions,
             mutability=schema.mutability)
 
     def serialize(self, builder: flatbuffers.Builder):
@@ -430,6 +447,10 @@ class PassthroughHandlerMapper:
 
 
 class FileExtensionHandlerMapper:
+    """
+    A handler mapper that inspects a resources file extension to determine what handler
+    should wrap a particular schema
+    """
     def __init__(self):
         self.ext_map = {}
 

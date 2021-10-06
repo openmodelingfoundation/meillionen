@@ -130,7 +130,7 @@ def _read_soil_fwf(path):
         'soil_water_deficit_stress',
         'soil_water_excess_stress'
     ]
-    df = pd.read_fwf(path, skiprows=6, names=colnames)
+    df = pd.read_fwf(path, skiprows=7, names=colnames)
     return df.loc[:, [c for c in colnames if not c.startswith('_')]]
 
 

@@ -122,9 +122,7 @@ class Parquet:
     def from_kwargs(cls, kwargs, settings, mra: MethodRequestArg, partition=None):
         path = build_path(
             settings=settings,
-            class_name=class_name,
-            method_name=method_name,
-            name=name,
+            mra=mra,
             partition=partition,
             ext=cls.ext
         )
@@ -136,7 +134,7 @@ class Parquet:
         return cls(path=path)
 
     def serialize(self, builder: flatbuffers.Builder):
-        data = json.dumps({'path': self.path})
+        data = json.dumps({'path': self.path}).encode('utf-8')
         return builder.CreateByteVector(data)
 
 
