@@ -15,12 +15,12 @@ jobs:
       - name: Setup Conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: meillionen
           environment-file: python/environment.yml
       - name: Activate environment
         run: |
           conda info
           conda list
+          conda env list
       - name: Install packages
         run: |
           cd python
