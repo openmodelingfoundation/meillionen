@@ -1,4 +1,3 @@
-name: meillionen
 channels:
   - conda-forge
 dependencies:
