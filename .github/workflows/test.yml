@@ -9,10 +9,6 @@ jobs:
   test-packages:
     name: Test Python Packages
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version:
-          - 3.8
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -21,6 +17,10 @@ jobs:
         with:
           activate-environment: meillionen
           environment-file: python/environment.yml
+      - name: Activate environment
+        run: |
+          conda activate meillionen
+          poetry --help
       - name: Install packages
         run: |
           cd python
