@@ -25,9 +25,8 @@ jobs:
         shell: bash -l {0}
         run: |
           cd python
-          poetry install
-          cd -
-          cd examples/crop-pipeline/simplecrop
+          poetry install --extra 'prefect'
+          cd ../examples/crop-pipeline/simplecrop
           poetry install
           cd ../overlandflow
           poetry install

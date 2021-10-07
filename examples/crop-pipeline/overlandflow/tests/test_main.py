@@ -8,7 +8,7 @@ from meillionen.client import Client, CLIRef
 
 
 def test_cli():
-    ref = CLIRef('overlandflow')
+    ref = CLIRef('overlandflow-omf')
     settings = Settings(base_path='output')
     client = Client(module_ref=ref, settings=settings)
     kwargs = client.run(
