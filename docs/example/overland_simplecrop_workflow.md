@@ -34,6 +34,15 @@ BASE_DIR = '../../examples/crop-pipeline'
 INPUT_DIR = os.path.join(BASE_DIR, 'workflows/inputs')
 OUTPUT_DIR = os.path.join(BASE_DIR, 'workflows/outputs')
 
+# using models as python models
+OVERLANDFLOW = os.path.join(BASE_DIR, 'overlandflow/overlandflow_omf/cli.py')
+SIMPLECROP = os.path.join(BASE_DIR, 'simplecrop/simplecrop_omf/cli.py')
+
+# using models as python packages
+# need to poetry install simplecrop and overlandflow packages first
+# OVERLANDFLOW = "overlandflow-omf"
+# SIMPLECROP = "simplecrop-omf"
+
 settings = Settings(
     base_path=OUTPUT_DIR
 )
@@ -42,7 +51,7 @@ settings = Settings(
 and build a request to call our model with.
 
 ```{code-cell} ipython3
-overlandflow = Client(CLIRef('overlandflow'), settings=settings)
+overlandflow = Client(CLIRef(OVERLANDFLOW), settings=settings)
 overlandflow
 ```
 
@@ -81,7 +90,7 @@ In order to wrap this model in an interface that allows you to run the model wit
 ```{code-cell} ipython3
 import pandas as pd
 
-simple_crop = Client(CLIRef('simplecrop-omf'), settings=settings)
+simple_crop = Client(CLIRef(SIMPLECROP), settings=settings)
 ```
 
 ```{code-cell} ipython3
@@ -116,12 +125,12 @@ from meillionen.interface.base import MethodRequestArg
 
 trial = settings.trial("simplecrop-parallelism")
 
-overlandflow = Client(CLIRef('overlandflow'), settings=trial)
+overlandflow = Client(CLIRef(OVERLANDFLOW), settings=trial)
 
 simplecrop_partitioning = Partitioning(
     pa.schema([("x", pa.int32()), ("y", pa.int32())]))
 
-simple_crop = Client(CLIRef('simplecrop-omf'), settings=trial)
+simple_crop = Client(CLIRef(SIMPLECROP), settings=trial)
 ```
 
 ```{code-cell} ipython3

@@ -3,7 +3,7 @@
 Here is a wrapper for the overland flow model
 
 ```{eval-rst}
-.. literalinclude:: ../../examples/crop-pipeline/overlandflow/overlandflow/__init__.py
+.. literalinclude:: ../../examples/crop-pipeline/overlandflow/overlandflow_omf/__init__.py
 ```
 
 There are few things to take note of:
