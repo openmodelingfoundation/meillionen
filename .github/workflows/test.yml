@@ -16,16 +16,11 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           environment-file: python/environment.yml
-      - name: Activate environment
-        run: |
-          conda info
-          conda list
-          conda env list
       - name: Install packages
         shell: bash -l {0}
         run: |
           cd python
-          poetry install --extra 'prefect'
+          poetry install --extras 'prefect'
           cd ../examples/crop-pipeline/simplecrop
           poetry install
           cd ../overlandflow
