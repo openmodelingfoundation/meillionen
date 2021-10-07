@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "overlandflow"
+name = "overlandflow-omf"
 version = "0.1.0"
 description = "A cli wrapper around landlab's overlandflow"
 authors = ["Calvin Pritchard <calvin.pritchard@asu.edu>"]
@@ -18,7 +18,7 @@ meillionen = { path = "../../../python", develop = true }
 pytest = "^6.2.5"
 
 [tool.poetry.scripts]
-overlandflow = "overlandflow:main"
+overlandflow-omf = "overlandflow_omf.model:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

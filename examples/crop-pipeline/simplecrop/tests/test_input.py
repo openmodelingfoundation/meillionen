@@ -1,6 +1,6 @@
 from meillionen.interface.method_request import MethodRequest
 from meillionen.interface.resource import Feather, OtherFile
-from simplecrop_omf import server
+from simplecrop_omf.model import server
 from simplecrop_omf.io import \
     _write_irrig_fwf,\
     _write_plant_fwf,\

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from typing import Tuple
 
 from landlab.components.overland_flow import OverlandFlow
@@ -137,4 +136,3 @@ server = Server(overlandflow_module)
 
 def main():
     server.cli()
-
