@@ -31,6 +31,9 @@ class _MethodRequest(mr._MethodRequest, FlatbufferMixin):
 
 
 class MethodRequest:
+    """
+    A request to call a model method
+    """
     def __init__(self, class_name, method_name, kwargs):
         self.class_name = class_name
         self.method_name = method_name
@@ -84,6 +87,11 @@ class MethodRequest:
         )
 
     def serialize(self, builder: flatbuffers.Builder):
+        """
+        Serialize a method request into a flatbuffer builder
+
+        :param builder: the flatbuffer builder
+        """
         cls_off = builder.CreateString(self.class_name)
         method_off = builder.CreateString(self.method_name)
         kwargs_off = self._serialize_resources(builder, self.kwargs)
@@ -94,4 +102,9 @@ class MethodRequest:
         return mr.End(builder)
 
     def get_arg(self, name):
+        """
+        Get the path metadata for a argument
+
+        :param name: the name of the argument
+        """
         return MethodRequestArg(class_name=self.class_name, method_name=self.method_name, arg_name=self.kwargs[name])

@@ -24,6 +24,10 @@ class _MethodInterface(fi._FunctionInterface, FlatbufferMixin):
 
 
 class MethodInterface:
+    """
+    A description of a method. It has a name, arguments (with schema information)
+    and a handler (which runs the method)
+    """
     def __init__(self, name, args: List[Any], handler=default_handler):
         self.name = name
         self.args = {s.name: s for s in args} if not hasattr(args, 'values') else args
@@ -46,10 +50,16 @@ class MethodInterface:
 
     @classmethod
     def deserialize(cls, buffer):
+        """
+        Builds a method interface from a buffer
+        """
         interface = _MethodInterface.GetRootAs(buffer, 0)
         return cls.from_interface(interface)
 
     def serialize(self, builder: flatbuffers.Builder):
+        """
+        Serializes a method interface into a flatbuffer builder
+        """
         name_off = builder.CreateString(self.name)
         args_off = serialize_dict(
             vector_builder=fi.StartArgsVector,
@@ -62,6 +72,10 @@ class MethodInterface:
         return fi.End(builder)
 
     def process_kwargs(self, kwargs: Dict[str, Any]):
+        """
+        Preprocesses resource payloads to reduce boilerplate code in the handler
+        """
+        # FIXME: This method should removed and just pass a request class object to the handler
         result = {}
         for name, resource in kwargs.items():
             handler = self.args[name]

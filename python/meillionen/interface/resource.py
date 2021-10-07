@@ -1,14 +1,13 @@
 import flatbuffers
-import io
 import json
 import numpy as np
 import os.path
-import pyarrow as pa
 
-from ..settings import Partition, Partitioning
+from typing import Optional, Protocol, TypeVar, Type
 from . import _Resource as r
 from .base import field_to_bytesio, MethodRequestArg
 from meillionen.exceptions import ResourceNotFound
+from meillionen.settings import Settings, Partition
 
 
 class _Resource(r._Resource):
@@ -72,9 +71,43 @@ def build_path(settings, mra: MethodRequestArg, ext, partition=None):
     return path
 
 
-class OtherFile:
+_R = TypeVar("_R")
 
-    """A file payload resource
+
+class ResourcePayloadable(Protocol):
+    """
+    The interface of a resource
+    """
+    @classmethod
+    def from_kwargs(cls: Type[_R], kwargs, settings: Settings, mra: MethodRequestArg, partition: Optional[Partition]) -> _R:
+        """
+        Builds a resource payload
+
+        :param kwargs: the arguments to pass to the classes initializer
+        :param settings: the common settings used to complete the partial resource payload
+        :param mra: the metadata describing which argument of a method is being built
+        :param partition: additional context used to build the resource for grid searches and sensitivity analysis
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def deserialize(cls: Type[_R], buffer) -> _R:
+        """
+        Builds the resource payload from a buffer
+        """
+        raise NotImplementedError()
+
+    def serialize(self, builder: flatbuffers.Builder):
+        """
+        Serializes the resource payload into the flatbuffer builder
+
+        :param builder: the flatbuffer builder
+        """
+        raise NotImplementedError()
+
+
+class OtherFile(ResourcePayloadable):
+    """A file payload resource payload
 
     Together with a name a full resource can be created"""
     name = 'meillionen::resource::OtherFile'
@@ -105,7 +138,7 @@ class OtherFile:
         return builder.CreateByteVector(json.dumps({'path': self.path}).encode('utf-8'))
 
 
-class Parquet:
+class Parquet(ResourcePayloadable):
     """A Parquet file resource payload"""
 
     name = 'meillionen::resource::Parquet'
@@ -138,7 +171,7 @@ class Parquet:
         return builder.CreateByteVector(data)
 
 
-class Feather:
+class Feather(ResourcePayloadable):
     """A Feather file resource payload"""
 
     name = 'meillionen::resource::Feather'
@@ -171,7 +204,7 @@ class Feather:
         return builder.CreateNumpyVector(data)
 
 
-class NetCDF:
+class NetCDF(ResourcePayloadable):
     """A NetCDF file resource payload"""
 
     name = 'meillionen::resource::NetCDF'

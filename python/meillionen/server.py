@@ -10,6 +10,13 @@ from meillionen.interface.module_interface import ModuleInterface
 
 
 class Server:
+    """
+    A class that handles method requests from clients
+
+    Currently this is only for handling requests from stdin but
+    in the future it may handle requests over http2.
+    """
+
     def __init__(self, module: ModuleInterface):
         self.module = module
 
@@ -66,6 +73,9 @@ class Server:
         return p
 
     def cli(self):
+        """
+        Returns an argparse cli to access the model with
+        """
         args = self._build_cli().parse_args()
         if hasattr(args, 'command'):
             command = args.command

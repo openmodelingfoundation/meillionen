@@ -1,3 +1,4 @@
+import io
 from typing import Tuple
 
 import flatbuffers
@@ -76,10 +77,7 @@ def test_call_method():
     assert yields_result_df.equals(yields_df)
 
     server = Server(mod_int)
-    builder = flatbuffers.Builder()
-    builder.Finish(mr.serialize(builder))
-    fd = builder.Output()
-    server._run(fd=fd)
+    server.run(mr)
 
 
 def test_load_feather():

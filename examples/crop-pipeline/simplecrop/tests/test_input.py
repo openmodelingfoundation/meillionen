@@ -9,7 +9,6 @@ from simplecrop_omf.io import \
     _write_weather_fwf, \
     run_one_year
 import pandas as pd
-from meillionen.resource import FeatherResource, FileResource
 
 
 def test_write_yearly():

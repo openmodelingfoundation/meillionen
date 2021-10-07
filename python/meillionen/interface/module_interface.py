@@ -22,10 +22,18 @@ class _ModuleInterface(mi._ModuleInterface, FlatbufferMixin):
 
 
 class ModuleInterface:
+    """
+    A collection of class interfaces
+    """
     def __init__(self, classes: List[ClassInterface]):
         self.classes = {c.name: c for c in classes} if not hasattr(classes, 'values') else classes
 
     def __call__(self, req: MethodRequest):
+        """
+        Call a class method
+
+        :param req: a request to a class method
+        """
         try:
             klass = self.classes[req.class_name]
         except KeyError as e:
@@ -37,6 +45,9 @@ class ModuleInterface:
 
     @classmethod
     def deserialize(cls, buffer):
+        """
+        Builds a module interface from a buffer
+        """
         interface = _ModuleInterface.GetRootAs(buffer, 0)
         classes = deserialize_to_dict(
             constructor=ClassInterface.from_interface,
@@ -45,6 +56,11 @@ class ModuleInterface:
         return cls(classes=classes)
 
     def serialize(self, builder: flatbuffers.Builder):
+        """
+        Serialize a module interface into a flatbuffer builder
+
+        :param builder: the flatbuffer builder
+        """
         class_off = serialize_dict(
             builder=builder,
             vector_builder=mi.StartClassesVector,

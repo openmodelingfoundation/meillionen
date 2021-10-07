@@ -20,16 +20,25 @@ class _ClassInterface(ci._ClassInterface, FlatbufferMixin):
 
 
 class ClassInterface:
+    """
+    A class interface describes the methods available in a model along with the model's name
+    """
     def __init__(self, name, methods: Union[List[MethodInterface], Dict[str, MethodInterface]]):
         self._name = name
         self._methods = {m.name: m for m in methods} if not hasattr(methods, 'values') else methods
 
     @property
     def name(self):
+        """
+        :return: the name of the model
+        """
         return self._name
 
     @classmethod
     def from_interface(cls, interface: _ClassInterface):
+        """
+        Builds a :class:`~ClassInterface` from a flatbuffer :class:`~_ClassInterface`
+        """
         name = interface.Name().decode('utf-8')
         methods = {}
         for i in range(interface.MethodsLength()):
@@ -39,10 +48,16 @@ class ClassInterface:
 
     @classmethod
     def deserialize(cls, buffer):
+        """
+        Builds a :class:`~ClassInterface` from a buffer
+        """
         interface = _ClassInterface.GetRootAs(buffer, 0)
         return cls.from_interface(interface)
 
     def serialize(self, builder: flatbuffers.Builder):
+        """
+        Serialized a class interface into a flatbuffer builder
+        """
         name_off = builder.CreateString(self._name)
         methods_off = serialize_dict(
             builder=builder,
@@ -56,6 +71,9 @@ class ClassInterface:
         return ci.End(builder)
 
     def get_method(self, name: str) -> MethodInterface:
+        """
+        Retrieve a method from a class given its name
+        """
         try:
             return self._methods[name]
         except KeyError as e:

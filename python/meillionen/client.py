@@ -4,11 +4,6 @@ import flatbuffers
 import sh
 from typing import Any, Dict, Optional
 
-
-import pyarrow as pa
-from pyarrow import dataset
-
-from .resource import infer_resource
 from .server import Server
 from .settings import Partition
 from .interface.module_interface import ModuleInterface
@@ -137,6 +132,6 @@ class Client:
             resource = resource.complete(settings=self.settings, mra=mra, partition=partition)
         method = self.module.get_method(mra)
         schema = method.args[mra.arg_name]
-        handler = get_handler(resource=resource, schema=schema)
+        handler = get_handler(resource_payload=resource, schema=schema)
         handler.save(resource, data)
         return resource

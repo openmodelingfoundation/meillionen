@@ -10,7 +10,7 @@ partitioning = Partitioning(pa.schema([pa.field('x', pa.int32()), pa.field('y', 
 
 
 def test_partial_csv_file():
-    partial_csv = OtherFile.partial(ext='csv')
+    partial_csv = OtherFile.partial(ext='.csv')
     csv = partial_csv.complete(settings=settings, mra=mra)
     assert csv.path == 'output/simplecrop/run/soil.csv'
 

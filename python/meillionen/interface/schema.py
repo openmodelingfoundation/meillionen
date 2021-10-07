@@ -13,12 +13,13 @@ import pyarrow as pa
 import xarray as xr
 from landlab.io import read_esri_ascii, write_esri_ascii
 
-from ._Mutability import _Mutability
+from abc import abstractmethod
+from typing import Optional, Protocol, Type, TypeVar
 from . import _Schema as s
 from .mutability import Mutability
 from .base import field_to_bytesio
 from ..exceptions import HandlerNotFound, ExtensionHandlerNotFound
-from .resource import get_resource_payload_class, Feather, Parquet, NetCDF, OtherFile
+from .resource import get_resource_payload_class, Feather, Parquet, NetCDF, OtherFile, ResourcePayloadable
 
 
 def _mkdir_p(path):
@@ -26,7 +27,37 @@ def _mkdir_p(path):
     p.parent.mkdir(parents=True, exist_ok=True)
 
 
-class DataFrameSchema:
+_SP = TypeVar('_SP')
+
+
+class SchemaPayloadable(Protocol):
+    """
+    A schema payload describes the shape of data a method argument expects
+    """
+
+    name: str
+
+    @classmethod
+    @abstractmethod
+    def deserialize(cls: Type[_SP], buffer) -> _SP:
+        """
+        Builds the schema payload from a buffer
+
+        :param buffer: the buffer to load from
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def serialize(self, builder: flatbuffers.Builder):
+        """
+        Serializes the schema payload into a flatbuffer builder
+
+        :param builder: the flatbuffer builder
+        """
+        raise NotImplementedError()
+
+
+class DataFrameSchemaPayload(SchemaPayloadable):
     name = 'meillionen::schema::DataFrameSchema'
 
     def __init__(self, arrow_schema: pa.Schema):
@@ -43,7 +74,7 @@ class DataFrameSchema:
         return off
 
 
-class TensorSchema:
+class TensorSchemaPayload(SchemaPayloadable):
     name = 'meillionen::schema::TensorSchema'
 
     def __init__(self, data_type: str, dimensions: List[str]):
@@ -60,7 +91,7 @@ class TensorSchema:
         return builder.CreateByteVector(data)
 
 
-class Schemaless:
+class SchemalessPayload(SchemaPayloadable):
     name = 'meillionen::schema::Schemaless'
 
     @classmethod
@@ -75,9 +106,9 @@ class Schemaless:
 _SCHEMA_CLASSES = {
     s.name: s for s in
     [
-        DataFrameSchema,
-        TensorSchema,
-        Schemaless
+        DataFrameSchemaPayload,
+        TensorSchemaPayload,
+        SchemalessPayload
     ]
 }
 
@@ -165,13 +196,54 @@ class SchemaProxy:
         return self.schema.resource_classes
 
 
-class PandasHandler(SchemaProxy):
+_H = TypeVar('_H')
+
+
+class Handlable(Protocol):
+    @classmethod
+    @abstractmethod
+    def from_schema(cls: Type[_H], schema: Schema) -> _H:
+        """
+        Builds the handler from the schema
+
+        :param schema: the schema to build the handler with
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def serialize(self, builder: flatbuffers.Builder):
+        """
+        Serialize a handler into a flatbuffer builder using only schema information
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def load(self, resource):
+        """
+        Loads a resource into memory
+
+        :param resource: the resource to load
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def save(self, resource, data):
+        """
+        Save data using the metadata provided by the resource
+
+        :param resource: the metadata desribing where and how to save the data
+        :param data: the data to save
+        """
+        raise NotImplementedError()
+
+
+class PandasHandler(SchemaProxy, Handlable):
     RESOURCE_CLASSES = [Feather, Parquet]
 
     def __init__(self, name: str, s: pa.Schema, mutability: Mutability):
         self.schema = Schema(
             name=name,
-            schema=DataFrameSchema(s),
+            schema=DataFrameSchemaPayload(s),
             resource_classes=self.RESOURCE_CLASSES,
             mutability=mutability)
 
@@ -213,11 +285,11 @@ class PandasHandler(SchemaProxy):
         return data.to_parquet(resource.path)
 
 
-class NetCDFHandler(SchemaProxy):
+class NetCDFHandler(SchemaProxy, Handlable):
     RESOURCE_CLASSES = [NetCDF]
 
     def __init__(self, name: str, data_type: str, dimensions: List[str], mutability: Mutability):
-        ts = TensorSchema(data_type=data_type, dimensions=dimensions)
+        ts = TensorSchemaPayload(data_type=data_type, dimensions=dimensions)
         self.schema = Schema(
             name=name,
             schema=ts,
@@ -283,13 +355,13 @@ def _netcdf_create_variable(schema, resource, dimensions):
     return dataset, variable
 
 
-class NetCDFSliceHandler(SchemaProxy):
+class NetCDFSliceHandler(SchemaProxy, Handlable):
     RESOURCE_CLASSES = [NetCDF]
 
     def __init__(self, name: str, data_type: str, dimensions: List[str], mutability: Mutability):
         self.schema = Schema(
             name=name,
-            schema=TensorSchema(data_type=data_type, dimensions=dimensions),
+            schema=TensorSchemaPayload(data_type=data_type, dimensions=dimensions),
             resource_classes=self.RESOURCE_CLASSES,
             mutability=mutability
         )
@@ -312,7 +384,7 @@ class NetCDFSliceHandler(SchemaProxy):
 
     @load.register
     def _load(self, resource: NetCDF):
-        return NetCDFSliceLoader(source=resource)
+        return NetCDFSliceLoader(resource=resource)
 
     @functools.singledispatchmethod
     def save(self, resource, data):
@@ -329,8 +401,8 @@ NDSlice = Dict[str, Union[int, slice]]
 class NetCDFSliceLoader:
     def __init__(self, resource: NetCDF):
         self.resource = resource
-        self.dataset = netCDF4.Dataset(source.path, mode='r')
-        self.variable = self.dataset[source.variable]
+        self.dataset = netCDF4.Dataset(resource.path, mode='r')
+        self.variable = self.dataset[resource.variable]
 
     def get(self, slices: NDSlice):
         vdims = self.variable.dimensions
@@ -369,12 +441,12 @@ class NetCDFSliceSaver:
         self._close()
 
 
-class LandLabGridHandler(SchemaProxy):
+class LandLabGridHandler(SchemaProxy, Handlable):
     RESOURCE_CLASSES = [OtherFile]
 
     def __init__(self, name: str, data_type: str, mutability: Mutability):
         dimensions = ['x', 'y']
-        ts = TensorSchema(data_type=data_type, dimensions=dimensions)
+        ts = TensorSchemaPayload(data_type=data_type, dimensions=dimensions)
         self.schema = Schema(name=name, schema=ts, resource_classes=self.RESOURCE_CLASSES, mutability=mutability)
 
     @classmethod
@@ -407,13 +479,13 @@ class LandLabGridHandler(SchemaProxy):
         write_esri_ascii(resource.path, data)
 
 
-class DirHandler(SchemaProxy):
+class DirHandler(SchemaProxy, Handlable):
     RESOURCE_CLASSES = [OtherFile]
 
     def __init__(self, name: str, mutability: Mutability):
         self.schema = Schema(
             name=name,
-            schema=Schemaless(),
+            schema=SchemalessPayload(),
             resource_classes=self.RESOURCE_CLASSES,
             mutability=mutability)
 
@@ -425,6 +497,9 @@ class DirHandler(SchemaProxy):
 
     def serialize(self, builder: flatbuffers.Builder):
         return self.schema.serialize(builder)
+
+    def load(self, resource):
+        raise NotImplemented()
 
     @functools.singledispatchmethod
     def save(self, resource):
@@ -489,9 +564,12 @@ def all_resource_handler_mappers(name):
     return _RESOURCE_HANDLER_MAPPER
 
 
-def get_handler(resource, schema: Schema):
-    handler_mapper = _RESOURCE_HANDLER_MAPPER[type(resource)]
-    return handler_mapper.to_handler(resource, schema)
+def get_handler(resource_payload, schema: Schema):
+    """
+    Retrieve a handler given a resource payload and a schema
+    """
+    handler_mapper = _RESOURCE_HANDLER_MAPPER[type(resource_payload)]
+    return handler_mapper.to_handler(resource_payload, schema)
 
 
 def get_handlers(resources, schemas: Dict[str, Schema]):
