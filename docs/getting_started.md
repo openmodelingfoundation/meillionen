@@ -4,8 +4,6 @@ Getting Started
 Install `meillionen`
 --------------------
 
-Coming soon (will be distributed on pypi, cargo, conda)
-
 ```bash
 pip install meillionen
 ```
