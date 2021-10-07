@@ -19,8 +19,8 @@ jobs:
           environment-file: python/environment.yml
       - name: Activate environment
         run: |
-          conda activate meillionen
-          poetry --help
+          conda info
+          conda list
       - name: Install packages
         run: |
           cd python
