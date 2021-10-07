@@ -35,8 +35,12 @@ INPUT_DIR = os.path.join(BASE_DIR, 'workflows/inputs')
 OUTPUT_DIR = os.path.join(BASE_DIR, 'workflows/outputs')
 
 # using models as python models
+# for binder compatibility only (since it does not support poetry yet)
 OVERLANDFLOW = os.path.join(BASE_DIR, 'overlandflow/overlandflow_omf/cli.py')
 SIMPLECROP = os.path.join(BASE_DIR, 'simplecrop/simplecrop_omf/cli.py')
+ov_path = os.path.realpath(os.path.join(BASE_DIR, 'overlandflow'))
+sc_path = os.path.realpath(os.path.join(BASE_DIR, 'simplecrop'))
+os.environ['PYTHONPATH'] = f'{ov_path}:{sc_path}'
 
 # using models as python packages
 # need to poetry install simplecrop and overlandflow packages first
