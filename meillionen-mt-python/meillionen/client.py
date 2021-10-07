@@ -105,6 +105,15 @@ class Client:
         return Response(handlers=handlers, resources=resources)
 
     def run(self, class_name, method_name, resource_payloads, partition: Optional[Partition]=None):
+        """
+        Runs a particular class method on the module
+
+        :param class_name: the name of the class
+        :param method_name: the name of the method to call
+        :param resource_payloads: dict of argument names to resource payloads
+        :param partition: an optional partition which describes how to build nested paths,
+          to add key columns to tabular data or to add dimensions to tensor data
+        """
         mr = MethodRequest.from_partial(
             class_name=class_name,
             method_name=method_name,
@@ -115,6 +124,15 @@ class Client:
         return self.run_simple(mr)
 
     def save(self, mra: MethodRequestArg, resource, data, partition=None):
+        """
+        Saves a resource
+
+        :param mra: metadata needed to locate the schema of a method argument
+        :param resource: the resource metadata describing how and where to save the data to
+        :param data: the data to save
+        :param partition: the optional partition information. Useful for evaluating a model at
+          many different parameter combinations
+        """
         if hasattr(resource, 'complete'):
             resource = resource.complete(settings=self.settings, mra=mra, partition=partition)
         method = self.module.get_method(mra)
