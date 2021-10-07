@@ -7,7 +7,7 @@ on:
 
 jobs:
   test-packages:
-    name: Test Rust Packages
+    name: Test Python Packages
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -16,105 +16,29 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Cache Rust Dependencies
-        uses: actions/cache@v2
+      - name: Setup Conda
+        uses: conda-incubator/setup-miniconda@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo
-      - name: Test Rust
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: x64
-      - name: Cache Pip Dependencies
-        uses: actions/cache@v2
-        with:
-          path: |
-            .venv
-          key: ${{ runner.os }}-python-${{ matrix.python-version }}-venv
-      - name: Setup Virtualenv
-        run: python -m venv .venv
-      - name: Upgrade Pip
+          activate-environment: meillionen
+          environment-file: python/environment.yml
+      - name: Install packages
         run: |
-          . .venv/bin/activate \
-          && python -m pip install --upgrade pip
-      - name: Install Python Packages into VirtualEnv
+          cd python
+          poetry install
+          cd -
+          cd examples/crop-pipeline/simplecrop
+          poetry install
+          cd ../overlandflow
+          poetry install
+      - name: Test packages
         run: |
-          . .venv/bin/activate \
-          && python -m pip uninstall -y meillionen simplecrop-omf \
-          && python -m pip install -r requirements/base.txt
-      - name: Test Python Meillionen Wrapper
-        run: . .venv/bin/activate && cd meillionen-mt-python && maturin develop && pytest
-      - name: Build Python Packages
+          cd python
+          poetry run pytest
+          cd ../examples/crop-pipeline/simplecrop
+          poetry run pytest
+          cd ../overlandflow
+          poetry run pytest
+      - name: Build docs
         run: |
-          . .venv/bin/activate \
-          && maturin build -i $(which python) \
-          --manifest-path meillionen-mt-python/Cargo.toml \
-          --cargo-extra-args='--features "pyo3/extension-module"' \
-          --out wheels \
-          && maturin build -i $(which python) \
-          --manifest-path meillionen-mt-python/Cargo.toml \
-          --cargo-extra-args='--features "pyo3/extension-module"' \
-          --out wheels \
-          && python -m pip install wheels/*.whl
-  publish-release:
-    name: Publish releases of packages to pypi
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python:
-          - 3.7
-          - 3.8
-          - 3.9
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-      - name: Cache Rust Dependencies
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: x64
-      - name: Cache Pip Dependencies
-        uses: actions/cache@v2
-        with:
-          path: |
-            .venv
-          key: ${{ runner.os }}-${{ matrix.python-version }}-venv
-      - name: Setup Virtualenv
-        run: python -m venv .venv
-      - name: Upgrade Pip
-        run: |
-          . .venv/bin/activate \
-          && python -m pip install --upgrade pip
-      - name: Build Python Packages
-        run: |
-          . .venv/bin/activate \
-          && maturin build -i $(which python) \
-          --manifest-path meillionen-mt-python/Cargo.toml \
-          --cargo-extra-args='--features "pyo3/extension-module"' \
-          && maturin build -i $(which python) \
-          --manifest-path meillionen-mt-python/Cargo.toml \
-          --cargo-extra-args='--features "pyo3/extension-module"'
-      - name: Upload Python Package to Test Pypi
-        uses: pypa/gh-actions-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
-          packages_dir: target/wheels/
+          cd docs
+          jupyter book build .
