@@ -4,41 +4,34 @@ Meillionen will be a project to facilitate the interoperability of simulation mo
 
 ## Setup
 
-In order to setup this project you'll have to install `cargo` and the rust toolchain. You can install `cargo` through [rustup](https://rustup.rs/#) or [conda](https://anaconda.org/conda-forge/rust) (`conda install -c conda-forge rust` should do the trick).
+In order to setup this project you'll have to install `conda`.
 
-Next you'll have to install the overall python dependencies
+See the `python` folder creating a development environment for the python implementation.
 
-```bash
-# create a python venv
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -r requirements/base.txt 
-```
+## Examples
 
-The `Makefile` in the project root can be used to build and install the `simplecrop` and `meillionen-mt-python`
-packages. You can install both those packages with
+Example models and workflows are in the `examples` directory
 
-```bash
-make
-```
+## Documentation
 
-Currently this is setup only for linux (`requirements/wheels.txt` assumes a linux operating system and python 3.8). With
-templated wheel dependencies the make file should be cross platform.
+To build the documentation you'll need a `meillionen` python development environment setup (see `python/README.md` for details) which will result in the `ghp-import` package being installed.
 
-## Build
+### Instructions
 
-```
-cargo build
-```
-
-## Test
+Go into the docs folder
 
 ```bash
-cargo test        
+cd docs
 ```
 
-## Build the Python libraries
+The build the jupyter book docs
 
 ```bash
-make build
+jupyter book build .
+```
+
+Push those docs to the `gh-pages` branch on github when the built docs look ready
+
+```build
+ghp-import --no-jekyll -o _build/html -p
 ```

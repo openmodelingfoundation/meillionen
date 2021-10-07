@@ -1,12 +1,15 @@
 [tool.poetry]
 name = "meillionen"
-version = "0.1.0"
+version = "0.1.1"
 description = "A model interface serialization and rpc framework"
 authors = ["Calvin Pritchard <calvin.pritchard@asu.edu>"]
 license = "MIT"
 packages = [
     { include = "meillionen" },
 ]
+readme = "README.md"
+homepage = "https://github.com/openmodelingfoundation/meillionen"
+documentation = "https://openmodelingfoundation.github.io/meillionen"
 
 [tool.poetry.dependencies]
 python = "^3.8"
