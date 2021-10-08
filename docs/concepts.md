@@ -6,27 +6,24 @@ The meillionen package includes support
 Model Interface
 ---------------
 
-All models in meillionen currently have a function interface definition. Function interface definitions describe what input (source) data the model expects and what output (sink) data the model produces. A model's interface can be accessed by invoking the model on the command line with the interface subcommand.
+All models in meillionen currently have a class interface definition. Class interface definitions describe methods. Methods have arguments. Arguments (which are schemas) describe the shape of data as well as whether or not it is an input (`Mutability.read`) or an output (`Mutability.write`). A model's interface can be accessed by invoking the model on the command line with the interface subcommand.
 
 ```bash
 <model> interface
 ```
 
-Invocation of the interface subcommand returns json that is interpreted by other programs with the meillionen libraries to facilitate data validation of inputs. For dataframe like data this means describing what names and data types columns in the dataframe should have. For tensor like data information on what dimension labels the tensor has as well as the tensor's element type.
+Invocation of the interface subcommand returns flatbuffer that is interpreted by other programs with meillionen libraries to facilitate calling the model. For dataframe like data this means describing what names and data types columns in the dataframe should have. For tensor like data information on what dimension labels the tensor has as well as the tensor's element type.
 
 Settings
 --------
 
-A model has settings. Settings provide conventions about where to save file resources to, provide default resource types
-for method arguments and where to keep and runtime errors.
+A model has settings. Settings provide conventions about where to save file resources to..
 
 ```python
 import pyarrow as pa
-from meillionen.client import Experiment
+from meillionen.settings import Settings
 
-partition = Partition(pa.schema([pa.field('x', pa.float32(), nullable=False), pa.field('y', pa.float32(), nullable=False)]))
-exp = Experiment.from_cli('simplecrop', partition=partition)
-exp.run('run', partition=[('x', 3), ('y', 5)], kwargs={'yearly': Feather('yearly.feather'), 'daily': Feather('daily.feather')})
+settings = Settings(base_path='output')
 ```
 
 Resources
@@ -37,7 +34,7 @@ A resource describes the location of data and how to access it.
 Resources can be created interactively
 
 ```python
-from meillionen.resource import Feather
+from meillionen.interface.resource import Feather
 
 pr = Feather('foo.feather')
 ```
@@ -45,9 +42,9 @@ pr = Feather('foo.feather')
 Often partially applied versions are used so that settings can provide conventions about where to save file resources to.
 
 ```python
-from meillionen.resource import FeatherPartial
+from meillionen.interface.resource import Feather
 
-fp = FeatherPartial()
+fp = Feather.partial()
 ```
 
 Creation of custom resource types requires you to implement the resource interface. This means creating a python class with
@@ -64,7 +61,7 @@ A schema describes the shape of data.
 Request
 -------
 
-Models can be run by issuing requests to them. A request contains metadata describing sources and sinks. A source describes the location of an existing file resource (web endpoints are also planned on being supported eventually). A sink describes the location of where you plan to write to (currently only a file).
+Models can be run by issuing requests to them. A request contains arguments for each argument specified in the `MethodInterface`.
 
 Handlers
 -------
@@ -75,7 +72,7 @@ Handlers can be created and used interactively
 
 ```python
 import pyarrow as pa
-from meillionen.handlers import PandasHandler
+from meillionen.interface.schema import PandasHandler
 from meillionen.interface.resource import Feather
 from meillionen.interface.mutability import Mutability
 
@@ -84,8 +81,8 @@ ph = PandasHandler(
     s=pa.schema([
         pa.field('day_of_year', pa.int32(), nullable=False),
         pa.field('acidity', pa.float32(), nullable=True)
-    ],
-    mutable=Mutability.read)
+    ]),
+    mutability=Mutability.read
 )
 f = Feather('foo.feather')
 df = ph.load(f)
