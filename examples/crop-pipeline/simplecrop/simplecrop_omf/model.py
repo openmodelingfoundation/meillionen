@@ -16,10 +16,10 @@ _run_one_year = MethodInterface(
             s=pa.schema([
                 pa.field(name=name, type=pa.float32(), nullable=False)
                 for name in [
-                    'irrigation',
+                    'irrigation_depth',
                     'temp_max',
                     'temp_min',
-                    'rainfall',
+                    'rainfall_depth',
                     'photosynthetic_energy_flux',
                     'energy_flux'
                 ]
