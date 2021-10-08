@@ -30,3 +30,13 @@ Install the dependencies
 ```bash
 poetry install
 ```
+
+### FAQ
+
+*I've updated the flatbuffer schemas, how do I update the generated Python code?*
+
+Run `flatc` in the root of the project (it is installed in the flatbuffers conda package).
+
+```bash
+flatc -o python --python schema/*.fbs
+```
