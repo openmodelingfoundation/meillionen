@@ -1,7 +1,12 @@
+import textwrap
 from typing import Dict, Any
 
 import flatbuffers
 import io
+
+
+def leading_indent(s: str, indent: int):
+    return textwrap.indent(s, ' ' * indent)
 
 
 def deserialize_to_dict(constructor, getter, n):

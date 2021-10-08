@@ -78,3 +78,10 @@ class ClassInterface:
             return self._methods[name]
         except KeyError as e:
             raise MethodNotFound() from e
+
+    def describe(self, indent: int=0):
+        print(self._name)
+        print('=' * len(self._name))
+
+        for method in self._methods.values():
+            method.describe()

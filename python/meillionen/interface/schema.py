@@ -3,6 +3,7 @@ import io
 import json
 import os.path
 import pathlib
+import textwrap
 from typing import Union, Dict, List, Any
 
 import flatbuffers
@@ -17,7 +18,7 @@ from abc import abstractmethod
 from typing import Optional, Protocol, Type, TypeVar
 from . import _Schema as s
 from .mutability import Mutability
-from .base import field_to_bytesio
+from .base import field_to_bytesio, leading_indent
 from ..exceptions import HandlerNotFound, ExtensionHandlerNotFound
 from .resource import get_resource_payload_class, Feather, Parquet, NetCDF, OtherFile, ResourcePayloadable
 
@@ -73,6 +74,10 @@ class DataFrameSchemaPayload(SchemaPayloadable):
         off = builder.CreateByteVector(buf.to_pybytes())
         return off
 
+    def describe(self, indent: int=0):
+        print(leading_indent(f'{self.name}', indent))
+        print(leading_indent(repr(self.arrow_schema), indent))
+
 
 class TensorSchemaPayload(SchemaPayloadable):
     name = 'meillionen::schema::TensorSchema'
@@ -90,6 +95,14 @@ class TensorSchemaPayload(SchemaPayloadable):
         data = json.dumps({'data_type': self.data_type, 'dimensions': self.dimensions}).encode('utf-8')
         return builder.CreateByteVector(data)
 
+    def describe(self, indent: int=0):
+        print(leading_indent(self.name, indent))
+        desc = textwrap.dedent(f'''\
+        data_type: {self.data_type}
+        dimensions: {repr(self.dimensions)}\
+        ''')
+        print(leading_indent(desc, indent))
+
 
 class SchemalessPayload(SchemaPayloadable):
     name = 'meillionen::schema::Schemaless'
@@ -101,6 +114,9 @@ class SchemalessPayload(SchemaPayloadable):
     def serialize(self, builder: flatbuffers.Builder):
         data = json.dumps('').encode('utf-8')
         return builder.CreateByteVector(data)
+
+    def describe(self, indent: int=0):
+        print(leading_indent(self.name, indent))
 
 
 _SCHEMA_CLASSES = {
@@ -181,6 +197,16 @@ class Schema:
             resource_classes.append(resource_class)
         return cls(name=name, schema=payload, resource_classes=resource_classes, mutability=mutability)
 
+    def describe(self, indent=0):
+        desc = textwrap.dedent(f'''\
+        name: {self.name}
+        resource_classes: {repr(self.resource_classes)}
+        mutability: {self.mutability}
+        payload:\
+        ''')
+        print(leading_indent(desc, indent))
+        self.schema.describe(indent + 2)
+
 
 class SchemaProxy:
     @property
@@ -194,6 +220,12 @@ class SchemaProxy:
     @property
     def resource_classes(self):
         return self.schema.resource_classes
+
+    def __repr__(self):
+        return f'{self.__class__.name}.from_schema({self.schema})'
+
+    def describe(self, indent):
+        return self.schema.describe(indent=indent)
 
 
 _H = TypeVar('_H')

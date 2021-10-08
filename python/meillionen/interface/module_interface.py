@@ -74,3 +74,7 @@ class ModuleInterface:
         klass = self.classes[req.class_name]
         method = klass._methods[req.method_name]
         return method
+
+    def describe(self, indent: int=0):
+        for cls in self.classes.values():
+            cls.describe(indent)

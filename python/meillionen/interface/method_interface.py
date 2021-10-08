@@ -1,10 +1,11 @@
+import textwrap
 from typing import Any, List, Dict
 
 import flatbuffers
 
 from . import _FunctionInterface as fi
-from .schema import Schema, _Schema
-from .base import deserialize_to_dict, serialize_dict, FlatbufferMixin
+from .schema import Schema, _Schema, Handlable, SchemaProxy
+from .base import deserialize_to_dict, serialize_dict, FlatbufferMixin, leading_indent
 from meillionen.interface.mutability import Mutability
 
 
@@ -30,7 +31,7 @@ class MethodInterface:
     """
     def __init__(self, name, args: List[Any], handler=default_handler):
         self.name = name
-        self.args = {s.name: s for s in args} if not hasattr(args, 'values') else args
+        self.args: Dict[str, SchemaProxy] = {s.name: s for s in args} if not hasattr(args, 'values') else args
         self.handler = handler
 
     def __call__(self, **kwargs):
@@ -84,3 +85,10 @@ class MethodInterface:
             elif handler.mutability == Mutability.write:
                 result[name] = (handler, resource)
         return result
+
+    def describe(self, indent=0):
+        print(leading_indent(self.name, indent))
+        print(leading_indent('-'*len(self.name), indent))
+
+        for arg in self.args.values():
+            arg.describe(indent=indent + 2)

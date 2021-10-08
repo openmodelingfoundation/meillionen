@@ -147,6 +147,9 @@ class Parquet(ResourcePayloadable):
     def __init__(self, path):
         self.path = path
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(path={repr(self.path)})'
+
     @classmethod
     def partial(cls):
         return PartialResource(cls, {})
@@ -179,6 +182,9 @@ class Feather(ResourcePayloadable):
 
     def __init__(self, path):
         self.path = path
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({repr(self.path)})'
 
     @classmethod
     def partial(cls):
@@ -213,6 +219,9 @@ class NetCDF(ResourcePayloadable):
     def __init__(self, path, variable):
         self.path = path
         self.variable = variable
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(path={repr(self.path)}, variable={repr(self.variable)})'
 
     @classmethod
     def partial(cls, variable):
