@@ -1,0 +1,1010 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Combining Overland Flow and Simple Crop &#8212; Meillionen</title>
+    
+  <link href="../_static/css/theme.css" rel="stylesheet" />
+  <link href="../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.1c5a1a01449ed65a7b51.js">
+
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/togglebutton.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="../_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
+    <script async="async" src="https://unpkg.com/thebe@0.5.1/lib/index.js"></script>
+    <script >
+        const thebe_selector = ".thebe"
+        const thebe_selector_input = "pre"
+        const thebe_selector_output = ".output"
+    </script>
+    <script async="async" src="../_static/sphinx-thebe.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Building a Wrapper for Overland Flow" href="build_overland_flow.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../_static/logo.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">Meillionen</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../index.html">
+   Introduction
+  </a>
+ </li>
+</ul>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../concepts.html">
+   Concepts
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../api/python.html">
+   Python API
+  </a>
+ </li>
+ <li class="toctree-l1 current active has-children">
+  <a class="reference internal" href="index.html">
+   Examples
+  </a>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul class="current">
+   <li class="toctree-l2">
+    <a class="reference internal" href="build_overland_flow.html">
+     Building a Wrapper for Overland Flow
+    </a>
+   </li>
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     Combining Overland Flow and Simple Crop
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            
+            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        <a class="dropdown-buttons"
+            href="../_sources/example/overland_simplecrop_workflow.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download notebook file" data-toggle="tooltip"
+                data-placement="left">.ipynb</button></a>
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../_sources/example/overland_simplecrop_workflow.md"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.md</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/openmodelingfoundation/meillionen"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/openmodelingfoundation/meillionen/issues/new?title=Issue%20on%20page%20%2Fexample/overland_simplecrop_workflow.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        <a class="edit-button" href="https://github.com/openmodelingfoundation/meillionen/edit/main/docs/example/overland_simplecrop_workflow.md"><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Edit this page"><i class="fas fa-pencil-alt"></i>suggest edit</button></a>
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
+    <div class="dropdown-buttons">
+        
+        <a class="binder-button" href="https://mybinder.org/v2/gh/openmodelingfoundation/meillionen/main?urlpath=tree/docs/example/overland_simplecrop_workflow.md"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
+                data-placement="left"><img class="binder-button-logo"
+                    src="../_static/images/logo_binder.svg"
+                    alt="Interact on binder">Binder</button></a>
+        
+        
+        
+        
+    </div>
+</div>
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#running-overland-flow-on-its-own">
+   Running Overland Flow on its Own
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#running-simple-crop-on-its-own">
+   Running Simple Crop on its Own
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#using-prefect-to-feed-overland-flow-results-into-simple-crop">
+   Using Prefect to Feed Overland Flow Results into Simple Crop
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="section" id="combining-overland-flow-and-simple-crop">
+<h1>Combining Overland Flow and Simple Crop<a class="headerlink" href="#combining-overland-flow-and-simple-crop" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="running-overland-flow-on-its-own">
+<h2>Running Overland Flow on its Own<a class="headerlink" href="#running-overland-flow-on-its-own" title="Permalink to this headline">¶</a></h2>
+<p>The overland flow model routes water over a landscape and determines how much water infiltrates particular cells in response to rain events and elevation data. Rainfall in this model is assumed to occur instantaneously and rainfall events are assumed to be independent (so a large rainfall event on a previous day has no bearing on the present day).</p>
+<p>In order to run the model we first need to import some source and sink types as well as classes for calling off to CLI models and building requests.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">netCDF4</span>
+
+<span class="kn">from</span> <span class="nn">meillionen.interface.resource</span> <span class="kn">import</span> <span class="n">Feather</span><span class="p">,</span> <span class="n">NetCDF</span><span class="p">,</span> <span class="n">OtherFile</span><span class="p">,</span> <span class="n">Parquet</span>
+<span class="kn">from</span> <span class="nn">meillionen.interface.schema</span> <span class="kn">import</span> <span class="n">PandasHandler</span><span class="p">,</span> <span class="n">NetCDFHandler</span>
+<span class="kn">from</span> <span class="nn">meillionen.settings</span> <span class="kn">import</span> <span class="n">Settings</span><span class="p">,</span> <span class="n">Partitioning</span>
+<span class="kn">from</span> <span class="nn">meillionen.client</span> <span class="kn">import</span> <span class="n">Client</span><span class="p">,</span> <span class="n">CLIRef</span>
+<span class="kn">from</span> <span class="nn">prefect</span> <span class="kn">import</span> <span class="n">task</span><span class="p">,</span> <span class="n">Flow</span>
+
+<span class="n">BASE_DIR</span> <span class="o">=</span> <span class="s1">&#39;../../examples/crop-pipeline&#39;</span>
+<span class="n">INPUT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;workflows/inputs&#39;</span><span class="p">)</span>
+<span class="n">OUTPUT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;workflows/outputs&#39;</span><span class="p">)</span>
+
+<span class="c1"># using models as python models</span>
+<span class="c1"># for binder compatibility only (since it does not support poetry yet)</span>
+<span class="n">OVERLANDFLOW</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;overlandflow/overlandflow_omf/cli.py&#39;</span><span class="p">)</span>
+<span class="n">SIMPLECROP</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;simplecrop/simplecrop_omf/cli.py&#39;</span><span class="p">)</span>
+<span class="n">ov_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;overlandflow&#39;</span><span class="p">))</span>
+<span class="n">sc_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;simplecrop&#39;</span><span class="p">))</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PYTHONPATH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ov_path</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="n">sc_path</span><span class="si">}</span><span class="s1">&#39;</span>
+
+<span class="c1"># using models as python packages</span>
+<span class="c1"># need to poetry install simplecrop and overlandflow packages first</span>
+<span class="c1"># OVERLANDFLOW = &quot;overlandflow-omf&quot;</span>
+<span class="c1"># SIMPLECROP = &quot;simplecrop-omf&quot;</span>
+
+<span class="n">settings</span> <span class="o">=</span> <span class="n">Settings</span><span class="p">(</span>
+    <span class="n">base_path</span><span class="o">=</span><span class="n">OUTPUT_DIR</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>and build a request to call our model with.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">overlandflow</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">CLIRef</span><span class="p">(</span><span class="n">OVERLANDFLOW</span><span class="p">),</span> <span class="n">settings</span><span class="o">=</span><span class="n">settings</span><span class="p">)</span>
+<span class="n">overlandflow</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;meillionen.client.Client at 0x7f3e703ec5e0&gt;
+</pre></div>
+</div>
+</div>
+</div>
+<p>Then call the overland flow model with our request (which will create files on the file system)</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">overland_payloads</span> <span class="o">=</span> <span class="n">overlandflow</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="n">class_name</span><span class="o">=</span><span class="s1">&#39;overlandflow&#39;</span><span class="p">,</span>
+    <span class="n">method_name</span><span class="o">=</span><span class="s1">&#39;run&#39;</span><span class="p">,</span>
+    <span class="n">resource_payloads</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;elevation&#39;</span><span class="p">:</span> <span class="n">OtherFile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">INPUT_DIR</span><span class="p">,</span> <span class="s1">&#39;elevation.asc&#39;</span><span class="p">)),</span>
+        <span class="s1">&#39;weather&#39;</span><span class="p">:</span> <span class="n">Feather</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">INPUT_DIR</span><span class="p">,</span> <span class="s1">&#39;weather.feather&#39;</span><span class="p">)),</span>
+        <span class="s1">&#39;soil_water_infiltration__depth&#39;</span><span class="p">:</span> <span class="n">NetCDF</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="s1">&#39;swid&#39;</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="running-simple-crop-on-its-own">
+<h2>Running Simple Crop on its Own<a class="headerlink" href="#running-simple-crop-on-its-own" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">simplecrop</span></code>  is a model of yearly crop growth that operates on the command line. When called in the current directory with no arguments it expects that there is a data folder. It expects that the data folder contains five files</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">irrig.inp</span></code> - daily irrigation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plant.inp</span></code> - plant growth parameters for the simulation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">simctrl.inp</span></code> - simulation reporting parameters</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">soil.inp</span></code> - soil characteristic parameters for the simulation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">weather.inp</span></code> - daily weather data (with variables like maximum temperature, solar energy flux)</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">simplecrop</span></code> also expects there to be an output folder. After the model has run it will populate the output folder with three files</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">plant.out</span></code>- daily plant characteristics</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">soil.out</span></code> - daily soil characteristics</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">wbal.out</span></code> - summary soil and plant statistics about simulation</p></li>
+</ul>
+<p>In order to wrap this model in an interface that allows you to run the model without manually building those input files and manually converting the output files into a format conducive to analysis we need to have a construct the input files and parse the output files. Fortunately we have such a model wrapper already.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="n">simple_crop</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">CLIRef</span><span class="p">(</span><span class="n">SIMPLECROP</span><span class="p">),</span> <span class="n">settings</span><span class="o">=</span><span class="n">settings</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">simple_crop_response</span> <span class="o">=</span> <span class="n">simple_crop</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="n">class_name</span><span class="o">=</span><span class="s1">&#39;simplecrop&#39;</span><span class="p">,</span>
+    <span class="n">method_name</span><span class="o">=</span><span class="s1">&#39;run&#39;</span><span class="p">,</span>
+    <span class="n">resource_payloads</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;daily&#39;</span><span class="p">:</span> <span class="n">Feather</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;simplecrop/data/daily.feather&#39;</span><span class="p">)),</span>
+        <span class="s1">&#39;yearly&#39;</span><span class="p">:</span> <span class="n">Feather</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;simplecrop/data/yearly.feather&#39;</span><span class="p">)),</span>
+        <span class="s1">&#39;plant&#39;</span><span class="p">:</span> <span class="n">Feather</span><span class="o">.</span><span class="n">partial</span><span class="p">(),</span>
+        <span class="s1">&#39;soil&#39;</span><span class="p">:</span> <span class="n">Feather</span><span class="o">.</span><span class="n">partial</span><span class="p">(),</span>
+        <span class="s1">&#39;raw&#39;</span><span class="p">:</span> <span class="n">OtherFile</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">ext</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="p">})</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">soil_df</span> <span class="o">=</span> <span class="n">simple_crop_response</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;soil&#39;</span><span class="p">)</span>
+<span class="n">soil_df</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>day_of_year</th>
+      <th>soil_daily_runoff</th>
+      <th>soil_daily_infiltration</th>
+      <th>soil_daily_drainage</th>
+      <th>soil_evapotranspiration</th>
+      <th>soil_evaporation</th>
+      <th>plant_potential_transpiration</th>
+      <th>soil_water_storage_depth</th>
+      <th>soil_water_profile_ratio</th>
+      <th>soil_water_deficit_stress</th>
+      <th>soil_water_excess_stress</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>3</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.86</td>
+      <td>2.25</td>
+      <td>2.23</td>
+      <td>0.02</td>
+      <td>260.97</td>
+      <td>1.800</td>
+      <td>1.000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>6</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2.25</td>
+      <td>2.64</td>
+      <td>2.62</td>
+      <td>0.02</td>
+      <td>264.09</td>
+      <td>1.821</td>
+      <td>1.000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>9</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.94</td>
+      <td>1.32</td>
+      <td>1.31</td>
+      <td>0.01</td>
+      <td>253.64</td>
+      <td>1.749</td>
+      <td>1.000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>12</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.57</td>
+      <td>2.56</td>
+      <td>2.53</td>
+      <td>0.02</td>
+      <td>249.09</td>
+      <td>1.718</td>
+      <td>1.000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>15</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.00</td>
+      <td>1.94</td>
+      <td>1.89</td>
+      <td>0.02</td>
+      <td>241.54</td>
+      <td>1.666</td>
+      <td>1.000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>94</th>
+      <td>282</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.00</td>
+      <td>4.04</td>
+      <td>0.61</td>
+      <td>1.55</td>
+      <td>154.76</td>
+      <td>1.067</td>
+      <td>0.566</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>95</th>
+      <td>285</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.00</td>
+      <td>1.64</td>
+      <td>0.26</td>
+      <td>0.56</td>
+      <td>152.05</td>
+      <td>1.049</td>
+      <td>0.544</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>96</th>
+      <td>288</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.00</td>
+      <td>2.92</td>
+      <td>0.46</td>
+      <td>0.88</td>
+      <td>146.65</td>
+      <td>1.011</td>
+      <td>0.499</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>97</th>
+      <td>291</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.00</td>
+      <td>4.84</td>
+      <td>0.75</td>
+      <td>1.25</td>
+      <td>140.73</td>
+      <td>0.971</td>
+      <td>0.449</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>98</th>
+      <td>293</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.00</td>
+      <td>4.18</td>
+      <td>0.65</td>
+      <td>0.95</td>
+      <td>137.47</td>
+      <td>0.948</td>
+      <td>0.422</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>99 rows × 11 columns</p>
+</div></div></div>
+</div>
+</div>
+<div class="section" id="using-prefect-to-feed-overland-flow-results-into-simple-crop">
+<h2>Using Prefect to Feed Overland Flow Results into Simple Crop<a class="headerlink" href="#using-prefect-to-feed-overland-flow-results-into-simple-crop" title="Permalink to this headline">¶</a></h2>
+<p>Now we’ll combine overlandflow with simplecrop. This will require an adapter to augment the daily source data fed into simplecrop with the depth of water that has infiltrated that cell. The workflow is shown below  without the details of calling simplecrop for each x, y coordinate in the map.</p>
+<p><img alt="workflow" src="../_images/workflow.svg" /></p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyarrow</span> <span class="k">as</span> <span class="nn">pa</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">from</span> <span class="nn">meillionen.interface.base</span> <span class="kn">import</span> <span class="n">MethodRequestArg</span>
+
+<span class="n">trial</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">trial</span><span class="p">(</span><span class="s2">&quot;simplecrop-parallelism&quot;</span><span class="p">)</span>
+
+<span class="n">overlandflow</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">CLIRef</span><span class="p">(</span><span class="n">OVERLANDFLOW</span><span class="p">),</span> <span class="n">settings</span><span class="o">=</span><span class="n">trial</span><span class="p">)</span>
+
+<span class="n">simplecrop_partitioning</span> <span class="o">=</span> <span class="n">Partitioning</span><span class="p">(</span>
+    <span class="n">pa</span><span class="o">.</span><span class="n">schema</span><span class="p">([(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">pa</span><span class="o">.</span><span class="n">int32</span><span class="p">()),</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">pa</span><span class="o">.</span><span class="n">int32</span><span class="p">())]))</span>
+
+<span class="n">simple_crop</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">CLIRef</span><span class="p">(</span><span class="n">SIMPLECROP</span><span class="p">),</span> <span class="n">settings</span><span class="o">=</span><span class="n">trial</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">daily_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_feather</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;simplecrop/data/daily.feather&#39;</span><span class="p">))</span>
+<span class="n">yearly</span> <span class="o">=</span> <span class="n">Feather</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;simplecrop/data/yearly.feather&#39;</span><span class="p">))</span>
+        
+<span class="nd">@task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">run_overland_flow</span><span class="p">():</span>
+    <span class="n">partial_resource_payloads</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;elevation&#39;</span><span class="p">:</span> <span class="n">OtherFile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">INPUT_DIR</span><span class="p">,</span> <span class="s1">&#39;elevation.asc&#39;</span><span class="p">)),</span>
+        <span class="s1">&#39;weather&#39;</span><span class="p">:</span> <span class="n">Feather</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">INPUT_DIR</span><span class="p">,</span> <span class="s1">&#39;weather.feather&#39;</span><span class="p">)),</span>
+        <span class="s1">&#39;soil_water_infiltration__depth&#39;</span><span class="p">:</span> <span class="n">NetCDF</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s1">&#39;swid&#39;</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="n">response</span> <span class="o">=</span> <span class="n">overlandflow</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="n">class_name</span><span class="o">=</span><span class="s1">&#39;overlandflow&#39;</span><span class="p">,</span>
+        <span class="n">method_name</span><span class="o">=</span><span class="s1">&#39;run&#39;</span><span class="p">,</span>
+        <span class="n">resource_payloads</span><span class="o">=</span><span class="n">partial_resource_payloads</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;soil_water_infiltration__depth&#39;</span><span class="p">)</span>
+
+
+<span class="nd">@task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">chunkify_soil_water_infiltration_depth</span><span class="p">(</span><span class="n">swid</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[{</span><span class="s1">&#39;soil_water_infiltration__depth&#39;</span><span class="p">:</span> <span class="n">swid</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="p">:],</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y</span><span class="p">}</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">13</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="mi">21</span><span class="p">,</span><span class="mi">24</span><span class="p">))]</span>
+
+
+<span class="nd">@task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">simplecrop_process_chunk</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">soil_water_infiltration__depth</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;soil_water_infiltration__depth&#39;</span><span class="p">]</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span>
+    <span class="n">partition</span> <span class="o">=</span> <span class="n">simplecrop_partitioning</span><span class="o">.</span><span class="n">complete</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">daily_xy_df</span> <span class="o">=</span> <span class="n">daily_df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">rainfall</span><span class="o">=</span><span class="n">soil_water_infiltration__depth</span><span class="p">)</span>
+    <span class="n">daily</span> <span class="o">=</span> <span class="n">simple_crop</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+        <span class="n">mra</span><span class="o">=</span><span class="n">MethodRequestArg</span><span class="p">(</span><span class="n">class_name</span><span class="o">=</span><span class="s1">&#39;simplecrop&#39;</span><span class="p">,</span> <span class="n">method_name</span><span class="o">=</span><span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="n">arg_name</span><span class="o">=</span><span class="s1">&#39;daily&#39;</span><span class="p">),</span>
+        <span class="n">resource</span><span class="o">=</span><span class="n">Feather</span><span class="o">.</span><span class="n">partial</span><span class="p">(),</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">daily_xy_df</span><span class="p">,</span>
+        <span class="n">partition</span><span class="o">=</span><span class="n">partition</span><span class="p">)</span>
+    
+    <span class="n">resource_payloads</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;daily&#39;</span><span class="p">:</span> <span class="n">daily</span><span class="p">,</span>
+        <span class="s1">&#39;yearly&#39;</span><span class="p">:</span> <span class="n">yearly</span><span class="p">,</span>
+        <span class="s1">&#39;plant&#39;</span><span class="p">:</span> <span class="n">Parquet</span><span class="o">.</span><span class="n">partial</span><span class="p">(),</span>
+        <span class="s1">&#39;soil&#39;</span><span class="p">:</span> <span class="n">Parquet</span><span class="o">.</span><span class="n">partial</span><span class="p">(),</span>
+        <span class="s1">&#39;raw&#39;</span><span class="p">:</span> <span class="n">OtherFile</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">ext</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="n">response</span> <span class="o">=</span> <span class="n">simple_crop</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="n">class_name</span><span class="o">=</span><span class="s1">&#39;simplecrop&#39;</span><span class="p">,</span>
+        <span class="n">method_name</span><span class="o">=</span><span class="s1">&#39;run&#39;</span><span class="p">,</span>
+        <span class="n">resource_payloads</span><span class="o">=</span><span class="n">resource_payloads</span><span class="p">,</span>
+        <span class="n">partition</span><span class="o">=</span><span class="n">partition</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">Flow</span><span class="p">(</span><span class="s1">&#39;crop_pipeline&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">flow</span><span class="p">:</span>
+    <span class="n">overland_flow</span> <span class="o">=</span> <span class="n">run_overland_flow</span><span class="p">()</span>
+    <span class="n">surface_water_depth_chunks</span> <span class="o">=</span> <span class="n">chunkify_soil_water_infiltration_depth</span><span class="p">(</span><span class="n">overland_flow</span><span class="p">)</span>
+    <span class="n">yield_chunks</span> <span class="o">=</span> <span class="n">simplecrop_process_chunk</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">surface_water_depth_chunks</span><span class="p">)</span>
+
+<span class="n">flow</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:22-0700] INFO - prefect.FlowRunner | Beginning Flow run for &#39;crop_pipeline&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:22-0700] INFO - prefect.TaskRunner | Task &#39;run_overland_flow&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:27-0700] INFO - prefect.TaskRunner | Task &#39;run_overland_flow&#39;: Finished task run for task with final state: &#39;Success&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:27-0700] INFO - prefect.TaskRunner | Task &#39;chunkify_soil_water_infiltration_depth&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:27-0700] INFO - prefect.TaskRunner | Task &#39;chunkify_soil_water_infiltration_depth&#39;: Finished task run for task with final state: &#39;Success&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:27-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:27-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk&#39;: Finished task run for task with final state: &#39;Mapped&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:27-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[0]&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:28-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[0]&#39;: Finished task run for task with final state: &#39;Success&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:28-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[1]&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:30-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[1]&#39;: Finished task run for task with final state: &#39;Success&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:30-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[2]&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:31-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[2]&#39;: Finished task run for task with final state: &#39;Success&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:31-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[3]&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:33-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[3]&#39;: Finished task run for task with final state: &#39;Success&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:33-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[4]&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:34-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[4]&#39;: Finished task run for task with final state: &#39;Success&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:34-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[5]&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:36-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[5]&#39;: Finished task run for task with final state: &#39;Success&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:36-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[6]&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:37-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[6]&#39;: Finished task run for task with final state: &#39;Success&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:37-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[7]&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:39-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[7]&#39;: Finished task run for task with final state: &#39;Success&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:39-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[8]&#39;: Starting task run...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:40-0700] INFO - prefect.TaskRunner | Task &#39;simplecrop_process_chunk[8]&#39;: Finished task run for task with final state: &#39;Success&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[2021-10-08 14:53:40-0700] INFO - prefect.FlowRunner | Flow run SUCCESS: all reference tasks succeeded
+</pre></div>
+</div>
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Success: &quot;All reference tasks succeeded.&quot;&gt;
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyarrow.dataset</span> <span class="kn">import</span> <span class="n">dataset</span>
+
+<span class="n">plant_df</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="s1">&#39;simplecrop-parallelism/simplecrop/run/plant&#39;</span><span class="p">),</span>
+    <span class="n">partitioning</span><span class="o">=</span><span class="n">simplecrop_partitioning</span><span class="o">.</span><span class="n">to_arrow</span><span class="p">())</span><span class="o">.</span><span class="n">to_table</span><span class="p">()</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+<span class="n">plant_df</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>day_of_year</th>
+      <th>plant_leaf_count</th>
+      <th>air_accumulated_temp</th>
+      <th>plant_matter</th>
+      <th>plant_matter_canopy</th>
+      <th>plant_matter_fruit</th>
+      <th>plant_matter_root</th>
+      <th>plant_leaf_area_index</th>
+      <th>x</th>
+      <th>y</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>121</td>
+      <td>2.00</td>
+      <td>0.00</td>
+      <td>0.30</td>
+      <td>0.25</td>
+      <td>0.05</td>
+      <td>0.00</td>
+      <td>0.01</td>
+      <td>10</td>
+      <td>21</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>123</td>
+      <td>2.20</td>
+      <td>0.00</td>
+      <td>0.65</td>
+      <td>0.55</td>
+      <td>0.10</td>
+      <td>0.00</td>
+      <td>0.02</td>
+      <td>10</td>
+      <td>21</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>126</td>
+      <td>2.50</td>
+      <td>0.00</td>
+      <td>1.20</td>
+      <td>1.02</td>
+      <td>0.18</td>
+      <td>0.00</td>
+      <td>0.03</td>
+      <td>10</td>
+      <td>21</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>129</td>
+      <td>2.79</td>
+      <td>0.00</td>
+      <td>1.91</td>
+      <td>1.62</td>
+      <td>0.29</td>
+      <td>0.00</td>
+      <td>0.04</td>
+      <td>10</td>
+      <td>21</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>132</td>
+      <td>3.09</td>
+      <td>0.00</td>
+      <td>2.80</td>
+      <td>2.38</td>
+      <td>0.42</td>
+      <td>0.00</td>
+      <td>0.06</td>
+      <td>10</td>
+      <td>21</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>526</th>
+      <td>282</td>
+      <td>12.06</td>
+      <td>186.05</td>
+      <td>1130.70</td>
+      <td>465.39</td>
+      <td>82.13</td>
+      <td>583.19</td>
+      <td>1.49</td>
+      <td>12</td>
+      <td>23</td>
+    </tr>
+    <tr>
+      <th>527</th>
+      <td>285</td>
+      <td>12.06</td>
+      <td>223.00</td>
+      <td>1138.88</td>
+      <td>465.39</td>
+      <td>82.13</td>
+      <td>591.36</td>
+      <td>1.34</td>
+      <td>12</td>
+      <td>23</td>
+    </tr>
+    <tr>
+      <th>528</th>
+      <td>288</td>
+      <td>12.06</td>
+      <td>243.50</td>
+      <td>1154.41</td>
+      <td>465.39</td>
+      <td>82.13</td>
+      <td>606.90</td>
+      <td>1.25</td>
+      <td>12</td>
+      <td>23</td>
+    </tr>
+    <tr>
+      <th>529</th>
+      <td>291</td>
+      <td>12.06</td>
+      <td>277.65</td>
+      <td>1170.74</td>
+      <td>465.39</td>
+      <td>82.13</td>
+      <td>623.22</td>
+      <td>1.11</td>
+      <td>12</td>
+      <td>23</td>
+    </tr>
+    <tr>
+      <th>530</th>
+      <td>293</td>
+      <td>12.06</td>
+      <td>304.90</td>
+      <td>1178.78</td>
+      <td>465.39</td>
+      <td>82.13</td>
+      <td>631.27</td>
+      <td>0.99</td>
+      <td>12</td>
+      <td>23</td>
+    </tr>
+  </tbody>
+</table>
+<p>531 rows × 10 columns</p>
+</div></div></div>
+</div>
+</div>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./example"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+        
+            
+
+
+
+<div class='prev-next-bottom'>
+    
+    <div id="prev">
+        <a class="left-prev" href="build_overland_flow.html" title="previous page">
+            <i class="prevnext-label fas fa-angle-left"></i>
+            <div class="prevnext-info">
+                <p class="prevnext-label">previous</p>
+                <p class="prevnext-title">Building a Wrapper for Overland Flow</p>
+            </div>
+        </a>
+    </div>
+
+</div>
+        
+        </div>
+    </div>
+    <footer class="footer">
+    <div class="container">
+      <p>
+        
+          By Open Modeling Foundation<br/>
+        
+            &copy; Copyright 2021.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../_static/js/index.1c5a1a01449ed65a7b51.js"></script>
+
+  
+  </body>
+</html>

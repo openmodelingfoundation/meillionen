@@ -1,0 +1,1339 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Python API &#8212; Meillionen</title>
+    
+  <link href="../_static/css/theme.css" rel="stylesheet" />
+  <link href="../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.1c5a1a01449ed65a7b51.js">
+
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/togglebutton.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="../_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
+    <script async="async" src="https://unpkg.com/thebe@0.5.1/lib/index.js"></script>
+    <script >
+        const thebe_selector = ".thebe"
+        const thebe_selector_input = "pre"
+        const thebe_selector_output = ".output"
+    </script>
+    <script async="async" src="../_static/sphinx-thebe.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Examples" href="../example/index.html" />
+    <link rel="prev" title="Getting Started" href="../getting_started.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../_static/logo.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">Meillionen</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../index.html">
+   Introduction
+  </a>
+ </li>
+</ul>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../concepts.html">
+   Concepts
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Python API
+  </a>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../example/index.html">
+   Examples
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../example/build_overland_flow.html">
+     Building a Wrapper for Overland Flow
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../example/overland_simplecrop_workflow.html">
+     Combining Overland Flow and Simple Crop
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            
+            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../_sources/api/python.md"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.md</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/openmodelingfoundation/meillionen"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/openmodelingfoundation/meillionen/issues/new?title=Issue%20on%20page%20%2Fapi/python.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        <a class="edit-button" href="https://github.com/openmodelingfoundation/meillionen/edit/main/docs/api/python.md"><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Edit this page"><i class="fas fa-pencil-alt"></i>suggest edit</button></a>
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-meillionen.interface.module_interface">
+   Module Interface
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-meillionen.interface.class_interface">
+   Class Interface
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-meillionen.interface.method_interface">
+   Method Interface
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-meillionen.interface.method_request">
+   Method Request
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-meillionen.interface.schema">
+   Schemas
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-meillionen.interface.resource">
+   Resources
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-meillionen.response">
+   Response
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-meillionen.settings">
+   Settings
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-meillionen.client">
+   Client
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-meillionen.server">
+   Server
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="section" id="python-api">
+<h1>Python API<a class="headerlink" href="#python-api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-meillionen.interface.module_interface">
+<span id="module-interface"></span><h2>Module Interface<a class="headerlink" href="#module-meillionen.interface.module_interface" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="meillionen.interface.module_interface.ModuleInterface">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.module_interface.</span></code><code class="sig-name descname"><span class="pre">ModuleInterface</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">classes</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#meillionen.interface.class_interface.ClassInterface" title="meillionen.interface.class_interface.ClassInterface"><span class="pre">meillionen.interface.class_interface.ClassInterface</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.module_interface.ModuleInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>A collection of class interfaces</p>
+<dl class="py method">
+<dt id="meillionen.interface.module_interface.ModuleInterface.__call__">
+<code class="sig-name descname"><span class="pre">__call__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">req</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#meillionen.interface.method_request.MethodRequest" title="meillionen.interface.method_request.MethodRequest"><span class="pre">meillionen.interface.method_request.MethodRequest</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.module_interface.ModuleInterface.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call a class method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>req</strong> – a request to a class method</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.module_interface.ModuleInterface.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">classes</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#meillionen.interface.class_interface.ClassInterface" title="meillionen.interface.class_interface.ClassInterface"><span class="pre">meillionen.interface.class_interface.ClassInterface</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.module_interface.ModuleInterface.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.module_interface.ModuleInterface.deserialize">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.module_interface.ModuleInterface.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a module interface from a buffer</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.module_interface.ModuleInterface.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.module_interface.ModuleInterface.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialize a module interface into a flatbuffer builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>builder</strong> – the flatbuffer builder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-meillionen.interface.class_interface">
+<span id="class-interface"></span><h2>Class Interface<a class="headerlink" href="#module-meillionen.interface.class_interface" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="meillionen.interface.class_interface.ClassInterface">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.class_interface.</span></code><code class="sig-name descname"><span class="pre">ClassInterface</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">methods</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#meillionen.interface.method_interface.MethodInterface" title="meillionen.interface.method_interface.MethodInterface"><span class="pre">meillionen.interface.method_interface.MethodInterface</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#meillionen.interface.method_interface.MethodInterface" title="meillionen.interface.method_interface.MethodInterface"><span class="pre">meillionen.interface.method_interface.MethodInterface</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.class_interface.ClassInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class interface describes the methods available in a model along with the model’s name</p>
+<dl class="py method">
+<dt id="meillionen.interface.class_interface.ClassInterface.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">methods</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#meillionen.interface.method_interface.MethodInterface" title="meillionen.interface.method_interface.MethodInterface"><span class="pre">meillionen.interface.method_interface.MethodInterface</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#meillionen.interface.method_interface.MethodInterface" title="meillionen.interface.method_interface.MethodInterface"><span class="pre">meillionen.interface.method_interface.MethodInterface</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.class_interface.ClassInterface.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.class_interface.ClassInterface.deserialize">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.class_interface.ClassInterface.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a <a class="reference internal" href="#meillionen.interface.class_interface.ClassInterface" title="meillionen.interface.class_interface.ClassInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClassInterface</span></code></a> from a buffer</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.class_interface.ClassInterface.from_interface">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_interface</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interface</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.class_interface._ClassInterface</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.class_interface.ClassInterface.from_interface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a <a class="reference internal" href="#meillionen.interface.class_interface.ClassInterface" title="meillionen.interface.class_interface.ClassInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClassInterface</span></code></a> from a flatbuffer <code class="xref py py-class docutils literal notranslate"><span class="pre">_ClassInterface</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.class_interface.ClassInterface.get_method">
+<code class="sig-name descname"><span class="pre">get_method</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#meillionen.interface.method_interface.MethodInterface" title="meillionen.interface.method_interface.MethodInterface"><span class="pre">meillionen.interface.method_interface.MethodInterface</span></a><a class="headerlink" href="#meillionen.interface.class_interface.ClassInterface.get_method" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a method from a class given its name</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.class_interface.ClassInterface.name">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#meillionen.interface.class_interface.ClassInterface.name" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the name of the model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.class_interface.ClassInterface.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.class_interface.ClassInterface.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialized a class interface into a flatbuffer builder</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-meillionen.interface.method_interface">
+<span id="method-interface"></span><h2>Method Interface<a class="headerlink" href="#module-meillionen.interface.method_interface" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="meillionen.interface.method_interface.MethodInterface">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.method_interface.</span></code><code class="sig-name descname"><span class="pre">MethodInterface</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">name,</span> <span class="pre">args:</span> <span class="pre">List[Any],</span> <span class="pre">handler=&lt;function</span> <span class="pre">default_handler&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.method_interface.MethodInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>A description of a method. It has a name, arguments (with schema information)
+and a handler (which runs the method)</p>
+<dl class="py method">
+<dt id="meillionen.interface.method_interface.MethodInterface.__call__">
+<code class="sig-name descname"><span class="pre">__call__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.method_interface.MethodInterface.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call self as a function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.method_interface.MethodInterface.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">name,</span> <span class="pre">args:</span> <span class="pre">List[Any],</span> <span class="pre">handler=&lt;function</span> <span class="pre">default_handler&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.method_interface.MethodInterface.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.method_interface.MethodInterface.deserialize">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.method_interface.MethodInterface.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a method interface from a buffer</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.method_interface.MethodInterface.process_kwargs">
+<code class="sig-name descname"><span class="pre">process_kwargs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.method_interface.MethodInterface.process_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preprocesses resource payloads to reduce boilerplate code in the handler</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.method_interface.MethodInterface.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.method_interface.MethodInterface.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes a method interface into a flatbuffer builder</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-meillionen.interface.method_request">
+<span id="method-request"></span><h2>Method Request<a class="headerlink" href="#module-meillionen.interface.method_request" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="meillionen.interface.method_request.MethodRequest">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.method_request.</span></code><code class="sig-name descname"><span class="pre">MethodRequest</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.method_request.MethodRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>A request to call a model method</p>
+<dl class="py method">
+<dt id="meillionen.interface.method_request.MethodRequest.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.method_request.MethodRequest.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.method_request.MethodRequest.from_partial">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_partial</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#meillionen.settings.Settings" title="meillionen.settings.Settings"><span class="pre">meillionen.settings.Settings</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_payloads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.method_request.MethodRequest.from_partial" title="Permalink to this definition">¶</a></dt>
+<dd><p>settings:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.method_request.MethodRequest.get_arg">
+<code class="sig-name descname"><span class="pre">get_arg</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.method_request.MethodRequest.get_arg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the path metadata for a argument</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> – the name of the argument</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.method_request.MethodRequest.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.method_request.MethodRequest.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialize a method request into a flatbuffer builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>builder</strong> – the flatbuffer builder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-meillionen.interface.schema">
+<span id="schemas"></span><h2>Schemas<a class="headerlink" href="#module-meillionen.interface.schema" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="meillionen.interface.schema.DataFrameSchemaPayload">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">DataFrameSchemaPayload</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arrow_schema</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pyarrow.lib.Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.DataFrameSchemaPayload" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="meillionen.interface.schema.DataFrameSchemaPayload.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arrow_schema</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pyarrow.lib.Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.DataFrameSchemaPayload.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.DataFrameSchemaPayload.deserialize">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">_io.BytesIO</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.DataFrameSchemaPayload.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the schema payload from a buffer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>buffer</strong> – the buffer to load from</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.DataFrameSchemaPayload.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.DataFrameSchemaPayload.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes the schema payload into a flatbuffer builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>builder</strong> – the flatbuffer builder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.schema.DirHandler">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">DirHandler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.mutability.Mutability</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.DirHandler" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="meillionen.interface.schema.DirHandler.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.mutability.Mutability</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.DirHandler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.DirHandler.from_schema">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_schema</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.schema.Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.DirHandler.from_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the handler from the schema</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>schema</strong> – the schema to build the handler with</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.DirHandler.load">
+<code class="sig-name descname"><span class="pre">load</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resource</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.DirHandler.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads a resource into memory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>resource</strong> – the resource to load</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.DirHandler.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.DirHandler.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialize a handler into a flatbuffer builder using only schema information</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.schema.FileExtensionHandlerMapper">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">FileExtensionHandlerMapper</span></code><a class="headerlink" href="#meillionen.interface.schema.FileExtensionHandlerMapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>A handler mapper that inspects a resources file extension to determine what handler
+should wrap a particular schema</p>
+<dl class="py method">
+<dt id="meillionen.interface.schema.FileExtensionHandlerMapper.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.FileExtensionHandlerMapper.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.schema.Handlable">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">Handlable</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.Handlable" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="meillionen.interface.schema.Handlable.from_schema">
+<em class="property"><span class="pre">abstract</span> <span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_schema</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.schema.Schema</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">_H</span><a class="headerlink" href="#meillionen.interface.schema.Handlable.from_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the handler from the schema</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>schema</strong> – the schema to build the handler with</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.Handlable.load">
+<em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">load</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resource</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.Handlable.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads a resource into memory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>resource</strong> – the resource to load</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.Handlable.save">
+<em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">save</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.Handlable.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save data using the metadata provided by the resource</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>resource</strong> – the metadata desribing where and how to save the data</p></li>
+<li><p><strong>data</strong> – the data to save</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.Handlable.serialize">
+<em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.Handlable.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialize a handler into a flatbuffer builder using only schema information</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.schema.LandLabGridHandler">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">LandLabGridHandler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.mutability.Mutability</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.LandLabGridHandler" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="meillionen.interface.schema.LandLabGridHandler.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.mutability.Mutability</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.LandLabGridHandler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.LandLabGridHandler.from_schema">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_schema</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.schema.Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.LandLabGridHandler.from_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the handler from the schema</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>schema</strong> – the schema to build the handler with</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.LandLabGridHandler.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.LandLabGridHandler.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialize a handler into a flatbuffer builder using only schema information</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.schema.NetCDFHandler">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">NetCDFHandler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dimensions</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.mutability.Mutability</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.NetCDFHandler" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="meillionen.interface.schema.NetCDFHandler.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dimensions</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.mutability.Mutability</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.NetCDFHandler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.NetCDFHandler.from_schema">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_schema</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.schema.Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.NetCDFHandler.from_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the handler from the schema</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>schema</strong> – the schema to build the handler with</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.NetCDFHandler.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.NetCDFHandler.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialize a handler into a flatbuffer builder using only schema information</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.schema.NetCDFSliceHandler">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">NetCDFSliceHandler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dimensions</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.mutability.Mutability</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.NetCDFSliceHandler" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="meillionen.interface.schema.NetCDFSliceHandler.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dimensions</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.mutability.Mutability</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.NetCDFSliceHandler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.NetCDFSliceHandler.from_schema">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_schema</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.schema.Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.NetCDFSliceHandler.from_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the handler from the schema</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>schema</strong> – the schema to build the handler with</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.NetCDFSliceHandler.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.NetCDFSliceHandler.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialize a handler into a flatbuffer builder using only schema information</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.schema.PandasHandler">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">PandasHandler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pyarrow.lib.Schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.mutability.Mutability</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.PandasHandler" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="meillionen.interface.schema.PandasHandler.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pyarrow.lib.Schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.mutability.Mutability</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.PandasHandler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.PandasHandler.from_schema">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_schema</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.schema.Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.PandasHandler.from_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the handler from the schema</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>schema</strong> – the schema to build the handler with</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.PandasHandler.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.PandasHandler.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialize a handler into a flatbuffer builder using only schema information</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.schema.SchemaPayloadable">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">SchemaPayloadable</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.SchemaPayloadable" title="Permalink to this definition">¶</a></dt>
+<dd><p>A schema payload describes the shape of data a method argument expects</p>
+<dl class="py method">
+<dt id="meillionen.interface.schema.SchemaPayloadable.deserialize">
+<em class="property"><span class="pre">abstract</span> <span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">_SP</span><a class="headerlink" href="#meillionen.interface.schema.SchemaPayloadable.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the schema payload from a buffer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>buffer</strong> – the buffer to load from</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.SchemaPayloadable.serialize">
+<em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.SchemaPayloadable.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes the schema payload into a flatbuffer builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>builder</strong> – the flatbuffer builder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.schema.SchemalessPayload">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">SchemalessPayload</span></code><a class="headerlink" href="#meillionen.interface.schema.SchemalessPayload" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="meillionen.interface.schema.SchemalessPayload.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.SchemalessPayload.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.SchemalessPayload.deserialize">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">_io.BytesIO</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.SchemalessPayload.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the schema payload from a buffer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>buffer</strong> – the buffer to load from</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.SchemalessPayload.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.SchemalessPayload.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes the schema payload into a flatbuffer builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>builder</strong> – the flatbuffer builder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.schema.TensorSchemaPayload">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">TensorSchemaPayload</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dimensions</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.TensorSchemaPayload" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="meillionen.interface.schema.TensorSchemaPayload.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dimensions</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.TensorSchemaPayload.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.TensorSchemaPayload.deserialize">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">_io.BytesIO</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.TensorSchemaPayload.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the schema payload from a buffer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>buffer</strong> – the buffer to load from</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.schema.TensorSchemaPayload.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.TensorSchemaPayload.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes the schema payload into a flatbuffer builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>builder</strong> – the flatbuffer builder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="meillionen.interface.schema.get_handler">
+<code class="sig-prename descclassname"><span class="pre">meillionen.interface.schema.</span></code><code class="sig-name descname"><span class="pre">get_handler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resource_payload</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.schema.Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.schema.get_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a handler given a resource payload and a schema</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-meillionen.interface.resource">
+<span id="resources"></span><h2>Resources<a class="headerlink" href="#module-meillionen.interface.resource" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="meillionen.interface.resource.Feather">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.resource.</span></code><code class="sig-name descname"><span class="pre">Feather</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Feather" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Feather file resource payload</p>
+<dl class="py method">
+<dt id="meillionen.interface.resource.Feather.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Feather.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.Feather.deserialize">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Feather.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the resource payload from a buffer</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.Feather.from_kwargs">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_kwargs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mra</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.base.MethodRequestArg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Feather.from_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a resource payload</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kwargs</strong> – the arguments to pass to the classes initializer</p></li>
+<li><p><strong>settings</strong> – the common settings used to complete the partial resource payload</p></li>
+<li><p><strong>mra</strong> – the metadata describing which argument of a method is being built</p></li>
+<li><p><strong>partition</strong> – additional context used to build the resource for grid searches and sensitivity analysis</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.Feather.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Feather.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes the resource payload into the flatbuffer builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>builder</strong> – the flatbuffer builder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.resource.NetCDF">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.resource.</span></code><code class="sig-name descname"><span class="pre">NetCDF</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.NetCDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>A NetCDF file resource payload</p>
+<dl class="py method">
+<dt id="meillionen.interface.resource.NetCDF.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.NetCDF.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.NetCDF.deserialize">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.NetCDF.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the resource payload from a buffer</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.NetCDF.from_kwargs">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_kwargs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mra</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.base.MethodRequestArg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.NetCDF.from_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a resource payload</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kwargs</strong> – the arguments to pass to the classes initializer</p></li>
+<li><p><strong>settings</strong> – the common settings used to complete the partial resource payload</p></li>
+<li><p><strong>mra</strong> – the metadata describing which argument of a method is being built</p></li>
+<li><p><strong>partition</strong> – additional context used to build the resource for grid searches and sensitivity analysis</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.NetCDF.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.NetCDF.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes the resource payload into the flatbuffer builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>builder</strong> – the flatbuffer builder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.resource.OtherFile">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.resource.</span></code><code class="sig-name descname"><span class="pre">OtherFile</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.OtherFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>A file payload resource payload</p>
+<p>Together with a name a full resource can be created</p>
+<dl class="py method">
+<dt id="meillionen.interface.resource.OtherFile.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.OtherFile.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.OtherFile.deserialize">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.OtherFile.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the resource payload from a buffer</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.OtherFile.from_kwargs">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_kwargs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mra</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.base.MethodRequestArg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.OtherFile.from_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a resource payload</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kwargs</strong> – the arguments to pass to the classes initializer</p></li>
+<li><p><strong>settings</strong> – the common settings used to complete the partial resource payload</p></li>
+<li><p><strong>mra</strong> – the metadata describing which argument of a method is being built</p></li>
+<li><p><strong>partition</strong> – additional context used to build the resource for grid searches and sensitivity analysis</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.OtherFile.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.OtherFile.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes the resource payload into the flatbuffer builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>builder</strong> – the flatbuffer builder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.resource.Parquet">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.resource.</span></code><code class="sig-name descname"><span class="pre">Parquet</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Parquet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Parquet file resource payload</p>
+<dl class="py method">
+<dt id="meillionen.interface.resource.Parquet.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Parquet.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.Parquet.deserialize">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Parquet.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the resource payload from a buffer</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.Parquet.from_kwargs">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_kwargs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mra</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.base.MethodRequestArg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Parquet.from_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a resource payload</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kwargs</strong> – the arguments to pass to the classes initializer</p></li>
+<li><p><strong>settings</strong> – the common settings used to complete the partial resource payload</p></li>
+<li><p><strong>mra</strong> – the metadata describing which argument of a method is being built</p></li>
+<li><p><strong>partition</strong> – additional context used to build the resource for grid searches and sensitivity analysis</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.Parquet.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Parquet.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes the resource payload into the flatbuffer builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>builder</strong> – the flatbuffer builder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.resource.Resource">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.resource.</span></code><code class="sig-name descname"><span class="pre">Resource</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_payload</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Resource" title="Permalink to this definition">¶</a></dt>
+<dd><p>A serializable resource. Should only be used internally.</p>
+<dl class="py method">
+<dt id="meillionen.interface.resource.Resource.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_payload</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.Resource.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.interface.resource.ResourcePayloadable">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.interface.resource.</span></code><code class="sig-name descname"><span class="pre">ResourcePayloadable</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.ResourcePayloadable" title="Permalink to this definition">¶</a></dt>
+<dd><p>The interface of a resource</p>
+<dl class="py method">
+<dt id="meillionen.interface.resource.ResourcePayloadable.deserialize">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">_R</span><a class="headerlink" href="#meillionen.interface.resource.ResourcePayloadable.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the resource payload from a buffer</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.ResourcePayloadable.from_kwargs">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_kwargs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#meillionen.settings.Settings" title="meillionen.settings.Settings"><span class="pre">meillionen.settings.Settings</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mra</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.base.MethodRequestArg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">meillionen.settings.Partition</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">_R</span><a class="headerlink" href="#meillionen.interface.resource.ResourcePayloadable.from_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a resource payload</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kwargs</strong> – the arguments to pass to the classes initializer</p></li>
+<li><p><strong>settings</strong> – the common settings used to complete the partial resource payload</p></li>
+<li><p><strong>mra</strong> – the metadata describing which argument of a method is being built</p></li>
+<li><p><strong>partition</strong> – additional context used to build the resource for grid searches and sensitivity analysis</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.interface.resource.ResourcePayloadable.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">flatbuffers.builder.Builder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.interface.resource.ResourcePayloadable.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes the resource payload into the flatbuffer builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>builder</strong> – the flatbuffer builder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-meillionen.response">
+<span id="response"></span><h2>Response<a class="headerlink" href="#module-meillionen.response" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="meillionen.response.Response">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.response.</span></code><code class="sig-name descname"><span class="pre">Response</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resources</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.response.Response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Response to a request from the client to call a method</p>
+<dl class="py method">
+<dt id="meillionen.response.Response.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resources</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.response.Response.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.response.Response.handler">
+<code class="sig-name descname"><span class="pre">handler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.response.Response.handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a handler</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> – the name of the handler</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.response.Response.load">
+<code class="sig-name descname"><span class="pre">load</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.response.Response.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads a resource using its handler</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> – the name of the resource and handler</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.response.Response.resource">
+<code class="sig-name descname"><span class="pre">resource</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.response.Response.resource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a resource</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> – the name of the resource</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.response.Response.save">
+<code class="sig-name descname"><span class="pre">save</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.response.Response.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves a resource using its handler</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – the name of the resource and handler</p></li>
+<li><p><strong>data</strong> – the data to save</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-meillionen.settings">
+<span id="settings"></span><h2>Settings<a class="headerlink" href="#module-meillionen.settings" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="meillionen.settings.Partitioning">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.settings.</span></code><code class="sig-name descname"><span class="pre">Partitioning</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pyarrow.lib.Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.settings.Partitioning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Describes additional data to be used to build up partial resource payload
+objects.</p>
+<p>Commonly used when broadcasting a model over a grid with different resources
+available at each grid point. Also useful for sensitivity analysis.</p>
+<dl class="py method">
+<dt id="meillionen.settings.Partitioning.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pyarrow.lib.Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.settings.Partitioning.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.settings.Partitioning.complete">
+<code class="sig-name descname"><span class="pre">complete</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.settings.Partitioning.complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a partition object with the data filled in for each missing partition key</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.settings.Partitioning.to_arrow">
+<code class="sig-name descname"><span class="pre">to_arrow</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.settings.Partitioning.to_arrow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert the partition into a <cite>pyarrow</cite> partition so that final results can
+be loaded as partitioned parquet files (which are supported by pyarrow, spark,
+datafusion and other libraries)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.settings.Settings">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.settings.</span></code><code class="sig-name descname"><span class="pre">Settings</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_path</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.settings.Settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Settings for a module.</p>
+<p>Currently used only to turn partial resource payloads into resource payloads. In the future
+it may have information about logging and how to access particular common resources (such as
+databases).</p>
+<dl class="py method">
+<dt id="meillionen.settings.Settings.trial">
+<code class="sig-name descname"><span class="pre">trial</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.settings.Settings.trial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to build ‘trial’ settings objects which extend the base path of the settings object.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-meillionen.client">
+<span id="client"></span><h2>Client<a class="headerlink" href="#module-meillionen.client" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="meillionen.client.CLIRef">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.client.</span></code><code class="sig-name descname"><span class="pre">CLIRef</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.client.CLIRef" title="Permalink to this definition">¶</a></dt>
+<dd><p>A CLI reference to a model</p>
+<p>The cli program must conform to the Meillionen cli interface</p>
+<dl class="py method">
+<dt id="meillionen.client.CLIRef.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.client.CLIRef.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.client.Client">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.client.</span></code><code class="sig-name descname"><span class="pre">Client</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.client.Client" title="Permalink to this definition">¶</a></dt>
+<dd><p>A client to execute and inspect Meillionen models</p>
+<dl class="py method">
+<dt id="meillionen.client.Client.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.client.Client.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.client.Client.run">
+<code class="sig-name descname"><span class="pre">run</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_payloads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">meillionen.settings.Partition</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.client.Client.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs a particular class method on the module</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>class_name</strong> – the name of the class</p></li>
+<li><p><strong>method_name</strong> – the name of the method to call</p></li>
+<li><p><strong>resource_payloads</strong> – dict of argument names to resource payloads</p></li>
+<li><p><strong>partition</strong> – an optional partition which describes how to build nested paths,
+to add key columns to tabular data or to add dimensions to tensor data</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.client.Client.save">
+<code class="sig-name descname"><span class="pre">save</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mra</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">meillionen.interface.base.MethodRequestArg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.client.Client.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves a resource</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mra</strong> – metadata needed to locate the schema of a method argument</p></li>
+<li><p><strong>resource</strong> – the resource metadata describing how and where to save the data to</p></li>
+<li><p><strong>data</strong> – the data to save</p></li>
+<li><p><strong>partition</strong> – the optional partition information. Useful for evaluating a model at
+many different parameter combinations</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.client.DockerImageRef">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.client.</span></code><code class="sig-name descname"><span class="pre">DockerImageRef</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.client.DockerImageRef" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Docker Image reference to a model</p>
+<p>The docker image must have an entrypoint of a Meillionen cli program and
+have a working directory of <cite>/code</cite> in order to work</p>
+<dl class="py method">
+<dt id="meillionen.client.DockerImageRef.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.client.DockerImageRef.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="meillionen.client.ServerRef">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.client.</span></code><code class="sig-name descname"><span class="pre">ServerRef</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#meillionen.server.Server" title="meillionen.server.Server"><span class="pre">meillionen.server.Server</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.client.ServerRef" title="Permalink to this definition">¶</a></dt>
+<dd><p>A server reference to a model</p>
+<p>This allows running a model in the same Python process.</p>
+<p>Mostly suited for interactive experimentation and model testing.</p>
+<dl class="py method">
+<dt id="meillionen.client.ServerRef.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#meillionen.server.Server" title="meillionen.server.Server"><span class="pre">meillionen.server.Server</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.client.ServerRef.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-meillionen.server">
+<span id="server"></span><h2>Server<a class="headerlink" href="#module-meillionen.server" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="meillionen.server.Server">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">meillionen.server.</span></code><code class="sig-name descname"><span class="pre">Server</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#meillionen.interface.module_interface.ModuleInterface" title="meillionen.interface.module_interface.ModuleInterface"><span class="pre">meillionen.interface.module_interface.ModuleInterface</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.server.Server" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class that handles method requests from clients</p>
+<p>Currently this is only for handling requests from stdin but
+in the future it may handle requests over http2.</p>
+<dl class="py method">
+<dt id="meillionen.server.Server.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#meillionen.interface.module_interface.ModuleInterface" title="meillionen.interface.module_interface.ModuleInterface"><span class="pre">meillionen.interface.module_interface.ModuleInterface</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.server.Server.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="meillionen.server.Server.cli">
+<code class="sig-name descname"><span class="pre">cli</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#meillionen.server.Server.cli" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an argparse cli to access the model with</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./api"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+        
+            
+
+
+
+<div class='prev-next-bottom'>
+    
+    <div id="prev">
+        <a class="left-prev" href="../getting_started.html" title="previous page">
+            <i class="prevnext-label fas fa-angle-left"></i>
+            <div class="prevnext-info">
+                <p class="prevnext-label">previous</p>
+                <p class="prevnext-title">Getting Started</p>
+            </div>
+        </a>
+    </div>
+     <div id="next">
+        <a class="right-next" href="../example/index.html" title="next page">
+            <div class="prevnext-info">
+                <p class="prevnext-label">next</p>
+                <p class="prevnext-title">Examples</p>
+            </div>
+            <i class="prevnext-label fas fa-angle-right"></i>
+        </a>
+     </div>
+
+</div>
+        
+        </div>
+    </div>
+    <footer class="footer">
+    <div class="container">
+      <p>
+        
+          By Open Modeling Foundation<br/>
+        
+            &copy; Copyright 2021.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../_static/js/index.1c5a1a01449ed65a7b51.js"></script>
+
+  
+  </body>
+</html>
