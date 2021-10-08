@@ -19,7 +19,7 @@ from typing import Optional, Protocol, Type, TypeVar
 from . import _Schema as s
 from .mutability import Mutability
 from .base import field_to_bytesio, leading_indent
-from ..exceptions import HandlerNotFound, ExtensionHandlerNotFound
+from ..exceptions import HandlerNotFound, ExtensionHandlerNotFound, ValidationError, DataFrameValidationError
 from .resource import get_resource_payload_class, Feather, Parquet, NetCDF, OtherFile, ResourcePayloadable
 
 
@@ -269,6 +269,34 @@ class Handlable(Protocol):
         raise NotImplementedError()
 
 
+def _validate_arrow_schema(s: pa.Schema, inferred_s: pa.Schema):
+    """
+    Ensure one dataframe arrow schema is compatible with another
+
+    :param s: the original schema
+    :param inferred_s: the schema inferred from a dataframe
+    """
+    missing_colnames = []
+    type_mismatches = []
+
+    # insure inferred schema has all columns
+    for name in s.names:
+        field_s = s.field(name)
+        try:
+            field_inf = inferred_s.field(name)
+        except KeyError as e:
+            missing_colnames.append(name)
+            continue
+
+        if field_s.type != field_inf.type:
+            type_mismatches.append({
+                'actual': field_s,
+                'expected': field_inf
+            })
+    if missing_colnames or type_mismatches:
+        raise DataFrameValidationError(missing_columns=missing_colnames, type_mismatches=type_mismatches)
+
+
 class PandasHandler(SchemaProxy, Handlable):
     RESOURCE_CLASSES = [Feather, Parquet]
 
@@ -296,11 +324,17 @@ class PandasHandler(SchemaProxy, Handlable):
 
     @load.register
     def _load(self, resource: Feather):
-        return pd.read_feather(resource.path)
+        df = pd.read_feather(resource.path)
+        inferred = pa.Schema.from_pandas(df)
+        _validate_arrow_schema(self.schema.schema.arrow_schema, inferred)
+        return df
 
     @load.register
     def _load(self, resource: Parquet):
-        return pd.read_parquet(resource.path)
+        df = pd.read_parquet(resource.path)
+        inferred = pa.Schema.from_pandas(df)
+        _validate_arrow_schema(self.schema.schema.arrow_schema, inferred)
+        return df
 
     @functools.singledispatchmethod
     def save(self, resource, data):
