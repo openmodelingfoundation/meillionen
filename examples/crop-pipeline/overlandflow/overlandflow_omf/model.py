@@ -88,7 +88,7 @@ run = MethodInterface(
         PandasHandler(
             name='weather',
             s=pa.schema([
-                pa.field(name='rainfall__depth', type=pa.float64(), nullable=False)
+                pa.field(name='rainfall__depth', type=pa.float32(), nullable=False)
             ]),
             mutability=Mutability.read
         ),
