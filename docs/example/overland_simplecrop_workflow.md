@@ -140,7 +140,7 @@ simple_crop = Client(CLIRef(SIMPLECROP), settings=trial)
 ```{code-cell} ipython3
 daily_df = pd.read_feather(os.path.join(BASE_DIR, 'simplecrop/data/daily.feather'))
 yearly = Feather(os.path.join(BASE_DIR, 'simplecrop/data/yearly.feather'))
-        
+
 @task()
 def run_overland_flow():
     partial_resource_payloads = {
@@ -169,7 +169,7 @@ def simplecrop_process_chunk(data):
     soil_water_infiltration__depth = data['soil_water_infiltration__depth']
     x, y = data['x'], data['y']
     partition = simplecrop_partitioning.complete(x=x, y=y)
-    daily_xy_df = daily_df.assign(rainfall=soil_water_infiltration__depth)
+    daily_xy_df = daily_df.assign(rainfall_depth=soil_water_infiltration__depth)
     daily = simple_crop.save(
         mra=MethodRequestArg(class_name='simplecrop', method_name='run', arg_name='daily'),
         resource=Feather.partial(),
@@ -189,6 +189,7 @@ def simplecrop_process_chunk(data):
         method_name='run',
         resource_payloads=resource_payloads,
         partition=partition)
+
 
 with Flow('crop_pipeline') as flow:
     overland_flow = run_overland_flow()

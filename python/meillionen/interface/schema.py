@@ -11,6 +11,8 @@ import netCDF4
 import numpy as np
 import pandas as pd
 import pyarrow as pa
+import pyarrow.feather as paf
+import pyarrow.parquet as pap
 import xarray as xr
 from landlab.io import read_esri_ascii, write_esri_ascii
 
@@ -19,7 +21,8 @@ from typing import Optional, Protocol, Type, TypeVar
 from . import _Schema as s
 from .mutability import Mutability
 from .base import field_to_bytesio, leading_indent
-from ..exceptions import HandlerNotFound, ExtensionHandlerNotFound, ValidationError, DataFrameValidationError
+from ..exceptions import HandlerNotFound, ExtensionHandlerNotFound, ValidationError, DataFrameValidationError, \
+    SchemaTypeMismatchValidationError
 from .resource import get_resource_payload_class, Feather, Parquet, NetCDF, OtherFile, ResourcePayloadable
 
 
@@ -78,6 +81,9 @@ class DataFrameSchemaPayload(SchemaPayloadable):
         print(leading_indent(f'{self.name}', indent))
         print(leading_indent(repr(self.arrow_schema), indent))
 
+    def validate(self, payload: 'DataFrameSchemaPayload'):
+        _validate_arrow_schema(self.arrow_schema, payload.arrow_schema)
+
 
 class TensorSchemaPayload(SchemaPayloadable):
     name = 'meillionen::schema::TensorSchema'
@@ -103,6 +109,10 @@ class TensorSchemaPayload(SchemaPayloadable):
         ''')
         print(leading_indent(desc, indent))
 
+    def validate(self, payload: SchemaPayloadable):
+        if not isinstance(payload, self.__class__):
+            raise SchemaTypeMismatchValidationError(expected=self.__class__, actual=type(payload))
+
 
 class SchemalessPayload(SchemaPayloadable):
     name = 'meillionen::schema::Schemaless'
@@ -117,6 +127,9 @@ class SchemalessPayload(SchemaPayloadable):
 
     def describe(self, indent: int=0):
         print(leading_indent(self.name, indent))
+
+    def validate(self, payload: SchemaPayloadable):
+        return
 
 
 _SCHEMA_CLASSES = {
@@ -158,7 +171,7 @@ class _Schema(s._Schema):
 class Schema:
     def __init__(self, name, schema, resource_classes, mutability: Mutability):
         self.name = name
-        self.schema = schema
+        self.payload = schema
         self.resource_classes = resource_classes
         self.mutability = mutability
 
@@ -172,8 +185,8 @@ class Schema:
 
     def serialize(self, builder: flatbuffers.Builder):
         name_off = builder.CreateString(self.name)
-        type_name_off = builder.CreateString(self.schema.name)
-        payload_off = self.schema.serialize(builder)
+        type_name_off = builder.CreateString(self.payload.name)
+        payload_off = self.payload.serialize(builder)
         resource_names_off = self._serialize_resource_names(builder, self.resource_classes)
         s.Start(builder)
         s.AddName(builder, name_off)
@@ -205,27 +218,31 @@ class Schema:
         payload:\
         ''')
         print(leading_indent(desc, indent))
-        self.schema.describe(indent + 2)
+        self.payload.describe(indent + 2)
 
 
 class SchemaProxy:
     @property
     def name(self):
-        return self.schema.name
+        return self._schema.name
 
     @property
     def mutability(self):
-        return self.schema.mutability
+        return self._schema.mutability
 
     @property
     def resource_classes(self):
-        return self.schema.resource_classes
+        return self._schema.resource_classes
+
+    @property
+    def payload(self):
+        return self._schema.payload
 
     def __repr__(self):
-        return f'{self.__class__.name}.from_schema({self.schema})'
+        return f'{self.__class__.name}.from_schema({self._schema})'
 
     def describe(self, indent):
-        return self.schema.describe(indent=indent)
+        return self._schema.describe(indent=indent)
 
 
 _H = TypeVar('_H')
@@ -288,10 +305,25 @@ def _validate_arrow_schema(s: pa.Schema, inferred_s: pa.Schema):
             missing_colnames.append(name)
             continue
 
+        type_s = field_s.type
+        type_inf = field_inf.type
+        if pa.types.is_floating(type_s) and \
+                pa.types.is_floating(type_inf) and \
+                type_s.bit_width >= type_inf.bit_width:
+            continue
+        if pa.types.is_signed_integer(type_s) and \
+                pa.types.is_signed_integer(type_inf) and \
+                type_s.bit_width >= type_inf.bit_width:
+            continue
+        if pa.types.is_unsigned_integer(type_s) and \
+                pa.types.is_unsigned_integer(type_inf) and \
+                type_s.bit_width >= type_inf.bit_width:
+            continue
+
         if field_s.type != field_inf.type:
             type_mismatches.append({
-                'actual': field_s,
-                'expected': field_inf
+                'actual': field_inf,
+                'expected': field_s
             })
     if missing_colnames or type_mismatches:
         raise DataFrameValidationError(missing_columns=missing_colnames, type_mismatches=type_mismatches)
@@ -301,7 +333,7 @@ class PandasHandler(SchemaProxy, Handlable):
     RESOURCE_CLASSES = [Feather, Parquet]
 
     def __init__(self, name: str, s: pa.Schema, mutability: Mutability):
-        self.schema = Schema(
+        self._schema = Schema(
             name=name,
             schema=DataFrameSchemaPayload(s),
             resource_classes=self.RESOURCE_CLASSES,
@@ -311,12 +343,12 @@ class PandasHandler(SchemaProxy, Handlable):
     def from_schema(cls, schema: Schema):
         return cls(
             name=schema.name,
-            s=schema.schema.arrow_schema,
+            s=schema.payload.arrow_schema,
             mutability=schema.mutability
         )
 
     def serialize(self, builder: flatbuffers.Builder):
-        return self.schema.serialize(builder)
+        return self._schema.serialize(builder)
 
     @functools.singledispatchmethod
     def load(self, resource):
@@ -324,17 +356,17 @@ class PandasHandler(SchemaProxy, Handlable):
 
     @load.register
     def _load(self, resource: Feather):
-        df = pd.read_feather(resource.path)
-        inferred = pa.Schema.from_pandas(df)
-        _validate_arrow_schema(self.schema.schema.arrow_schema, inferred)
-        return df
+        df = paf.read_table(resource.path)
+        inferred = df.schema
+        self._schema.payload.validate(DataFrameSchemaPayload(inferred))
+        return df.to_pandas()
 
     @load.register
     def _load(self, resource: Parquet):
-        df = pd.read_parquet(resource.path)
-        inferred = pa.Schema.from_pandas(df)
-        _validate_arrow_schema(self.schema.schema.arrow_schema, inferred)
-        return df
+        df = pap.read_table(resource.path)
+        inferred = df._schema
+        self._schema.payload.validate(DataFrameSchemaPayload(inferred))
+        return df.to_pandas()
 
     @functools.singledispatchmethod
     def save(self, resource, data):
@@ -343,12 +375,14 @@ class PandasHandler(SchemaProxy, Handlable):
     @save.register
     def _save(self, resource: Feather, data: pd.DataFrame):
         _mkdir_p(resource.path)
-        return data.to_feather(resource.path)
+        tbl = pa.Table.from_pandas(df=data, schema=self.payload.arrow_schema)
+        return pa.feather.write_feather(df=tbl, dest=resource.path)
 
     @save.register
     def _save(self, resource: Parquet, data: pd.DataFrame):
         _mkdir_p(resource.path)
-        return data.to_parquet(resource.path)
+        tbl = pa.Table.from_pandas(df=data, schema=self.payload.arrow_schema)
+        return pa.feather.write_feather(df=tbl, dest=resource.path)
 
 
 class NetCDFHandler(SchemaProxy, Handlable):
@@ -356,7 +390,7 @@ class NetCDFHandler(SchemaProxy, Handlable):
 
     def __init__(self, name: str, data_type: str, dimensions: List[str], mutability: Mutability):
         ts = TensorSchemaPayload(data_type=data_type, dimensions=dimensions)
-        self.schema = Schema(
+        self._schema = Schema(
             name=name,
             schema=ts,
             resource_classes=self.RESOURCE_CLASSES,
@@ -366,20 +400,12 @@ class NetCDFHandler(SchemaProxy, Handlable):
     def from_schema(cls, schema: Schema):
         return cls(
             name=schema.name,
-            data_type=schema.schema.data_type,
-            dimensions=schema.schema.dimensions,
+            data_type=schema.payload.data_type,
+            dimensions=schema.payload.dimensions,
             mutability=schema.mutability)
 
-    @property
-    def data_type(self):
-        return self.schema.schema.data_type
-
-    @property
-    def dimensions(self):
-        return self.schema.schema.dimensions
-
     def serialize(self, builder: flatbuffers.Builder):
-        return self.schema.serialize(builder)
+        return self._schema.serialize(builder)
 
     @functools.singledispatchmethod
     def load(self, resource):
@@ -401,7 +427,7 @@ class NetCDFHandler(SchemaProxy, Handlable):
     @save.register
     def _save(self, resource: NetCDF, data: xr.DataArray):
         data = data.transpose(self.dimensions)
-        ds, variable = _netcdf_create_variable(self.schema.schema, resource=resource, dimensions=data.dims)
+        ds, variable = _netcdf_create_variable(self._schema.payload, resource=resource, dimensions=data.dims)
         try:
             variable[:] = data
         finally:
@@ -425,7 +451,7 @@ class NetCDFSliceHandler(SchemaProxy, Handlable):
     RESOURCE_CLASSES = [NetCDF]
 
     def __init__(self, name: str, data_type: str, dimensions: List[str], mutability: Mutability):
-        self.schema = Schema(
+        self._schema = Schema(
             name=name,
             schema=TensorSchemaPayload(data_type=data_type, dimensions=dimensions),
             resource_classes=self.RESOURCE_CLASSES,
@@ -436,13 +462,13 @@ class NetCDFSliceHandler(SchemaProxy, Handlable):
     def from_schema(cls, schema: Schema):
         return cls(
             name=schema.name,
-            data_type=schema.schema.data_type,
-            dimensions=schema.schema.dimensions,
+            data_type=schema.payload.data_type,
+            dimensions=schema.payload.dimensions,
             mutability=schema.mutability
         )
 
     def serialize(self, builder: flatbuffers.Builder):
-        return self.schema.serialize(builder)
+        return self._schema.serialize(builder)
 
     @functools.singledispatchmethod
     def load(self, resource):
@@ -458,7 +484,7 @@ class NetCDFSliceHandler(SchemaProxy, Handlable):
 
     @save.register
     def _save(self, resource: NetCDF, data):
-        return NetCDFSliceSaver(schema=self.schema, resource=resource, dimensions=data)
+        return NetCDFSliceSaver(schema=self._schema, resource=resource, dimensions=data)
 
 
 NDSlice = Dict[str, Union[int, slice]]
@@ -480,7 +506,7 @@ class NetCDFSliceSaver:
     def __init__(self, schema, resource: NetCDF, dimensions):
         self.schema = schema
         self.dataset, self.variable = _netcdf_create_variable(
-            schema=schema.schema,
+            schema=schema.payload,
             resource=resource,
             dimensions=dimensions)
 
@@ -513,17 +539,25 @@ class LandLabGridHandler(SchemaProxy, Handlable):
     def __init__(self, name: str, data_type: str, mutability: Mutability):
         dimensions = ['x', 'y']
         ts = TensorSchemaPayload(data_type=data_type, dimensions=dimensions)
-        self.schema = Schema(name=name, schema=ts, resource_classes=self.RESOURCE_CLASSES, mutability=mutability)
+        self._schema = Schema(name=name, schema=ts, resource_classes=self.RESOURCE_CLASSES, mutability=mutability)
 
     @classmethod
     def from_schema(cls, schema: Schema):
         return cls(
             name=schema.name,
-            data_type=schema.schema.data_type,
+            data_type=schema.payload.data_type,
             mutability=schema.mutability)
 
     def serialize(self, builder: flatbuffers.Builder):
-        return self.schema.serialize(builder)
+        return self._schema.serialize(builder)
+
+    @property
+    def data_type(self):
+        return self._schema.payload.data_type
+
+    @property
+    def dimensions(self):
+        return self._schema.payload.dimensions
 
     @functools.singledispatchmethod
     def load(self, resource):
@@ -549,7 +583,7 @@ class DirHandler(SchemaProxy, Handlable):
     RESOURCE_CLASSES = [OtherFile]
 
     def __init__(self, name: str, mutability: Mutability):
-        self.schema = Schema(
+        self._schema = Schema(
             name=name,
             schema=SchemalessPayload(),
             resource_classes=self.RESOURCE_CLASSES,
@@ -562,7 +596,7 @@ class DirHandler(SchemaProxy, Handlable):
             mutability=schema.mutability)
 
     def serialize(self, builder: flatbuffers.Builder):
-        return self.schema.serialize(builder)
+        return self._schema.serialize(builder)
 
     def load(self, resource):
         raise NotImplemented()

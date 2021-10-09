@@ -4,11 +4,12 @@ from meillionen.interface.method_request import MethodRequest
 from meillionen.interface.resource import Feather, NetCDF, OtherFile
 from meillionen.interface.schema import NetCDFHandler
 from meillionen.settings import Settings
-from meillionen.client import Client, CLIRef
+from meillionen.client import Client, ServerRef
+from overlandflow_omf.model import server
 
 
 def test_cli():
-    ref = CLIRef('overlandflow-omf')
+    ref = ServerRef(server)
     settings = Settings(base_path='output')
     client = Client(module_ref=ref, settings=settings)
     kwargs = client.run(

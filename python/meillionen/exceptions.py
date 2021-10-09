@@ -26,6 +26,18 @@ class ValidationError(ValueError):
     pass
 
 
+class SchemaTypeMismatchValidationError(ValidationError):
+    msg = 'schema type mismatch: expected={expected} actual={actual}'
+
+    def __init__(self, expected, actual):
+        self.expected = expected
+        self.actual = actual
+        super().__init__()
+
+    def __str__(self):
+        return self.msg.format(expected=self.expected, actual=self.actual)
+
+
 class DataFrameValidationError(ValidationError):
     def __init__(self, missing_columns, type_mismatches):
         self.missing_columns = missing_columns
