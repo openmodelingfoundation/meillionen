@@ -309,15 +309,15 @@ def _validate_arrow_schema(s: pa.Schema, inferred_s: pa.Schema):
         type_inf = field_inf.type
         if pa.types.is_floating(type_s) and \
                 pa.types.is_floating(type_inf) and \
-                type_s.bit_width >= type_inf.bit_width:
+                type_s.bit_width <= type_inf.bit_width:
             continue
         if pa.types.is_signed_integer(type_s) and \
                 pa.types.is_signed_integer(type_inf) and \
-                type_s.bit_width >= type_inf.bit_width:
+                type_s.bit_width <= type_inf.bit_width:
             continue
         if pa.types.is_unsigned_integer(type_s) and \
                 pa.types.is_unsigned_integer(type_inf) and \
-                type_s.bit_width >= type_inf.bit_width:
+                type_s.bit_width <= type_inf.bit_width:
             continue
 
         if field_s.type != field_inf.type:
@@ -356,15 +356,15 @@ class PandasHandler(SchemaProxy, Handlable):
 
     @load.register
     def _load(self, resource: Feather):
-        df = paf.read_table(resource.path)
-        inferred = df.schema
+        df = pd.read_feather(resource.path)
+        inferred = pa.Schema.from_pandas(df=df)
         self._schema.payload.validate(DataFrameSchemaPayload(inferred))
-        return df.to_pandas()
+        return df
 
     @load.register
     def _load(self, resource: Parquet):
-        df = pap.read_table(resource.path)
-        inferred = df._schema
+        df = pd.read_parquet(resource.path)
+        inferred = pa.Schema.from_pandas(df=df)
         self._schema.payload.validate(DataFrameSchemaPayload(inferred))
         return df.to_pandas()
 
@@ -375,14 +375,12 @@ class PandasHandler(SchemaProxy, Handlable):
     @save.register
     def _save(self, resource: Feather, data: pd.DataFrame):
         _mkdir_p(resource.path)
-        tbl = pa.Table.from_pandas(df=data, schema=self.payload.arrow_schema)
-        return pa.feather.write_feather(df=tbl, dest=resource.path)
+        return data.to_feather(resource.path)
 
     @save.register
     def _save(self, resource: Parquet, data: pd.DataFrame):
         _mkdir_p(resource.path)
-        tbl = pa.Table.from_pandas(df=data, schema=self.payload.arrow_schema)
-        return pa.feather.write_feather(df=tbl, dest=resource.path)
+        return data.to_parquet(resource.path)
 
 
 class NetCDFHandler(SchemaProxy, Handlable):

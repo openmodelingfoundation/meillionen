@@ -38,4 +38,4 @@ jobs:
         shell: bash -l {0}
         run: |
           cd docs
-          jupyter book build .
+          jupyter book build --warningiserror .

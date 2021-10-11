@@ -67,10 +67,11 @@ _run_one_year = MethodInterface(
         PandasHandler(
             name='plant',
             s=pa.schema([
+                pa.field('day_of_year', type=pa.int32(), nullable=False),
+            ] + [
                 pa.field(name=name, type=pa.float32(), nullable=False)
                 for name in
                 [
-                    'day_of_year',
                     'plant_leaf_count',
                     'air_accumulated_temp',
                     'plant_matter',
@@ -85,10 +86,11 @@ _run_one_year = MethodInterface(
         PandasHandler(
             name='soil',
             s=pa.schema([
+                pa.field('day_of_year', type=pa.int32(), nullable=False),
+            ] + [
                 pa.field(name=name, type=pa.float32(), nullable=False)
                 for name in
                 [
-                    'day_of_year',
                     'soil_daily_runoff',
                     'soil_daily_infiltration',
                     'soil_daily_drainage',
