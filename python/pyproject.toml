@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "meillionen"
-version = "0.1.3"
+version = "0.1.4"
 description = "A model interface serialization and rpc framework"
 authors = ["Calvin Pritchard <calvin.pritchard@asu.edu>"]
 license = "MIT"
