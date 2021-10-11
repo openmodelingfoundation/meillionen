@@ -6,7 +6,13 @@ Meillionen will be a project to facilitate the interoperability of simulation mo
 
 In order to setup this project you'll have to install `conda`.
 
-See the `python` folder creating a development environment for the python implementation.
+Then run
+
+```bash
+make setup
+```
+
+to setup the conda env and install the needed packages
 
 ## Examples
 
@@ -24,7 +30,7 @@ Go into the docs folder
 cd docs
 ```
 
-The build the jupyter book docs
+Then build the jupyter book docs
 
 ```bash
 jupyter book build .
