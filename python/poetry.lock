@@ -625,7 +625,7 @@ format_nongpl = ["idna", "jsonpointer (>1.13)", "webcolors", "rfc3986-validator 
 
 [[package]]
 name = "jupyter-book"
-version = "0.12.0"
+version = "0.12.1"
 description = "Jupyter Book: Create an online book with Jupyter Notebooks"
 category = "dev"
 optional = false
@@ -644,7 +644,7 @@ sphinx-book-theme = ">=0.1.4,<0.2.0"
 sphinx-comments = "*"
 sphinx-copybutton = "*"
 sphinx-external-toc = ">=0.2.3,<0.3.0"
-sphinx-jupyterbook-latex = ">=0.4.3,<0.5.0"
+sphinx-jupyterbook-latex = ">=0.4.6,<0.5.0"
 sphinx-multitoc-numbering = ">=0.1.3,<0.2.0"
 sphinx-panels = ">=0.6.0,<0.7.0"
 sphinx-thebe = ">=0.0.10,<0.1.0"
@@ -654,8 +654,8 @@ sphinxcontrib-bibtex = ">=2.2.0,<2.3.0"
 [package.extras]
 code_style = ["pre-commit (>=2.12,<3.0)"]
 pdfhtml = ["pyppeteer"]
-sphinx = ["altair", "bokeh", "folium", "ipywidgets", "matplotlib", "nbclient", "numpy", "pandas", "plotly", "sphinx-click", "sphinx-inline-tabs", "sphinxext-rediraffe (>=0.2.3,<0.3.0)", "sympy"]
-testing = ["altair", "beautifulsoup4", "cookiecutter", "coverage", "matplotlib", "pyppeteer", "pytest (>=3.6,<4)", "pytest-cov", "pytest-regressions", "pytest-timeout", "pytest-xdist", "sphinx-click", "sphinx-tabs", "texsoup"]
+sphinx = ["altair", "bokeh", "folium", "ipywidgets", "matplotlib", "nbclient", "numpy", "pandas", "plotly", "sphinx-click", "sphinx-inline-tabs", "sphinxext-rediraffe (>=0.2.3,<0.3.0)", "sympy", "sphinx-proof"]
+testing = ["altair", "beautifulsoup4", "cookiecutter", "coverage", "matplotlib", "pyppeteer", "pytest (>=6.2.4)", "pytest-cov", "pytest-regressions", "pytest-timeout", "pytest-xdist", "sphinx-click", "sphinx-tabs", "texsoup"]
 
 [[package]]
 name = "jupyter-cache"
@@ -1917,7 +1917,7 @@ testing = ["coverage", "pytest (>=3.6,<4)", "pytest-cov", "pytest-regressions"]
 
 [[package]]
 name = "sphinx-jupyterbook-latex"
-version = "0.4.5"
+version = "0.4.6"
 description = "Latex specific features for jupyter book"
 category = "dev"
 optional = false
@@ -1930,7 +1930,7 @@ sphinx = ">=3,<5"
 [package.extras]
 code_style = ["pre-commit (>=2.12,<3.0)"]
 myst = ["myst-nb (>=0.13,<0.14)"]
-rtd = ["myst-parser", "sphinx-book-theme"]
+rtd = ["myst-parser", "sphinx-book-theme", "sphinx-design", "sphinx-jupyterbook-latex"]
 testing = ["coverage (<5.0)", "myst-nb (>=0.13,<0.14)", "pytest (>=3.6,<4)", "pytest-cov (>=2.8,<3.0)", "pytest-regressions", "sphinx-external-toc (>=0.1.0,<0.3.0)", "sphinxcontrib-bibtex (>=2.2.1,<2.3.0)", "texsoup"]
 
 [[package]]
@@ -2350,7 +2350,7 @@ prefect = ["prefect"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "dcef8c0f202466d615b2c44c19f6f87d38745799b7a80605edf22efee9ddf46e"
+content-hash = "14ad78578054eb5e2485c295b0cbf308b2b5b7c5611aa23c0e1632bd1bd723cf"
 
 [metadata.files]
 alabaster = [
@@ -2696,8 +2696,8 @@ jsonschema = [
     {file = "jsonschema-3.2.0.tar.gz", hash = "sha256:c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a"},
 ]
 jupyter-book = [
-    {file = "jupyter-book-0.12.0.tar.gz", hash = "sha256:cc0082d27239d9c1d64ac0aa2e12194cce7415cdeb498fe1c626572a2e65ea2c"},
-    {file = "jupyter_book-0.12.0-py3-none-any.whl", hash = "sha256:75da974e8cd63cd0d42b165e978e38ce2786590eafceefd04105322ae2f07bf8"},
+    {file = "jupyter-book-0.12.1.tar.gz", hash = "sha256:674d40c1e18c3f3fb02514a9f60898bbdcb9939c72d3f795db02fd4f1d1d3f70"},
+    {file = "jupyter_book-0.12.1-py3-none-any.whl", hash = "sha256:37ca4642df60b1d16b9b54feb89be84e206b04e687a4cc304fda200fa8f4b1ee"},
 ]
 jupyter-cache = [
     {file = "jupyter-cache-0.4.3.tar.gz", hash = "sha256:4c9b5431b1d320bc68440c21fa0a155bbeb29c5b979bef72222e244a7bcd54fc"},
@@ -3064,8 +3064,11 @@ packaging = [
     {file = "packaging-21.0.tar.gz", hash = "sha256:7dc96269f53a4ccec5c0670940a4281106dd0bb343f47b7471f779df49c2fbe7"},
 ]
 pandas = [
+    {file = "pandas-1.3.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9707bdc1ea9639c886b4d3be6e2a45812c1ac0c2080f94c31b71c9fa35556f9b"},
+    {file = "pandas-1.3.4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c2f44425594ae85e119459bb5abb0748d76ef01d9c08583a667e3339e134218e"},
     {file = "pandas-1.3.4-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:372d72a3d8a5f2dbaf566a5fa5fa7f230842ac80f29a931fb4b071502cf86b9a"},
     {file = "pandas-1.3.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d99d2350adb7b6c3f7f8f0e5dfb7d34ff8dd4bc0a53e62c445b7e43e163fce63"},
+    {file = "pandas-1.3.4-cp310-cp310-win_amd64.whl", hash = "sha256:4acc28364863127bca1029fb72228e6f473bb50c32e77155e80b410e2068eeac"},
     {file = "pandas-1.3.4-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:c2646458e1dce44df9f71a01dc65f7e8fa4307f29e5c0f2f92c97f47a5bf22f5"},
     {file = "pandas-1.3.4-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5298a733e5bfbb761181fd4672c36d0c627320eb999c59c65156c6a90c7e1b4f"},
     {file = "pandas-1.3.4-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:22808afb8f96e2269dcc5b846decacb2f526dd0b47baebc63d913bf847317c8f"},
@@ -3591,8 +3594,8 @@ sphinx-external-toc = [
     {file = "sphinx_external_toc-0.2.3.tar.gz", hash = "sha256:22d1d63f74206b388fb4e1d67e0c0d0b4de2ea98a2820f97a03ae3f3141dc525"},
 ]
 sphinx-jupyterbook-latex = [
-    {file = "sphinx_jupyterbook_latex-0.4.5-py3-none-any.whl", hash = "sha256:d92f967563213374775034f993abaf5a109de94134a02badd9ef0eaa4bab13ef"},
-    {file = "sphinx_jupyterbook_latex-0.4.5.tar.gz", hash = "sha256:b169ab271f512f45cea93587bd573f32f513eb744a680908874a2a60c62f6884"},
+    {file = "sphinx_jupyterbook_latex-0.4.6-py3-none-any.whl", hash = "sha256:75b8f7654ac1eff5419f71017491ecdc50a4723e3305dd6f61b183099f46600f"},
+    {file = "sphinx_jupyterbook_latex-0.4.6.tar.gz", hash = "sha256:8ff3775b11ab4798e6e8ec983601d7aea4c3b8e8b5d28ca758578ede3a791334"},
 ]
 sphinx-multitoc-numbering = [
     {file = "sphinx-multitoc-numbering-0.1.3.tar.gz", hash = "sha256:c9607671ac511236fa5d61a7491c1031e700e8d498c9d2418e6c61d1251209ae"},
