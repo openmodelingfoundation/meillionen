@@ -1,0 +1,23 @@
+include "resource.fbs";
+
+namespace meillionen.interface;
+
+table _MethodResponseError {
+    name: string;
+    trace: string;
+}
+
+table _MethodResponseSuccess {
+    resources: [_Resource];
+}
+
+union _MethodResponseType {
+    success: _MethodResponseSuccess,
+    failure: _MethodResponseError
+}
+
+table _MethodResponse {
+    value: _MethodResponseType;
+}
+
+root_type _MethodResponse;

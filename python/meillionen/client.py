@@ -28,6 +28,12 @@ class CLIRef:
         module = ModuleInterface.deserialize(interface.stdout)
         return module
 
+    def initialize(self):
+        pass
+
+    def finalize(self):
+        pass
+
     def run(self, mr: MethodRequest):
         builder = flatbuffers.Builder()
         # need to prefix the message by the size
@@ -51,12 +57,25 @@ class DockerImageRef:
         #  available in the directory the model is currently running in
         self.image_name = image_name
         curdir = os.getcwd()
-        self.command(f'docker run -it --rm -v {curdir}:/code {image_name}')
+        self.command = sh.Command(f'docker run -it --rm -v {curdir}:/code {image_name}')
 
     def get_interface(self) -> ModuleInterface:
-        self.command('interface')
+        interface = self.command('interface')
         module = ModuleInterface.deserialize(interface.stdout)
         return module
+
+    def initialize(self):
+        self.command('serve')
+
+    def finalize(self):
+        pass
+
+    def __enter__(self):
+        self.initialize()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.finalize()
 
     def run(self, mr: MethodRequest):
         builder = flatbuffers.Builder()
@@ -93,7 +112,7 @@ class Client:
         self.settings = settings
 
     def run_simple(self, mr: MethodRequest):
-        self.module_ref.run(mr)
+        self.module_ref.apply(mr)
         method = self.module.get_method(mr)
         resources = mr.kwargs
         handlers = get_handlers(resources=resources, schemas=method.args)

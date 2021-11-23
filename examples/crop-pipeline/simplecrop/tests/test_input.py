@@ -42,4 +42,4 @@ def test_run_one_year():
             **sinks
         }
     )
-    server.run(mr)
+    server.apply(mr)

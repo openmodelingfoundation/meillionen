@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+message Request {
+  optional bytes payload = 1;
+}
+
+message Response {
+  optional bytes payload = 1;
+}
+
+message EndRequest {}
+message EndResponse {}
+
+service ModuleModelService {
+  rpc apply(stream Request) returns (stream Response);
+}
