@@ -1,4 +1,15 @@
 [[package]]
+name = "affine"
+version = "2.3.0"
+description = "Matrices describing affine transformation of the plane."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+test = ["pytest (>=3.0)", "pytest-cov", "pydocstyle", "coveralls"]
+
+[[package]]
 name = "alabaster"
 version = "0.7.12"
 description = "A configurable sidebar-enabled Sphinx theme"
@@ -59,7 +70,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 name = "attrs"
 version = "21.2.0"
 description = "Classes Without Boilerplate"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -144,6 +155,23 @@ six = ">=1.9.0"
 webencodings = "*"
 
 [[package]]
+name = "bmi-topography"
+version = "0.4"
+description = "Fetch and cache NASA SRTM and JAXA ALOS land elevation data"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+bmipy = "*"
+click = "*"
+numpy = "*"
+pyyaml = "*"
+rasterio = "*"
+requests = "*"
+xarray = "*"
+
+[[package]]
 name = "bmipy"
 version = "2.0"
 description = "Basic Model Interface for Python"
@@ -205,6 +233,34 @@ description = "Composable command line interface toolkit"
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
+name = "click-plugins"
+version = "1.1.1"
+description = "An extension module for click to enable registering CLI commands via setuptools entry-points."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+click = ">=4.0"
+
+[package.extras]
+dev = ["pytest (>=3.6)", "pytest-cov", "wheel", "coveralls"]
+
+[[package]]
+name = "cligj"
+version = "0.7.2"
+description = "Click params for commmand line interfaces to GeoJSON"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4"
+
+[package.dependencies]
+click = ">=4.0"
+
+[package.extras]
+test = ["pytest-cov"]
 
 [[package]]
 name = "cloudpickle"
@@ -817,13 +873,14 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "landlab"
-version = "2.3.0"
+version = "2.4.1"
 description = "Plugin-based component modeling tool."
 category = "main"
 optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
+bmi-topography = "*"
 bmipy = "*"
 matplotlib = "*"
 netcdf4 = "*"
@@ -831,6 +888,7 @@ numpy = "*"
 pandas = "*"
 pyshp = "*"
 pyyaml = "*"
+richdem = "*"
 scipy = "*"
 statsmodels = "*"
 xarray = ">=0.16"
@@ -1695,6 +1753,32 @@ cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 py = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
+name = "rasterio"
+version = "1.2.10"
+description = "Fast and direct raster I/O for use with Numpy and SciPy"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+affine = "*"
+attrs = "*"
+certifi = "*"
+click = ">=4.0"
+click-plugins = "*"
+cligj = ">=0.5"
+numpy = "*"
+snuggs = ">=1.4.1"
+
+[package.extras]
+all = ["numpydoc", "hypothesis", "matplotlib", "pytest-cov (>=2.2.0)", "sphinx", "ipython (>=2.0)", "boto3 (>=1.2.4)", "shapely", "pytest (>=2.8.2)", "packaging", "sphinx-rtd-theme", "ghp-import"]
+docs = ["ghp-import", "numpydoc", "sphinx", "sphinx-rtd-theme"]
+ipython = ["ipython (>=2.0)"]
+plot = ["matplotlib"]
+s3 = ["boto3 (>=1.2.4)"]
+test = ["boto3 (>=1.2.4)", "hypothesis", "packaging", "pytest-cov (>=2.2.0)", "pytest (>=2.8.2)", "shapely"]
+
+[[package]]
 name = "regex"
 version = "2021.10.23"
 description = "Alternative regular expression module, to replace re."
@@ -1731,6 +1815,17 @@ python-versions = "*"
 [package.dependencies]
 requests = ">=1.1"
 urllib3 = ">=1.8"
+
+[[package]]
+name = "richdem"
+version = "0.3.4"
+description = "High-Performance Terrain Analysis"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+numpy = {version = ">=1.7,<2", markers = "python_version > \"3.4\" or python_version < \"3.0\""}
 
 [[package]]
 name = "scipy"
@@ -1795,6 +1890,21 @@ description = "This package provides 29 stemmers for 28 languages generated from
 category = "dev"
 optional = false
 python-versions = "*"
+
+[[package]]
+name = "snuggs"
+version = "1.4.7"
+description = "Snuggs are s-expressions for Numpy"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+numpy = "*"
+pyparsing = ">=2.1.6"
+
+[package.extras]
+test = ["pytest", "hypothesis"]
 
 [[package]]
 name = "sortedcontainers"
@@ -2353,6 +2463,10 @@ python-versions = "^3.8"
 content-hash = "dcef8c0f202466d615b2c44c19f6f87d38745799b7a80605edf22efee9ddf46e"
 
 [metadata.files]
+affine = [
+    {file = "affine-2.3.0-py2.py3-none-any.whl", hash = "sha256:34b05b070d954c382e56f02c207a372d8a32621a87653cc30cdd31cd7f65799f"},
+    {file = "affine-2.3.0.tar.gz", hash = "sha256:2e045def1aa29e613c42e801a7e10e0b9bacfed1a7c6af0cadf8843530a15102"},
+]
 alabaster = [
     {file = "alabaster-0.7.12-py2.py3-none-any.whl", hash = "sha256:446438bdcca0e05bd45ea2de1668c1d9b032e1a9154c2c259092d77031ddd359"},
     {file = "alabaster-0.7.12.tar.gz", hash = "sha256:a661d72d58e6ea8a57f7a86e37d86716863ee5e92788398526d58b26a4e4dc02"},
@@ -2405,6 +2519,10 @@ black = [
 bleach = [
     {file = "bleach-4.1.0-py2.py3-none-any.whl", hash = "sha256:4d2651ab93271d1129ac9cbc679f524565cc8a1b791909c4a51eac4446a15994"},
     {file = "bleach-4.1.0.tar.gz", hash = "sha256:0900d8b37eba61a802ee40ac0061f8c2b5dee29c1927dd1d233e075ebf5a71da"},
+]
+bmi-topography = [
+    {file = "bmi-topography-0.4.tar.gz", hash = "sha256:cb69107dc79bbde259905f628a1a713e46e8b1bcda2b56aa2fd8b506cc8c9797"},
+    {file = "bmi_topography-0.4-py3-none-any.whl", hash = "sha256:4a51c0ee178580bf30dec9b3499e97b7698d00f87ea492926a854129bf822edc"},
 ]
 bmipy = [
     {file = "bmipy-2.0.tar.gz", hash = "sha256:d1a586f6ac679e44d7eae3c15ee09bc3a6bd856d23cada9a461a1900e4246345"},
@@ -2503,6 +2621,14 @@ charset-normalizer = [
 click = [
     {file = "click-7.1.2-py2.py3-none-any.whl", hash = "sha256:dacca89f4bfadd5de3d7489b7c8a566eee0d3676333fbb50030263894c38c0dc"},
     {file = "click-7.1.2.tar.gz", hash = "sha256:d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a"},
+]
+click-plugins = [
+    {file = "click-plugins-1.1.1.tar.gz", hash = "sha256:46ab999744a9d831159c3411bb0c79346d94a444df9a3a3742e9ed63645f264b"},
+    {file = "click_plugins-1.1.1-py2.py3-none-any.whl", hash = "sha256:5d262006d3222f5057fd81e1623d4443e41dcda5dc815c06b442aa3c02889fc8"},
+]
+cligj = [
+    {file = "cligj-0.7.2-py3-none-any.whl", hash = "sha256:c1ca117dbce1fe20a5809dc96f01e1c2840f6dcc939b3ddbb1111bf330ba82df"},
+    {file = "cligj-0.7.2.tar.gz", hash = "sha256:a4bc13d623356b373c2c27c53dbd9c68cae5d526270bfa71f6c6fa69669c6b27"},
 ]
 cloudpickle = [
     {file = "cloudpickle-2.0.0-py3-none-any.whl", hash = "sha256:6b2df9741d06f43839a3275c4e6632f7df6487a1f181f5f46a052d3c917c3d11"},
@@ -2782,19 +2908,14 @@ kiwisolver = [
     {file = "kiwisolver-1.3.2.tar.gz", hash = "sha256:fc4453705b81d03568d5b808ad8f09c77c47534f6ac2e72e733f9ca4714aa75c"},
 ]
 landlab = [
-    {file = "landlab-2.3.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:b33d873c4530e3910263ba976850b21baf89aa3d2c0faf855ab2ad6c9d225234"},
-    {file = "landlab-2.3.0-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:b3766670116ceeb0a1a1c1ae2fc222dd91fab192a9e4ae0489b835cca499d07e"},
-    {file = "landlab-2.3.0-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:3f9b036f0f5e292c0fd9c1ec6a6636b77758f8c94be8944604780d288054f72f"},
-    {file = "landlab-2.3.0-cp37-cp37m-win_amd64.whl", hash = "sha256:c9494cd0e0ed11b6cb7ae39bdf4a69a8ad2b80e46f496b953f4c2abac3e80f06"},
-    {file = "landlab-2.3.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:2b068562343c821ebbdbd76da8add2857ad89a4b5e62cda0c3dd2e105e2b7f63"},
-    {file = "landlab-2.3.0-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:37a75e289b156f3260ca3ad39d256f67c6cc7d2c4f68dd7072aec8314dbd17c4"},
-    {file = "landlab-2.3.0-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:61c53a02d9b66a4a203763ab1d9d6215d28e3cee52528e847b6644318ba44024"},
-    {file = "landlab-2.3.0-cp38-cp38-win_amd64.whl", hash = "sha256:ebcc93113805fdee8d98e5ea0f843833b81a9478d1a74f93c0f46f05c3ac3a97"},
-    {file = "landlab-2.3.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:3a9dc3feae0305930f023c77bb9dec85e4adeb44133ea499eb6f0efe553e2553"},
-    {file = "landlab-2.3.0-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:5a246a66b47d5b43b31873b51661a2983339608cbe498cce5a87d991c4307a5c"},
-    {file = "landlab-2.3.0-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:4d0b9449bc6e52a05046a49404d317e0e5e2bb78932141a923b80904eaab948e"},
-    {file = "landlab-2.3.0-cp39-cp39-win_amd64.whl", hash = "sha256:7798159868f1f03680da25bac58ce1317af85b16d9f2dd4d981fc7ea429076e9"},
-    {file = "landlab-2.3.0.tar.gz", hash = "sha256:86598e8e940fc0a06b8bdc804a5241e7bd884550af38aa2d0b6c4145cd6b4a32"},
+    {file = "landlab-2.4.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:cf39e06a13c38f55d57268cdc2c386daba03118fe0a2b01a95ef4660042f37f5"},
+    {file = "landlab-2.4.1-cp310-cp310-win32.whl", hash = "sha256:cb16061e1156d60f0b618252cb89a120be72b3f7f12690370fad829b18105827"},
+    {file = "landlab-2.4.1-cp310-cp310-win_amd64.whl", hash = "sha256:44093da534a777a654fd1e9c12cc34823d6de3b60a51ba46193fea6e4086d451"},
+    {file = "landlab-2.4.1-cp38-cp38-win32.whl", hash = "sha256:e5d03d2687027ff24bb30e72aef142f48800313288fda0e9e9296b92f224bfcc"},
+    {file = "landlab-2.4.1-cp38-cp38-win_amd64.whl", hash = "sha256:aaf400b567101d2f58112cced614fb6d09d40777da126e0fa75e4783234744bf"},
+    {file = "landlab-2.4.1-cp39-cp39-win32.whl", hash = "sha256:121c187fa2eb294a4b76bba86593c6434452be5b71d42f57174b5beba2266328"},
+    {file = "landlab-2.4.1-cp39-cp39-win_amd64.whl", hash = "sha256:724eb33b6ffedce33e18fa417f08e1080e5a54cfa258740987e3b990f7c2005e"},
+    {file = "landlab-2.4.1.tar.gz", hash = "sha256:99ff252306f213959090b03e9abb1cede18b1d2fb9362e44258a4353972fd230"},
 ]
 latexcodec = [
     {file = "latexcodec-2.0.1-py2.py3-none-any.whl", hash = "sha256:c277a193638dc7683c4c30f6684e3db728a06efb0dc9cf346db8bd0aa6c5d271"},
@@ -3064,8 +3185,11 @@ packaging = [
     {file = "packaging-21.0.tar.gz", hash = "sha256:7dc96269f53a4ccec5c0670940a4281106dd0bb343f47b7471f779df49c2fbe7"},
 ]
 pandas = [
+    {file = "pandas-1.3.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9707bdc1ea9639c886b4d3be6e2a45812c1ac0c2080f94c31b71c9fa35556f9b"},
+    {file = "pandas-1.3.4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c2f44425594ae85e119459bb5abb0748d76ef01d9c08583a667e3339e134218e"},
     {file = "pandas-1.3.4-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:372d72a3d8a5f2dbaf566a5fa5fa7f230842ac80f29a931fb4b071502cf86b9a"},
     {file = "pandas-1.3.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d99d2350adb7b6c3f7f8f0e5dfb7d34ff8dd4bc0a53e62c445b7e43e163fce63"},
+    {file = "pandas-1.3.4-cp310-cp310-win_amd64.whl", hash = "sha256:4acc28364863127bca1029fb72228e6f473bb50c32e77155e80b410e2068eeac"},
     {file = "pandas-1.3.4-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:c2646458e1dce44df9f71a01dc65f7e8fa4307f29e5c0f2f92c97f47a5bf22f5"},
     {file = "pandas-1.3.4-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5298a733e5bfbb761181fd4672c36d0c627320eb999c59c65156c6a90c7e1b4f"},
     {file = "pandas-1.3.4-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:22808afb8f96e2269dcc5b846decacb2f526dd0b47baebc63d913bf847317c8f"},
@@ -3471,6 +3595,17 @@ pyzmq = [
     {file = "pyzmq-22.3.0-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:d6157793719de168b199194f6b6173f0ccd3bf3499e6870fac17086072e39115"},
     {file = "pyzmq-22.3.0.tar.gz", hash = "sha256:8eddc033e716f8c91c6a2112f0a8ebc5e00532b4a6ae1eb0ccc48e027f9c671c"},
 ]
+rasterio = [
+    {file = "rasterio-1.2.10-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:f86efb0e4989201f244d6818575d442b716ce81af6cd969c3caead76b9690837"},
+    {file = "rasterio-1.2.10-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:831b6dbefb409c3ece23fa219d8446a7534e30c69a075fd366e72742b1f94c58"},
+    {file = "rasterio-1.2.10-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:42a1a6364313c384fcd631d850792621301e930449b47f72ced048c415c9c84e"},
+    {file = "rasterio-1.2.10-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:1572003273225162933d4c88729076ac39050e7becd9de7d31988d1dd40942c1"},
+    {file = "rasterio-1.2.10-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:8f9867a3b6663396260fc5bdfbea372cac9202074b709478db741767f40dfffc"},
+    {file = "rasterio-1.2.10-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:ba95aa3221814e364ef49cf8dd8ca4a73e2ea702bd9228a3a845e197091792ae"},
+    {file = "rasterio-1.2.10-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:2394ce0ae1e7b49b456ddc6bbf00ce6840656e926046c1a5a54cd0f66ea67dc4"},
+    {file = "rasterio-1.2.10-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:c73248b4ba0564798bf64df869834821a7b823a4c9ceda3de9b772d69c3f5405"},
+    {file = "rasterio-1.2.10.tar.gz", hash = "sha256:6062456047ba6494fe18bd0da98a383b6fad5306b16cd52a22e76c59172a2b5f"},
+]
 regex = [
     {file = "regex-2021.10.23-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:45b65d6a275a478ac2cbd7fdbf7cc93c1982d613de4574b56fd6972ceadb8395"},
     {file = "regex-2021.10.23-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:74d071dbe4b53c602edd87a7476ab23015a991374ddb228d941929ad7c8c922e"},
@@ -3517,6 +3652,21 @@ requests-unixsocket = [
     {file = "requests-unixsocket-0.2.0.tar.gz", hash = "sha256:9e5c1a20afc3cf786197ae59c79bcdb0e7565f218f27df5f891307ee8817c1ea"},
     {file = "requests_unixsocket-0.2.0-py2.py3-none-any.whl", hash = "sha256:014d07bfb66dc805a011a8b4b306cf4ec96d2eddb589f6b2b5765e626f0dc0cc"},
 ]
+richdem = [
+    {file = "richdem-0.3.4-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:52ba15f974110e967318c96878cb1d9f9be2370133327319454650fb6464b45c"},
+    {file = "richdem-0.3.4-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:68a2cabcbcb99be22140e16a9474d5d92d427cf5744c1aeb07ca722645673260"},
+    {file = "richdem-0.3.4-cp27-cp27mu-manylinux1_i686.whl", hash = "sha256:6064292d3205db589aead92b901aac9d7b37c90ea6a3a205e6799ba158c03efc"},
+    {file = "richdem-0.3.4-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:6f5901c8b322dbd87938fc8b56b42663d49bda27f905347b67a50460d610ed85"},
+    {file = "richdem-0.3.4-cp34-cp34m-manylinux1_i686.whl", hash = "sha256:0c5988b58bea942a31ea9f5c5502a6a34aacad5cd1ab6b5e32ac627630a36b9b"},
+    {file = "richdem-0.3.4-cp34-cp34m-manylinux1_x86_64.whl", hash = "sha256:7ef3dc0d3f890b3697f2070448d07961543620c16fda26b000f872c742c7750f"},
+    {file = "richdem-0.3.4-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:7601f868da4863466c4de436fc0bcd9c591407d98f8201a69f8a403485eca87e"},
+    {file = "richdem-0.3.4-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:68c69364dac7a9dba0abe21ff1e4f415a4c4388b1416e492a8fadb798e625c31"},
+    {file = "richdem-0.3.4-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:346d6a7f2e23e9743be8a34682247d630f0695db5f48f2f706ee2080ccd42d04"},
+    {file = "richdem-0.3.4-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:5fc6c48b34554ec97e68918bdd9dd51fc35de1f8f5fa29bc436c67093981167d"},
+    {file = "richdem-0.3.4-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:ffa5cf547b0af2e2900caa3af5ff5738f73954b72d63b1fcb1ab83c3036fa335"},
+    {file = "richdem-0.3.4-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:d0ab9b14f01b5f0e00410ca8d380779bf9a7dd46c78806bb6fb0cfa85abfba9e"},
+    {file = "richdem-0.3.4.tar.gz", hash = "sha256:a9d3119ca8e25aa73039c94816f68ac2e1c33dc8ef02b0467c090d44243a7ad1"},
+]
 scipy = [
     {file = "scipy-1.6.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:a15a1f3fc0abff33e792d6049161b7795909b40b97c6cc2934ed54384017ab76"},
     {file = "scipy-1.6.1-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:e79570979ccdc3d165456dd62041d9556fb9733b86b4b6d818af7a0afc15f092"},
@@ -3561,6 +3711,10 @@ sniffio = [
 snowballstemmer = [
     {file = "snowballstemmer-2.1.0-py2.py3-none-any.whl", hash = "sha256:b51b447bea85f9968c13b650126a888aabd4cb4463fca868ec596826325dedc2"},
     {file = "snowballstemmer-2.1.0.tar.gz", hash = "sha256:e997baa4f2e9139951b6f4c631bad912dfd3c792467e2f03d7239464af90e914"},
+]
+snuggs = [
+    {file = "snuggs-1.4.7-py3-none-any.whl", hash = "sha256:988dde5d4db88e9d71c99457404773dabcc7a1c45971bfbe81900999942d9f07"},
+    {file = "snuggs-1.4.7.tar.gz", hash = "sha256:501cf113fe3892e14e2fee76da5cd0606b7e149c411c271898e6259ebde2617b"},
 ]
 sortedcontainers = [
     {file = "sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
