@@ -23,7 +23,7 @@ prefect = {version = "^0.15.6", optional = true}
 sh = "^1.14.2"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
+pytest = "^7.0.0"
 jupyter-book = "^0.12.0"
 ghp-import = "^2.0.2"
 
