@@ -625,37 +625,37 @@ format_nongpl = ["idna", "jsonpointer (>1.13)", "webcolors", "rfc3986-validator 
 
 [[package]]
 name = "jupyter-book"
-version = "0.12.0"
-description = "Jupyter Book: Create an online book with Jupyter Notebooks"
+version = "0.12.3"
+description = "Build a book with Jupyter Notebooks and Sphinx."
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
-click = ">=7.1,<8.0"
+click = ">=7.1,<9"
 docutils = ">=0.15,<0.18"
+Jinja2 = "<3.1"
 jsonschema = "<4"
-jupytext = ">=1.11.2,<1.12"
 linkify-it-py = ">=1.0.1,<1.1.0"
 myst-nb = ">=0.13.1,<0.14.0"
 pyyaml = "*"
 sphinx = ">=3,<5"
-sphinx-book-theme = ">=0.1.4,<0.2.0"
+sphinx_book_theme = ">=0.1.4,<0.2.0"
 sphinx-comments = "*"
 sphinx-copybutton = "*"
 sphinx-external-toc = ">=0.2.3,<0.3.0"
-sphinx-jupyterbook-latex = ">=0.4.3,<0.5.0"
+sphinx-jupyterbook-latex = ">=0.4.6,<0.5.0"
 sphinx-multitoc-numbering = ">=0.1.3,<0.2.0"
 sphinx-panels = ">=0.6.0,<0.7.0"
-sphinx-thebe = ">=0.0.10,<0.1.0"
-sphinx-togglebutton = "*"
-sphinxcontrib-bibtex = ">=2.2.0,<2.3.0"
+sphinx-thebe = ">=0.1.1,<0.2.0"
+sphinx_togglebutton = "*"
+sphinxcontrib-bibtex = ">=2.2.0,<=2.5.0"
 
 [package.extras]
 code_style = ["pre-commit (>=2.12,<3.0)"]
 pdfhtml = ["pyppeteer"]
-sphinx = ["altair", "bokeh", "folium", "ipywidgets", "matplotlib", "nbclient", "numpy", "pandas", "plotly", "sphinx-click", "sphinx-inline-tabs", "sphinxext-rediraffe (>=0.2.3,<0.3.0)", "sympy"]
-testing = ["altair", "beautifulsoup4", "cookiecutter", "coverage", "matplotlib", "pyppeteer", "pytest (>=3.6,<4)", "pytest-cov", "pytest-regressions", "pytest-timeout", "pytest-xdist", "sphinx-click", "sphinx-tabs", "texsoup"]
+sphinx = ["altair", "bokeh", "folium", "ipywidgets", "jupytext", "matplotlib", "nbclient", "numpy", "pandas", "plotly", "sphinx-click", "sphinx-inline-tabs", "sphinxext-rediraffe (>=0.2.3,<0.3.0)", "sympy", "sphinx-proof"]
+testing = ["altair", "beautifulsoup4", "beautifulsoup4", "cookiecutter", "coverage", "jupytext", "matplotlib", "pyppeteer", "pytest (>=6.2.4)", "pytest-cov", "pytest-regressions", "pytest-timeout", "pytest-xdist", "sphinx-click", "sphinx-tabs", "texsoup"]
 
 [[package]]
 name = "jupyter-cache"
@@ -787,25 +787,6 @@ description = "A JupyterLab extension."
 category = "dev"
 optional = false
 python-versions = ">=3.6"
-
-[[package]]
-name = "jupytext"
-version = "1.11.5"
-description = "Jupyter notebooks as Markdown documents, Julia, Python or R scripts"
-category = "dev"
-optional = false
-python-versions = "~=3.6"
-
-[package.dependencies]
-markdown-it-py = ">=1.0,<2.0"
-mdit-py-plugins = "*"
-nbformat = "*"
-pyyaml = "*"
-toml = "*"
-
-[package.extras]
-rst2md = ["sphinx-gallery (>=0.7.0,<0.8.0)"]
-toml = ["toml"]
 
 [[package]]
 name = "kiwisolver"
@@ -1917,7 +1898,7 @@ testing = ["coverage", "pytest (>=3.6,<4)", "pytest-cov", "pytest-regressions"]
 
 [[package]]
 name = "sphinx-jupyterbook-latex"
-version = "0.4.5"
+version = "0.4.6"
 description = "Latex specific features for jupyter book"
 category = "dev"
 optional = false
@@ -1930,7 +1911,7 @@ sphinx = ">=3,<5"
 [package.extras]
 code_style = ["pre-commit (>=2.12,<3.0)"]
 myst = ["myst-nb (>=0.13,<0.14)"]
-rtd = ["myst-parser", "sphinx-book-theme"]
+rtd = ["myst-parser", "sphinx-book-theme", "sphinx-design", "sphinx-jupyterbook-latex"]
 testing = ["coverage (<5.0)", "myst-nb (>=0.13,<0.14)", "pytest (>=3.6,<4)", "pytest-cov (>=2.8,<3.0)", "pytest-regressions", "sphinx-external-toc (>=0.1.0,<0.3.0)", "sphinxcontrib-bibtex (>=2.2.1,<2.3.0)", "texsoup"]
 
 [[package]]
@@ -1969,7 +1950,7 @@ themes = ["sphinx-rtd-theme", "pydata-sphinx-theme (>=0.4.0,<0.5.0)", "sphinx-bo
 
 [[package]]
 name = "sphinx-thebe"
-version = "0.0.10"
+version = "0.1.1"
 description = "Integrate interactive code blocks into your documentation with Thebe and Binder."
 category = "dev"
 optional = false
@@ -1979,8 +1960,8 @@ python-versions = "*"
 sphinx = ">=3.5,<5"
 
 [package.extras]
-sphinx = ["myst-parser", "sphinx-book-theme", "jupyter-sphinx", "sphinx-panels"]
-testing = ["pytest", "pytest-regressions", "beautifulsoup4"]
+sphinx = ["matplotlib", "myst-nb", "sphinx-book-theme", "sphinx-copybutton", "sphinx-panels"]
+testing = ["matplotlib", "pytest", "pytest-regressions", "beautifulsoup4"]
 
 [[package]]
 name = "sphinx-togglebutton"
@@ -2350,7 +2331,7 @@ prefect = ["prefect"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "dcef8c0f202466d615b2c44c19f6f87d38745799b7a80605edf22efee9ddf46e"
+content-hash = "5e590e7be02b75cd246dca616019575a492268d462067f707e0dc795c0def3f5"
 
 [metadata.files]
 alabaster = [
@@ -2603,6 +2584,7 @@ greenlet = [
     {file = "greenlet-1.1.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:97e5306482182170ade15c4b0d8386ded995a07d7cc2ca8f27958d34d6736497"},
     {file = "greenlet-1.1.2-cp310-cp310-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:e6a36bb9474218c7a5b27ae476035497a6990e21d04c279884eb10d9b290f1b1"},
     {file = "greenlet-1.1.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:abb7a75ed8b968f3061327c433a0fbd17b729947b400747c334a9c29a9af6c58"},
+    {file = "greenlet-1.1.2-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:b336501a05e13b616ef81ce329c0e09ac5ed8c732d9ba7e3e983fcc1a9e86965"},
     {file = "greenlet-1.1.2-cp310-cp310-win_amd64.whl", hash = "sha256:14d4f3cd4e8b524ae9b8aa567858beed70c392fdec26dbdb0a8a418392e71708"},
     {file = "greenlet-1.1.2-cp35-cp35m-macosx_10_14_x86_64.whl", hash = "sha256:17ff94e7a83aa8671a25bf5b59326ec26da379ace2ebc4411d690d80a7fbcf23"},
     {file = "greenlet-1.1.2-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:9f3cba480d3deb69f6ee2c1825060177a22c7826431458c697df88e6aeb3caee"},
@@ -2615,6 +2597,7 @@ greenlet = [
     {file = "greenlet-1.1.2-cp36-cp36m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f9d29ca8a77117315101425ec7ec2a47a22ccf59f5593378fc4077ac5b754fce"},
     {file = "greenlet-1.1.2-cp36-cp36m-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:21915eb821a6b3d9d8eefdaf57d6c345b970ad722f856cd71739493ce003ad08"},
     {file = "greenlet-1.1.2-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:eff9d20417ff9dcb0d25e2defc2574d10b491bf2e693b4e491914738b7908168"},
+    {file = "greenlet-1.1.2-cp36-cp36m-musllinux_1_1_x86_64.whl", hash = "sha256:b8c008de9d0daba7b6666aa5bbfdc23dcd78cafc33997c9b7741ff6353bafb7f"},
     {file = "greenlet-1.1.2-cp36-cp36m-win32.whl", hash = "sha256:32ca72bbc673adbcfecb935bb3fb1b74e663d10a4b241aaa2f5a75fe1d1f90aa"},
     {file = "greenlet-1.1.2-cp36-cp36m-win_amd64.whl", hash = "sha256:f0214eb2a23b85528310dad848ad2ac58e735612929c8072f6093f3585fd342d"},
     {file = "greenlet-1.1.2-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:b92e29e58bef6d9cfd340c72b04d74c4b4e9f70c9fa7c78b674d1fec18896dc4"},
@@ -2623,6 +2606,7 @@ greenlet = [
     {file = "greenlet-1.1.2-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1e12bdc622676ce47ae9abbf455c189e442afdde8818d9da983085df6312e7a1"},
     {file = "greenlet-1.1.2-cp37-cp37m-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:8c790abda465726cfb8bb08bd4ca9a5d0a7bd77c7ac1ca1b839ad823b948ea28"},
     {file = "greenlet-1.1.2-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f276df9830dba7a333544bd41070e8175762a7ac20350786b322b714b0e654f5"},
+    {file = "greenlet-1.1.2-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:8c5d5b35f789a030ebb95bff352f1d27a93d81069f2adb3182d99882e095cefe"},
     {file = "greenlet-1.1.2-cp37-cp37m-win32.whl", hash = "sha256:64e6175c2e53195278d7388c454e0b30997573f3f4bd63697f88d855f7a6a1fc"},
     {file = "greenlet-1.1.2-cp37-cp37m-win_amd64.whl", hash = "sha256:b11548073a2213d950c3f671aa88e6f83cda6e2fb97a8b6317b1b5b33d850e06"},
     {file = "greenlet-1.1.2-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:9633b3034d3d901f0a46b7939f8c4d64427dfba6bbc5a36b1a67364cf148a1b0"},
@@ -2631,6 +2615,7 @@ greenlet = [
     {file = "greenlet-1.1.2-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e859fcb4cbe93504ea18008d1df98dee4f7766db66c435e4882ab35cf70cac43"},
     {file = "greenlet-1.1.2-cp38-cp38-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:00e44c8afdbe5467e4f7b5851be223be68adb4272f44696ee71fe46b7036a711"},
     {file = "greenlet-1.1.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ec8c433b3ab0419100bd45b47c9c8551248a5aee30ca5e9d399a0b57ac04651b"},
+    {file = "greenlet-1.1.2-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:2bde6792f313f4e918caabc46532aa64aa27a0db05d75b20edfc5c6f46479de2"},
     {file = "greenlet-1.1.2-cp38-cp38-win32.whl", hash = "sha256:288c6a76705dc54fba69fbcb59904ae4ad768b4c768839b8ca5fdadec6dd8cfd"},
     {file = "greenlet-1.1.2-cp38-cp38-win_amd64.whl", hash = "sha256:8d2f1fb53a421b410751887eb4ff21386d119ef9cde3797bf5e7ed49fb51a3b3"},
     {file = "greenlet-1.1.2-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:166eac03e48784a6a6e0e5f041cfebb1ab400b394db188c48b3a84737f505b67"},
@@ -2639,6 +2624,7 @@ greenlet = [
     {file = "greenlet-1.1.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b1692f7d6bc45e3200844be0dba153612103db241691088626a33ff1f24a0d88"},
     {file = "greenlet-1.1.2-cp39-cp39-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:7227b47e73dedaa513cdebb98469705ef0d66eb5a1250144468e9c3097d6b59b"},
     {file = "greenlet-1.1.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7ff61ff178250f9bb3cd89752df0f1dd0e27316a8bd1465351652b1b4a4cdfd3"},
+    {file = "greenlet-1.1.2-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:0051c6f1f27cb756ffc0ffbac7d2cd48cb0362ac1736871399a739b2885134d3"},
     {file = "greenlet-1.1.2-cp39-cp39-win32.whl", hash = "sha256:f70a9e237bb792c7cc7e44c531fd48f5897961701cdaa06cf22fc14965c496cf"},
     {file = "greenlet-1.1.2-cp39-cp39-win_amd64.whl", hash = "sha256:013d61294b6cd8fe3242932c1c5e36e5d1db2c8afb58606c5a67efce62c1f5fd"},
     {file = "greenlet-1.1.2.tar.gz", hash = "sha256:e30f5ea4ae2346e62cedde8794a56858a67b878dd79f7df76a0767e356b1744a"},
@@ -2696,8 +2682,8 @@ jsonschema = [
     {file = "jsonschema-3.2.0.tar.gz", hash = "sha256:c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a"},
 ]
 jupyter-book = [
-    {file = "jupyter-book-0.12.0.tar.gz", hash = "sha256:cc0082d27239d9c1d64ac0aa2e12194cce7415cdeb498fe1c626572a2e65ea2c"},
-    {file = "jupyter_book-0.12.0-py3-none-any.whl", hash = "sha256:75da974e8cd63cd0d42b165e978e38ce2786590eafceefd04105322ae2f07bf8"},
+    {file = "jupyter-book-0.12.3.tar.gz", hash = "sha256:ed695f29b1d1a0816e1fc0c409755ccb2a15fda36e507b19da69e3bdc4f5c7a8"},
+    {file = "jupyter_book-0.12.3-py3-none-any.whl", hash = "sha256:063ab998ae7dae00ae2992ab986f83253c71385af99faa36c643e6e9f491b27d"},
 ]
 jupyter-cache = [
     {file = "jupyter-cache-0.4.3.tar.gz", hash = "sha256:4c9b5431b1d320bc68440c21fa0a155bbeb29c5b979bef72222e244a7bcd54fc"},
@@ -2730,10 +2716,6 @@ jupyterlab-pygments = [
 jupyterlab-widgets = [
     {file = "jupyterlab_widgets-1.0.2-py3-none-any.whl", hash = "sha256:f5d9efface8ec62941173ba1cffb2edd0ecddc801c11ae2931e30b50492eb8f7"},
     {file = "jupyterlab_widgets-1.0.2.tar.gz", hash = "sha256:7885092b2b96bf189c3a705cc3c412a4472ec5e8382d0b47219a66cccae73cfa"},
-]
-jupytext = [
-    {file = "jupytext-1.11.5-py3-none-any.whl", hash = "sha256:7d9e3a4396a35e4dd5604af8664bec14695fa2634ad1666d1610e27b07a981d7"},
-    {file = "jupytext-1.11.5.tar.gz", hash = "sha256:3fbf2747afca7228d5e82a907cc51937219d2233bc4efbcc9a0974d70d7e8986"},
 ]
 kiwisolver = [
     {file = "kiwisolver-1.3.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:1d819553730d3c2724582124aee8a03c846ec4362ded1034c16fb3ef309264e6"},
@@ -3064,8 +3046,11 @@ packaging = [
     {file = "packaging-21.0.tar.gz", hash = "sha256:7dc96269f53a4ccec5c0670940a4281106dd0bb343f47b7471f779df49c2fbe7"},
 ]
 pandas = [
+    {file = "pandas-1.3.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9707bdc1ea9639c886b4d3be6e2a45812c1ac0c2080f94c31b71c9fa35556f9b"},
+    {file = "pandas-1.3.4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c2f44425594ae85e119459bb5abb0748d76ef01d9c08583a667e3339e134218e"},
     {file = "pandas-1.3.4-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:372d72a3d8a5f2dbaf566a5fa5fa7f230842ac80f29a931fb4b071502cf86b9a"},
     {file = "pandas-1.3.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d99d2350adb7b6c3f7f8f0e5dfb7d34ff8dd4bc0a53e62c445b7e43e163fce63"},
+    {file = "pandas-1.3.4-cp310-cp310-win_amd64.whl", hash = "sha256:4acc28364863127bca1029fb72228e6f473bb50c32e77155e80b410e2068eeac"},
     {file = "pandas-1.3.4-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:c2646458e1dce44df9f71a01dc65f7e8fa4307f29e5c0f2f92c97f47a5bf22f5"},
     {file = "pandas-1.3.4-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5298a733e5bfbb761181fd4672c36d0c627320eb999c59c65156c6a90c7e1b4f"},
     {file = "pandas-1.3.4-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:22808afb8f96e2269dcc5b846decacb2f526dd0b47baebc63d913bf847317c8f"},
@@ -3591,8 +3576,8 @@ sphinx-external-toc = [
     {file = "sphinx_external_toc-0.2.3.tar.gz", hash = "sha256:22d1d63f74206b388fb4e1d67e0c0d0b4de2ea98a2820f97a03ae3f3141dc525"},
 ]
 sphinx-jupyterbook-latex = [
-    {file = "sphinx_jupyterbook_latex-0.4.5-py3-none-any.whl", hash = "sha256:d92f967563213374775034f993abaf5a109de94134a02badd9ef0eaa4bab13ef"},
-    {file = "sphinx_jupyterbook_latex-0.4.5.tar.gz", hash = "sha256:b169ab271f512f45cea93587bd573f32f513eb744a680908874a2a60c62f6884"},
+    {file = "sphinx_jupyterbook_latex-0.4.6-py3-none-any.whl", hash = "sha256:75b8f7654ac1eff5419f71017491ecdc50a4723e3305dd6f61b183099f46600f"},
+    {file = "sphinx_jupyterbook_latex-0.4.6.tar.gz", hash = "sha256:8ff3775b11ab4798e6e8ec983601d7aea4c3b8e8b5d28ca758578ede3a791334"},
 ]
 sphinx-multitoc-numbering = [
     {file = "sphinx-multitoc-numbering-0.1.3.tar.gz", hash = "sha256:c9607671ac511236fa5d61a7491c1031e700e8d498c9d2418e6c61d1251209ae"},
@@ -3603,8 +3588,8 @@ sphinx-panels = [
     {file = "sphinx_panels-0.6.0-py3-none-any.whl", hash = "sha256:bd64afaf85c07f8096d21c8247fc6fd757e339d1be97832c8832d6ae5ed2e61d"},
 ]
 sphinx-thebe = [
-    {file = "sphinx-thebe-0.0.10.tar.gz", hash = "sha256:b51ed38e0974c891319aed1554212598597ae12226c7916f2215becc382ae8d7"},
-    {file = "sphinx_thebe-0.0.10-py3-none-any.whl", hash = "sha256:4e349204eab2f059d037be423b93bfe138fa8feceedd5eae7f358f1e82403968"},
+    {file = "sphinx-thebe-0.1.1.tar.gz", hash = "sha256:3f0bee00ca830a6d649b3188de9a95ae92bace16de1e6800f27671b9edb37fd7"},
+    {file = "sphinx_thebe-0.1.1-py3-none-any.whl", hash = "sha256:820768a68d144f30badf922041ce45175e1dc84fda9c1b8703c8ac4692fb2715"},
 ]
 sphinx-togglebutton = [
     {file = "sphinx-togglebutton-0.2.3.tar.gz", hash = "sha256:41cbe2f87459eade8dc5718bb56146e8e113a05fb97459b90472470f0d357b55"},
