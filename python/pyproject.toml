@@ -24,7 +24,7 @@ sh = "^1.14.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
-jupyter-book = "^0.12.0"
+jupyter-book = "^0.13.2"
 ghp-import = "^2.0.2"
 
 [tool.poetry.extras]
